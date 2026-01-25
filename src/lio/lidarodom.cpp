@@ -1204,7 +1204,7 @@ namespace zjloc
 
                pcl::VoxelGrid<pcl::PointXYZI> vg;
                vg.setInputCloud(points_world);
-               vg.setLeafSize(cloud_pub_options.space_down_sample, cloud_pub_options.space_down_sample,cloud_pub_options.space_down_sample);
+               vg.setLeafSize(cloud_pub_options.space_down_sample, cloud_pub_options.space_down_sample, cloud_pub_options.space_down_sample);
 
                pcl::PointCloud<pcl::PointXYZI>::Ptr down(new pcl::PointCloud<pcl::PointXYZI>);
                vg.filter(*down);
@@ -1346,6 +1346,7 @@ namespace zjloc
      std::vector<MeasureGroup> lidarodom_m::getMeasureMents()
      {
           std::vector<MeasureGroup> measurements;
+          // std::cout << "get measurements called." << std::endl;
           while (true)
           {
                if (imu_buffer_.empty())
@@ -1366,7 +1367,7 @@ namespace zjloc
                time_buffer_.pop_front();
 
                time_curr = meas.lidar_end_time_;
-
+               // std::cout << "end lidar" << std::endl;
                double imu_time = imu_buffer_.front()->timestamp_;
                meas.imu_.clear();
                while ((!imu_buffer_.empty()) && (imu_time < meas.lidar_end_time_))
@@ -1379,71 +1380,75 @@ namespace zjloc
                     meas.imu_.push_back(imu_buffer_.front());
                     imu_buffer_.pop_front();
                }
-               double t_begin = meas.lidar_begin_time_;
-               double t_end = imu_buffer_.front()->timestamp_;
-               while (!aux_lidar_buffer_.empty())
-               {
-                    auto &aux_time = aux_lidar_time_buffer_.front();
-                    auto &aux = aux_lidar_buffer_.front();
 
-                    double start_time = aux_time.first;
-                    double end_time = aux_time.first + aux_time.second;
-
-                    // 1. aux 整帧在窗口之前 → 丢弃整帧
-                    if (end_time < t_begin)
-                    {
-                         aux_lidar_buffer_.pop_front();
-                         aux_lidar_time_buffer_.pop_front();
-                         aux_point_cursor_ = 0;
-                         continue;
-                    }
-
-                    // 2. aux 整帧在窗口之后 → 等下次
-                    if (start_time > t_end)
-                    {
-                         break;
-                    }
-
-                    // 3. 有时间交集 → 用“点级时间游标”裁剪
-                    std::vector<point3D> cropped;
-                    cropped.reserve(13000); // 经验值，避免频繁扩容
-
-                    // 3.1 跳过已经过期的点
-                    while (aux_point_cursor_ < aux.size() &&
-                           aux[aux_point_cursor_].timestamp < t_begin)
-                    {
-                         aux_point_cursor_++;
-                    }
-
-                    // 3.2 收集时间窗内的点
-                    while (aux_point_cursor_ < aux.size() &&
-                           aux[aux_point_cursor_].timestamp <= t_end)
-                    {
-                         cropped.push_back(aux[aux_point_cursor_]);
-                         aux_point_cursor_++;
-                    }
-
-                    // 4. 如果本窗口内有 aux lidar 点
-                    if (!cropped.empty())
-                    {
-                         meas.aux_lidar_ = std::move(cropped);
-                         meas.aux_lidar_time_ = t_begin;
-                    }
-
-                    // 5. 如果这一帧 aux lidar 的点已经用完 → pop
-                    if (aux_point_cursor_ >= aux.size())
-                    {
-                         aux_lidar_buffer_.pop_front();
-                         aux_lidar_time_buffer_.pop_front();
-                         aux_point_cursor_ = 0;
-                    }
-
-                    break; // 一个 MeasureGroup 只处理一次 aux lidar
-               }
-
+               // IMU 消耗完毕后，必须保证还有未来 IMU，否则数组越界
                if (!imu_buffer_.empty())
-                    meas.imu_.push_back(imu_buffer_.front()); //   added for Interp
+               {
+                    double t_begin = meas.lidar_begin_time_;
+                    double t_end = imu_buffer_.front()->timestamp_;
+                    // std::cout << "end imu" << std::endl;
+                    while (!aux_lidar_buffer_.empty())
+                    {
+                         auto &aux_time = aux_lidar_time_buffer_.front();
+                         auto &aux = aux_lidar_buffer_.front();
 
+                         double start_time = aux_time.first;
+                         double end_time = aux_time.first + aux_time.second;
+
+                         // 1. aux 整帧在窗口之前 → 丢弃整帧
+                         if (end_time < t_begin)
+                         {
+                              aux_lidar_buffer_.pop_front();
+                              aux_lidar_time_buffer_.pop_front();
+                              aux_point_cursor_ = 0;
+                              continue;
+                         }
+
+                         // 2. aux 整帧在窗口之后 → 等下次
+                         if (start_time > t_end)
+                         {
+                              break;
+                         }
+
+                         // 3. 有时间交集 → 用“点级时间游标”裁剪
+                         std::vector<point3D> cropped;
+                         cropped.reserve(13000); // 经验值，避免频繁扩容
+
+                         // 3.1 跳过已经过期的点
+                         while (aux_point_cursor_ < aux.size() &&
+                                aux[aux_point_cursor_].timestamp < t_begin)
+                         {
+                              aux_point_cursor_++;
+                         }
+
+                         // 3.2 收集时间窗内的点
+                         while (aux_point_cursor_ < aux.size() &&
+                                aux[aux_point_cursor_].timestamp <= t_end)
+                         {
+                              cropped.push_back(aux[aux_point_cursor_]);
+                              aux_point_cursor_++;
+                         }
+
+                         // 4. 如果本窗口内有 aux lidar 点
+                         if (!cropped.empty())
+                         {
+                              meas.aux_lidar_ = std::move(cropped);
+                              meas.aux_lidar_time_ = t_begin;
+                         }
+
+                         // 5. 如果这一帧 aux lidar 的点已经用完 → pop
+                         if (aux_point_cursor_ >= aux.size())
+                         {
+                              aux_lidar_buffer_.pop_front();
+                              aux_lidar_time_buffer_.pop_front();
+                              aux_point_cursor_ = 0;
+                         }
+
+                         break; // 一个 MeasureGroup 只处理一次 aux lidar
+                    }
+
+                    meas.imu_.push_back(imu_buffer_.front()); //   added for Interp
+               }
                std::cout << meas.aux_lidar_.size() << std::endl;
                std::cout << meas.lidar_.size() << std::endl;
 
