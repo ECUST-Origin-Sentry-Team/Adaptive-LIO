@@ -63,6 +63,7 @@ namespace zjloc
 
                OPTION_CLAUSE(odometry_node, options_, sampling_rate, double);
                OPTION_CLAUSE(odometry_node, options_, max_num_residuals, int);
+               OPTION_CLAUSE(odometry_node, options_, min_num_residuals, int);
 
                std::string str_motion_compensation = odometry_node["motion_compensation"].as<std::string>();
                if (str_motion_compensation == "NONE")
@@ -575,12 +576,11 @@ namespace zjloc
                     //      problem.AddResidualBlock(cost_velocity_consistency, nullptr, PR_begin, PR_end);
                     // }
                }
-
                if (surf_num < options_.min_num_residuals)
                {
                     std::stringstream ss_out;
                     ss_out << "[Optimization] Error : not enough keypoints selected in ct-icp !" << std::endl;
-                    ss_out << "[Optimization] number_of_residuals : " << surf_num << std::endl;
+                    ss_out << "[Optimization] number_of_residuals : " << surf_num << "min_num_residuals:"<< options_.min_num_residuals << std::endl;
                     std::cout << "ERROR: " << ss_out.str();
                }
 

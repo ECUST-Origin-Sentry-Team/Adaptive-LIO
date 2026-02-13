@@ -150,7 +150,7 @@ The emerging Internet of Things (IoT) applications, such as driverless cars, hav
 ### Usage
 
 1. Prerequisites
-   **Ubuntu and ROS**
+   **Ubuntu and ROS2**
 
    Ubuntu >= 18.04. And Ubuntu 20.04 is recommended.
 
@@ -162,19 +162,26 @@ The emerging Internet of Things (IoT) applications, such as driverless cars, hav
 
 3. build
    ```bash
-    cd ~/catkin_ws/src
-    git clone https://github.com/chengwei0427/Adaptive-LIO.git
+    cd ~/ros2_ws/src
+    git clone https://github.com/ECUST-Origin-Sentry-Team/Adaptive-LIO.git
     cd ..
-    catkin_make
+    colcon build --symlink-install
     ```
 
 
-4. Run
+4. Run 
    ```bash
-    source devel/setup.bash
-    roslaunch adaptive_lio run.launch
+    source install/setup.bash
+    ros2 launch adaptive_lio run.launch.py
     ```
-   
+
+5. Mapping And Save the PCD
+  - Turn on the enable_mapping in the `mapping_m.yaml` if you need mapping progress
+  - Save the map using `ros2 service call`  - (Also supports auto-save)
+  ```bash
+  ros2 service call /save_map_service std_srvs/srv/Trigger 
+  ```
+  - The SC-map is stored in the map_scantext.pcd_db folder and updated in real time.
 
 ## Publications
 

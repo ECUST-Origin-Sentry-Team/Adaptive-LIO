@@ -10,7 +10,7 @@ preprocess:
 common:
   imu_topic: /livox/imu #/imu_raw   /gps/gtimu
   lid_topic: /livox/lidar #/points_raw  /rslidar_points /velodyne_points
-  #   imu_topic: /livox/imu_192_168_1_160 #/imu_raw   /gps/gtimu
+  # imu_topic: /livox/imu_192_168_1_160 #/imu_raw   /gps/gtimu
   # lid_topic: /livox/lidar_192_168_1_160 #/points_raw  /rslidar_points /velodyne_points
   aux_lidar_topic: /livox/lidar_192_168_1_163
   gnorm: 1 # 9.805    # 部分数据，加速度模长为1->9.805gnorm
@@ -81,3 +81,15 @@ cloud_pub:
   max_z_filter: 1.5 # the roof must be filtered
   min_z_filter: -1.0 
   space_down_sample: 0.01 # should not larger than 0.05
+
+mapping_module:
+  enable_mapping: true
+  keyframe_dist_thresh: 1.0
+  keyframe_angle_thresh: 0.8
+  map_save_path: "./map_scantext.pcd"
+  auto_save_interval: 20.0 # meters
+  
+  scantext:
+    num_ring: 20
+    num_sector: 60
+    max_radius: 80.0

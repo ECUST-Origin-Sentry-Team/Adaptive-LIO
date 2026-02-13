@@ -43,7 +43,6 @@ std::shared_ptr<scantext::MappingCore> scantext_mapping;
 double gnorm = 1.0;
 // rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr imu_repub;
 
-DEFINE_string(config_yaml, "./config/mapping.yaml", "配置文件");
 #define DEBUG_FILE_DIR(name) (std::string(std::string(ROOT_DIR) + "Log/" + name))
 
 inline rclcpp::Time get_ros_time(double timestamp)
@@ -223,12 +222,11 @@ int main(int argc, char **argv)
     // Load configs
     try
     {
-        std::string mapping_cfg_path = std::string(ROOT_DIR) + "config/mapping.yaml";
-        auto yaml_mapping = YAML::LoadFile(mapping_cfg_path);
-        if (yaml_mapping["mapping_module"])
+        auto yaml_mapping_ = YAML::LoadFile(config_file);
+        if (yaml_mapping_["mapping_module"])
         {
             scantext::MappingCore::Config cfg;
-            auto node = yaml_mapping["mapping_module"];
+            auto node = yaml_mapping_["mapping_module"];
             if (node["enable_mapping"])
                 cfg.enable_mapping = node["enable_mapping"].as<bool>();
             if (node["keyframe_dist_thresh"])
