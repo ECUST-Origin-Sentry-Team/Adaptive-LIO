@@ -1,0 +1,11 @@
+mapping_module:
+  enable_mapping: false
+  keyframe_dist_thresh: 1.0
+  keyframe_angle_thresh: 0.8
+  map_save_path: "./map_scantext.pcd"
+  auto_save_interval: 20.0 # meters
+  
+  scantext:
+    num_ring: 20
+    num_sector: 60
+    max_radius: 80.0

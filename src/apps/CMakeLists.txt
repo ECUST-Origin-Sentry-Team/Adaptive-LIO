@@ -1,4 +1,5 @@
 find_package(livox_ros_driver2 REQUIRED)
+find_package(std_srvs REQUIRED)
 add_executable(${PROJECT_NAME}
   main_ada.cpp
   common_utility.cpp
@@ -20,6 +21,7 @@ ament_target_dependencies(${PROJECT_NAME}
   message_filters
   tf2_geometry_msgs
   livox_ros_driver2
+  std_srvs
 )
 
 target_link_libraries(${PROJECT_NAME}
@@ -27,6 +29,8 @@ target_link_libraries(${PROJECT_NAME}
   ${PROJECT_NAME}.pre
   ${PROJECT_NAME}.lio
   ${PROJECT_NAME}.algo
+  scantext_mapping_core
+  scantext_core
   ${third_party_libs}
   glog::glog
   gflags

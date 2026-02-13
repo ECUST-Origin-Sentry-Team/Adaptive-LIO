@@ -31,10 +31,15 @@
 #include "preprocess/cloud_convert/cloud_convert2.h"
 #include "lio/lidarodom.h"
 
+#include "scantext_module/Mapping.hpp"
+#include "std_srvs/srv/trigger.hpp"
+#include "geometry_msgs/msg/pose_with_covariance_stamped.hpp"
+
 nav_msgs::msg::Path laserOdoPath;
 
 zjloc::lidarodom_m *lio;
 zjloc::CloudConvert2 *convert;
+std::shared_ptr<scantext::MappingCore> scantext_mapping;
 double gnorm = 1.0;
 // rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr imu_repub;
 
@@ -43,10 +48,10 @@ DEFINE_string(config_yaml, "./config/mapping.yaml", "配置文件");
 
 inline rclcpp::Time get_ros_time(double timestamp)
 {
-int32_t sec = std::floor(timestamp);
-auto nanosec_d = (timestamp - std::floor(timestamp)) * 1e9;
-uint32_t nanosec = nanosec_d;
-return rclcpp::Time(sec, nanosec);
+    int32_t sec = std::floor(timestamp);
+    auto nanosec_d = (timestamp - std::floor(timestamp)) * 1e9;
+    uint32_t nanosec = nanosec_d;
+    return rclcpp::Time(sec, nanosec);
 }
 
 void livox_pcl_cbk(const livox_ros_driver2::msg::CustomMsg::UniquePtr msg)
@@ -75,7 +80,6 @@ void livox_pcl_cbk(const livox_ros_driver2::msg::CustomMsg::UniquePtr msg)
                                        "laser ds");
         lio->pushData(cloud_out, std::make_pair(msg->header.stamp.sec + msg->header.stamp.nanosec * 1e-9 + t_out[i] - t_out[0], t_out[0]), false);
         // pair<本段数据的绝对起始时间,数据持续时长>
-
     }
 }
 
@@ -83,28 +87,25 @@ void aux_livox_pcl_cbk(const livox_ros_driver2::msg::CustomMsg::UniquePtr msg)
 {
     std::cout << "aux_livox_pcl_cbk called." << std::endl;
     std::vector<std::vector<point3D>> cloud_vec; // 附属雷达只存于第0个时间片
-    std::vector<double> t_out; // 只有第0个时间片，代表总体的时间长度
+    std::vector<double> t_out;                   // 只有第0个时间片，代表总体的时间长度
     auto shared_msg = std::make_shared<const livox_ros_driver2::msg::CustomMsg>(*msg);
 
     zjloc::common::Timer::Evaluate([&]()
                                    { convert->Process(shared_msg, cloud_vec, t_out, true); },
                                    "laser convert");
 
-
     auto &cloud_out = cloud_vec[0];
     double sample_size = lio->getIndex() < 20 ? 0.01 : 0.01;
     // double sample_size = 0.01;
     std::mt19937_64 g;
     zjloc::common::Timer::Evaluate([&]()
-                                    { std::shuffle(cloud_out.begin(), cloud_out.end(), g);
+                                   { std::shuffle(cloud_out.begin(), cloud_out.end(), g);
         subSampleFrame(cloud_out, sample_size);
         std::shuffle(cloud_out.begin(), cloud_out.end(), g); },
-                                    "laser ds");
+                                   "laser ds");
 
-    lio->pushData(cloud_out, std::make_pair(msg->header.stamp.sec + msg->header.stamp.nanosec * 1e-9 , t_out[0]),true);
-
+    lio->pushData(cloud_out, std::make_pair(msg->header.stamp.sec + msg->header.stamp.nanosec * 1e-9, t_out[0]), true);
 }
-
 
 void standard_pcl_cbk(const sensor_msgs::msg::PointCloud2::SharedPtr msg)
 {
@@ -130,7 +131,7 @@ void standard_pcl_cbk(const sensor_msgs::msg::PointCloud2::SharedPtr msg)
                                        "laser ds");
 
         // 在ROS2中使用的是nanoseconds().count()来获取时间戳
-        lio->pushData(cloud_out, std::make_pair(msg->header.stamp.sec + msg->header.stamp.nanosec * 1e-9 + t_out[i] - t_out[0], t_out[0]),false);
+        lio->pushData(cloud_out, std::make_pair(msg->header.stamp.sec + msg->header.stamp.nanosec * 1e-9 + t_out[i] - t_out[0], t_out[0]), false);
     }
 }
 
@@ -216,6 +217,36 @@ int main(int argc, char **argv)
     std::string config_file = std::string(ROOT_DIR) + "config/mapping_m.yaml";
     std::cout << ANSI_COLOR_GREEN << "config_file:" << config_file << ANSI_COLOR_RESET << std::endl;
 
+    // Init Scantext Modules
+    scantext_mapping = std::make_shared<scantext::MappingCore>();
+
+    // Load configs
+    try
+    {
+        std::string mapping_cfg_path = std::string(ROOT_DIR) + "config/mapping.yaml";
+        auto yaml_mapping = YAML::LoadFile(mapping_cfg_path);
+        if (yaml_mapping["mapping_module"])
+        {
+            scantext::MappingCore::Config cfg;
+            auto node = yaml_mapping["mapping_module"];
+            if (node["enable_mapping"])
+                cfg.enable_mapping = node["enable_mapping"].as<bool>();
+            if (node["keyframe_dist_thresh"])
+                cfg.keyframe_dist_thresh = node["keyframe_dist_thresh"].as<double>();
+            if (node["keyframe_angle_thresh"])
+                cfg.keyframe_angle_thresh = node["keyframe_angle_thresh"].as<double>();
+            if (node["map_save_path"])
+                cfg.map_save_path = node["map_save_path"].as<std::string>();
+            if (node["auto_save_interval"])
+                cfg.auto_save_interval = node["auto_save_interval"].as<double>();
+            scantext_mapping->setConfig(cfg);
+        }
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "Error loading scantext configs: " << e.what() << std::endl;
+    }
+
     lio = new zjloc::lidarodom_m();
     if (!lio->init(config_file))
     {
@@ -229,7 +260,7 @@ int main(int argc, char **argv)
             sensor_msgs::msg::PointCloud2::SharedPtr cloud_ptr_output(new sensor_msgs::msg::PointCloud2());
             pcl::toROSMsg(*cloud, *cloud_ptr_output);
 
-            cloud_ptr_output->header.stamp = get_ros_time(time); 
+            cloud_ptr_output->header.stamp = get_ros_time(time);
             cloud_ptr_output->header.frame_id = "odom";
             if (topic_name == "laser")
                 pub_scan->publish(*cloud_ptr_output);
@@ -252,7 +283,7 @@ int main(int argc, char **argv)
             geometry_msgs::msg::TransformStamped transform;
             Eigen::Quaterniond q_current(pose.so3().matrix());
 
-            transform.header.stamp = get_ros_time(stamp); 
+            transform.header.stamp = get_ros_time(stamp);
             transform.transform.translation.x = pose.translation().x();
             transform.transform.translation.y = pose.translation().y();
             transform.transform.translation.z = pose.translation().z();
@@ -271,7 +302,7 @@ int main(int argc, char **argv)
                 nav_msgs::msg::Odometry laserOdometry;
                 laserOdometry.header.frame_id = "odom";
                 laserOdometry.child_frame_id = "aft_mapped";
-                laserOdometry.header.stamp = get_ros_time(stamp); 
+                laserOdometry.header.stamp = get_ros_time(stamp);
 
                 laserOdometry.pose.pose.orientation.x = q_current.x();
                 laserOdometry.pose.pose.orientation.y = q_current.y();
@@ -303,8 +334,165 @@ int main(int argc, char **argv)
 
     );
 
+    // Scantext processing queue
+    struct ScantextTask
+    {
+        scantext::ScanContext::SCDescriptor sc;
+        scantext::ScanContext::RingKey rk;
+        pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_ds;
+        Eigen::Isometry3d odom_pose;
+        double time;
+    };
+
+    std::queue<ScantextTask> scantext_queue;
+    std::mutex scantext_queue_mutex;
+    std::condition_variable scantext_queue_cv;
+    bool stop_scantext_thread = false;
+
+    // Consumer thread function
+    std::thread scantext_worker([&]()
+                                {
+    while (!stop_scantext_thread) {
+        ScantextTask task;
+        {
+            std::unique_lock<std::mutex> lock(scantext_queue_mutex);
+            // Wait for task or stop signal
+            scantext_queue_cv.wait(lock, [&]() { return !scantext_queue.empty() || stop_scantext_thread; });
+
+            if (stop_scantext_thread && scantext_queue.empty()) break;
+
+            task = scantext_queue.front();
+            scantext_queue.pop();
+        }
+
+        if (!scantext_mapping) continue;
+        
+
+        // 1) mapping：如果 enable_mapping，且满足内部 keyframe 条件，则入库
+        std::shared_ptr<scantext::KeyFrame> new_kf;
+        if (scantext_mapping->getConfig().enable_mapping) {
+            bool added = scantext_mapping->addFrameWithSC(
+                task.cloud_ds, task.odom_pose, task.time, task.sc, task.rk, &new_kf);
+
+            // if (added && new_kf) {
+            //     // 增量更新 relo 的 map（重要！否则 mapping 模式下 relo 永远空 map）
+            //     scantext_relo->addKeyFrame(new_kf);
+            // }
+        }
+    } });
+
+    Eigen::Isometry3d last_sc_pose = Eigen::Isometry3d::Identity();
+    double last_sc_time = 0.0;
+    bool has_last_sc = false;
+
+    scantext::ScanContext sc_extractor;
+
+    auto scantext_cbk =
+        std::function<bool(const std::vector<point3D> &, const SE3 &, double)>(
+            [&](const std::vector<point3D> &points,
+                const SE3 &pose,
+                double time) -> bool
+            {
+                if (!scantext_mapping)
+                    return false;
+
+                // --- pose -> Eigen ---
+                Eigen::Isometry3d eigen_pose = Eigen::Isometry3d::Identity();
+                eigen_pose.linear() = pose.rotationMatrix();
+                eigen_pose.translation() = pose.translation();
+
+                // --- Step2: 只在关键帧/低频做 SC ---
+                const double dist_th =
+                    scantext_mapping->getConfig().keyframe_dist_thresh > 1e-6 ? scantext_mapping->getConfig().keyframe_dist_thresh : 1.0;
+
+                const double ang_th =
+                    scantext_mapping->getConfig().keyframe_angle_thresh > 1e-6 ? scantext_mapping->getConfig().keyframe_angle_thresh : 0.2;
+
+                const double time_th = 1.0; // 1Hz 兜底（可放到 yaml）
+
+                bool do_sc = false;
+                if (!has_last_sc)
+                {
+                    do_sc = true;
+                }
+                else
+                {
+                    Eigen::Isometry3d delta = last_sc_pose.inverse() * eigen_pose;
+                    double dist = delta.translation().norm();
+                    double ang = Eigen::AngleAxisd(delta.rotation()).angle();
+                    double dt = time - last_sc_time;
+
+                    do_sc = (dist >= dist_th) || (ang >= ang_th) || (dt >= time_th);
+                }
+
+                if (!do_sc)
+                {
+                    return true; // 不做 SC，直接返回，不占用队列
+                }
+
+                has_last_sc = true;
+                last_sc_pose = eigen_pose;
+                last_sc_time = time;
+
+                // --- Step1: 直接从 vector<point3D> 计算 descriptor/ringkey（不转 PCL）---
+                auto sc = sc_extractor.makeScanContextFromPoints(points,
+                                                                 [](const point3D &p)
+                                                                 {
+                                                                     // 这里假设 p.raw_point 有 x()/y()/z()
+                                                                     return p.raw_point;
+                                                                 });
+                auto rk = sc_extractor.makeRingKey(sc);
+
+                // --- 为 ICP / (可选)建图存储 构造一个小云（上限 2000 点）---
+                constexpr size_t MAX_DS_PTS = 2000;
+                auto cloud_ds = std::make_shared<pcl::PointCloud<pcl::PointXYZI>>();
+                if (!points.empty())
+                {
+                    cloud_ds->reserve(std::min(points.size(), MAX_DS_PTS));
+                    size_t step = std::max<size_t>(1, points.size() / MAX_DS_PTS);
+
+                    for (size_t i = 0; i < points.size(); i += step)
+                    {
+                        pcl::PointXYZI pt;
+                        pt.x = points[i].raw_point.x();
+                        pt.y = points[i].raw_point.y();
+                        pt.z = points[i].raw_point.z();
+                        pt.intensity = points[i].intensity;
+                        cloud_ds->push_back(pt);
+                    }
+                }
+
+                // --- push 轻量任务到队列 ---
+                {
+                    std::lock_guard<std::mutex> lock(scantext_queue_mutex);
+                    if (scantext_queue.size() < 5)
+                    {
+                        scantext_queue.push({sc, rk, cloud_ds, eigen_pose, time});
+                    }
+                }
+                scantext_queue_cv.notify_one();
+
+                return true;
+            });
+
     auto vel_pub = node->create_publisher<std_msgs::msg::Float32>("/velocity", 1);
     auto dist_pub = node->create_publisher<std_msgs::msg::Float32>("/move_dist", 1);
+
+    auto save_map_srv =
+        node->create_service<std_srvs::srv::Trigger>(
+            "save_map_service",
+            [&](const std::shared_ptr<std_srvs::srv::Trigger::Request>,
+                std::shared_ptr<std_srvs::srv::Trigger::Response> res)
+            {
+                std::string path = scantext_mapping->getConfig().map_save_path;
+                std::string db_path = std::string(ROOT_DIR) + "map_db";
+
+                scantext_mapping->saveMapAsync(path);
+
+                res->success = true;
+                res->message = "Map saving started asynchronously";
+            });
+
     // imu_repub = node->create_publisher<sensor_msgs::msg::Imu>("/repub_imu", 1);
 
     auto data_pub_func = std::function<bool(std::string & topic_name, double time1, double time2)>(
@@ -326,6 +514,7 @@ int main(int argc, char **argv)
     lio->setFunc(cloud_pub_func);
     lio->setFunc(pose_pub_func);
     lio->setFunc(data_pub_func);
+    lio->setFunc(scantext_cbk);
 
     convert = new zjloc::CloudConvert2;
     convert->LoadFromYAML(config_file);
@@ -344,14 +533,24 @@ int main(int argc, char **argv)
         (convert->lidar_type_ == zjloc::CloudConvert2::LidarType::AVIA)
             ? std::static_pointer_cast<void>(node->create_subscription<livox_ros_driver2::msg::CustomMsg>(laser_topic, 100, livox_pcl_cbk))
             : std::static_pointer_cast<void>(node->create_subscription<sensor_msgs::msg::PointCloud2>(laser_topic, 100, standard_pcl_cbk));
-    
+
     auto subAuxLaserCloud = node->create_subscription<livox_ros_driver2::msg::CustomMsg>(aux_laser_topic, 100, aux_livox_pcl_cbk);
 
     auto sub_imu_ori = node->create_subscription<sensor_msgs::msg::Imu>(imu_topic, 500, imuHandler);
 
     std::thread measurement_process(&zjloc::lidarodom_m::run, lio);
-
+    
     rclcpp::spin(node);
+
+    // Cleanup Scantext thread
+    {
+        std::lock_guard<std::mutex> lock(scantext_queue_mutex);
+        stop_scantext_thread = true;
+    }
+    scantext_queue_cv.notify_all();
+    if (scantext_worker.joinable())
+        scantext_worker.join();
+
     rclcpp::shutdown();
 
     zjloc::common::Timer::PrintAll();
