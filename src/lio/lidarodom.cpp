@@ -339,11 +339,7 @@ namespace zjloc
 
           //   观测
           SE3 pose_of_lo_ = SE3(current_state->rotation, current_state->translation);
-          
-          if (pub_scantext_data) {
-               pub_scantext_data(p_frame->point_surf, pose_of_lo_, meas.lidar_end_time_);
-          }
-          
+
           // std::cout << "obs: " << current_state->translation.transpose() << ", " << current_state->rotation.transpose() << std::endl;
           // SE3 pred_pose = eskf_.GetNominalSE3();
           // std::cout << "pred: " << pred_pose.translation().transpose() << ", " << pred_pose.so3().log().transpose() << std::endl;
@@ -1214,8 +1210,14 @@ namespace zjloc
                pcl::PointCloud<pcl::PointXYZI>::Ptr down(new pcl::PointCloud<pcl::PointXYZI>);
                vg.filter(*down);
                std::string laser_topic = "laser";
-               
+                
                pub_cloud_to_ros(laser_topic, down, p_frame->time_frame_end);
+
+               if (pub_scantext_data)
+               {
+                    SE3 pose_of_lo_ = SE3(current_state->rotation, current_state->translation);
+                    pub_scantext_data(points_world, pose_of_lo_, p_frame->time_frame_end);
+               }
           }
           points_world->clear();
      }

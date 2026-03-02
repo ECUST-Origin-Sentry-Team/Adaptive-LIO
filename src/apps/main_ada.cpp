@@ -26,6 +26,7 @@
 #include <glog/logging.h>
 #include <yaml-cpp/yaml.h>
 #include <random>
+#include <pcl/common/transforms.h>
 
 #include "common/utility.h"
 #include "preprocess/cloud_convert/cloud_convert2.h"
@@ -386,12 +387,12 @@ int main(int argc, char **argv)
     scantext::ScanContext sc_extractor;
 
     auto scantext_cbk =
-        std::function<bool(const std::vector<point3D> &, const SE3 &, double)>(
-            [&](const std::vector<point3D> &points,
+        std::function<bool(const zjloc::CloudPtr &, const SE3 &, double)>(
+            [&](const zjloc::CloudPtr &points_world,
                 const SE3 &pose,
                 double time) -> bool
             {
-                if (!scantext_mapping)
+                if (!scantext_mapping || !points_world)
                     return false;
 
                 // --- pose -> Eigen ---
@@ -432,31 +433,28 @@ int main(int argc, char **argv)
                 last_sc_pose = eigen_pose;
                 last_sc_time = time;
 
-                // --- Step1: 直接从 vector<point3D> 计算 descriptor/ringkey（不转 PCL）---
-                auto sc = sc_extractor.makeScanContextFromPoints(points,
-                                                                 [](const point3D &p)
-                                                                 {
-                                                                     // 这里假设 p.raw_point 有 x()/y()/z()
-                                                                     return p.raw_point;
-                                                                 });
+                auto cloud_local = std::make_shared<pcl::PointCloud<pcl::PointXYZI>>();
+                if (!points_world->empty())
+                {
+                    const Eigen::Matrix4f t_lidar_world = eigen_pose.matrix().cast<float>().inverse();
+                    pcl::transformPointCloud(*points_world, *cloud_local, t_lidar_world);
+                }
+
+                // --- Step1: 用当前帧雷达坐标系点云计算 descriptor/ringkey ---
+                auto sc = sc_extractor.makeScanContext(*cloud_local);
                 auto rk = sc_extractor.makeRingKey(sc);
 
                 // --- 为 ICP / (可选)建图存储 构造一个小云（上限 2000 点）---
                 constexpr size_t MAX_DS_PTS = 2000;
                 auto cloud_ds = std::make_shared<pcl::PointCloud<pcl::PointXYZI>>();
-                if (!points.empty())
+                if (!cloud_local->empty())
                 {
-                    cloud_ds->reserve(std::min(points.size(), MAX_DS_PTS));
-                    size_t step = std::max<size_t>(1, points.size() / MAX_DS_PTS);
+                    cloud_ds->reserve(std::min(cloud_local->size(), MAX_DS_PTS));
+                    size_t step = std::max<size_t>(1, cloud_local->size() / MAX_DS_PTS);
 
-                    for (size_t i = 0; i < points.size(); i += step)
+                    for (size_t i = 0; i < cloud_local->size(); i += step)
                     {
-                        pcl::PointXYZI pt;
-                        pt.x = points[i].raw_point.x();
-                        pt.y = points[i].raw_point.y();
-                        pt.z = points[i].raw_point.z();
-                        pt.intensity = points[i].intensity;
-                        cloud_ds->push_back(pt);
+                        cloud_ds->push_back(cloud_local->points[i]);
                     }
                 }
 

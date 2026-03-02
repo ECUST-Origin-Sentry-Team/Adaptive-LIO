@@ -95,7 +95,7 @@ namespace zjloc
           void setFunc(std::function<bool(std::string &topic_name, CloudPtr &cloud, double time)> &fun) { pub_cloud_to_ros = fun; }
           void setFunc(std::function<bool(std::string &topic_name, SE3 &pose, double time)> &fun) { pub_pose_to_ros = fun; }
           void setFunc(std::function<bool(std::string &topic_name, double time1, double time2)> &fun) { pub_data_to_ros = fun; }
-          void setFunc(std::function<bool(const std::vector<point3D>& points, const SE3& pose, double time)> &fun) { pub_scantext_data = fun; }
+          void setFunc(std::function<bool(const CloudPtr &cloud, const SE3 &pose, double time)> &fun) { pub_scantext_data = fun; }
           void setCloudConvert(CloudConvertInterface *cloud_convert) { convert = cloud_convert; }
 
      private:
@@ -219,8 +219,8 @@ namespace zjloc
           std::function<bool(std::string &topic_name, CloudPtr &cloud, double time)> pub_cloud_to_ros;
           std::function<bool(std::string &topic_name, SE3 &pose, double time)> pub_pose_to_ros;
           std::function<bool(std::string &topic_name, double time1, double time2)> pub_data_to_ros;
-          // Callback for ScanContext module (Points in local frame, Pose in world frame)
-          std::function<bool(const std::vector<point3D>& points, const SE3& pose, double time)> pub_scantext_data;
+          // Callback for ScanContext module (world cloud + world pose)
+          std::function<bool(const CloudPtr &cloud, const SE3 &pose, double time)> pub_scantext_data;
 
           pcl::PointCloud<pcl::PointXYZI>::Ptr points_world;
      };

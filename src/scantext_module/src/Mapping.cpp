@@ -61,17 +61,23 @@ namespace scantext
     }
     bool MappingCore::saveMap(const std::string &path)
     {
-        ScanContext::PointCloudType::Ptr map_copy;
+        ScanContext::PointCloudType::Ptr map_copy(new ScanContext::PointCloudType);
 
         {
             std::lock_guard<std::mutex> lock(map_mutex_);
             if (!global_map_ || global_map_->empty())
                 return false;
 
-            map_copy = global_map_;
+            *map_copy = *global_map_;
         }
 
-        pcl::io::savePCDFileBinaryCompressed(path, *map_copy);
+        map_copy->width = static_cast<uint32_t>(map_copy->points.size());
+        map_copy->height = 1;
+        map_copy->is_dense = false;
+
+        int ret = pcl::io::savePCDFileBinary(path, *map_copy);
+        if (ret < 0)
+            return false;
 
         std::cout << "[Mapping] Saved map with "
                   << map_copy->size()
