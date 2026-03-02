@@ -7,6 +7,7 @@
 #include <chrono>
 #include <functional>
 #include <memory>
+#include <deque>
 
 // ros2 lib
 #include "rclcpp/rclcpp.hpp"
@@ -41,6 +42,8 @@ nav_msgs::msg::Path laserOdoPath;
 zjloc::lidarodom_m *lio;
 zjloc::CloudConvert2 *convert;
 std::shared_ptr<scantext::MappingCore> scantext_mapping;
+std::shared_ptr<tf2_ros::TransformBroadcaster> g_tf_broadcaster;
+std::shared_ptr<class ImuOdomFusion> imu_odom_fusion;
 double gnorm = 1.0;
 // rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr imu_repub;
 
@@ -53,6 +56,301 @@ inline rclcpp::Time get_ros_time(double timestamp)
     uint32_t nanosec = nanosec_d;
     return rclcpp::Time(sec, nanosec);
 }
+
+class ImuOdomFusion
+{
+public:
+    ImuOdomFusion(const nav_msgs::msg::Path &path_template,
+                  const rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr &odom_pub,
+                  const rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr &path_pub,
+                  tf2_ros::TransformBroadcaster *tf_pub,
+                  const std::string &map_frame,
+                  const std::string &base_frame)
+        : odom_pub_(odom_pub),
+          path_pub_(path_pub),
+          tf_pub_(tf_pub),
+          map_frame_(map_frame),
+          base_frame_(base_frame),
+          fused_path_(path_template)
+    {
+        x_.setZero();
+        P_ = Eigen::Matrix<double, 6, 6>::Identity() * 1e-2;
+        Q_.setZero();
+        Q_.block<3, 3>(0, 0) = Eigen::Matrix3d::Identity() * 1e-3;
+        Q_.block<3, 3>(3, 3) = Eigen::Matrix3d::Identity() * 1e-4;
+        R_ = Eigen::Matrix3d::Identity() * 1e-3;
+    }
+
+    void OnLioMeasurement(const SE3 &pose, double stamp)
+    {
+        std::lock_guard<std::mutex> lk(mtx_);
+        const Eigen::Vector3d p_meas = pose.translation();
+        position_xyz_ = p_meas;
+
+        Eigen::Quaterniond q_meas(pose.rotationMatrix());
+        q_meas.normalize();
+        tf2::Quaternion q_tf(q_meas.x(), q_meas.y(), q_meas.z(), q_meas.w());
+        double r = 0.0;
+        double p = 0.0;
+        double y = 0.0;
+        tf2::Matrix3x3(q_tf).getRPY(r, p, y);
+        const Eigen::Vector3d rpy_meas(r, p, y);
+
+        if (!initialized_)
+        {
+            x_.segment<3>(0) = rpy_meas;
+            NormalizeRPYInPlace(x_);
+            initialized_ = true;
+            last_imu_t_ = stamp;
+            last_meas_t_ = stamp;
+            history_.clear();
+            AppendPathAndPublishLocked(stamp);
+            return;
+        }
+
+        if (history_.empty() || stamp >= history_.back().stamp)
+        {
+            UpdateRPYLocked(rpy_meas);
+            last_meas_t_ = stamp;
+            if (!history_.empty() && std::abs(stamp - history_.back().stamp) < 1e-4)
+            {
+                history_.back().kf_x = x_;
+                history_.back().kf_P = P_;
+            }
+            const double publish_stamp = history_.empty() ? stamp : history_.back().stamp;
+            AppendPathAndPublishLocked(publish_stamp);
+            return;
+        }
+
+        int idx = -1;
+        for (int i = static_cast<int>(history_.size()) - 1; i >= 0; --i)
+        {
+            if (history_[static_cast<size_t>(i)].stamp <= stamp)
+            {
+                idx = i;
+                break;
+            }
+        }
+        if (idx < 0)
+        {
+            return;
+        }
+
+        x_ = history_[static_cast<size_t>(idx)].kf_x;
+        P_ = history_[static_cast<size_t>(idx)].kf_P;
+        UpdateRPYLocked(rpy_meas);
+        history_[static_cast<size_t>(idx)].kf_x = x_;
+        history_[static_cast<size_t>(idx)].kf_P = P_;
+
+        for (size_t j = static_cast<size_t>(idx) + 1; j < history_.size(); ++j)
+        {
+            PredictRPYLocked(history_[j].gyro, history_[j].dt);
+            last_imu_t_ = history_[j].stamp;
+            history_[j].kf_x = x_;
+            history_[j].kf_P = P_;
+        }
+
+        last_meas_t_ = stamp;
+        AppendPathAndPublishLocked(history_.back().stamp);
+    }
+
+    void OnImu(const IMUPtr &imu)
+    {
+        std::lock_guard<std::mutex> lk(mtx_);
+        if (!initialized_)
+        {
+            return;
+        }
+
+        const double t = imu->timestamp_;
+        double dt = t - last_imu_t_;
+        if (dt <= 0.0)
+        {
+            return;
+        }
+
+        if (dt > kMaxImuDtSec)
+        {
+            last_imu_t_ = t;
+            history_.clear();
+            return;
+        }
+
+        PredictRPYLocked(imu->gyro_, dt);
+        last_imu_t_ = t;
+
+        HistoryEntry e;
+        e.stamp = t;
+        e.dt = dt;
+        e.gyro = imu->gyro_;
+        e.kf_x = x_;
+        e.kf_P = P_;
+        history_.push_back(e);
+
+        while (!history_.empty() && (t - history_.front().stamp) > history_sec_)
+        {
+            history_.pop_front();
+        }
+
+        if ((t - last_meas_t_) > max_predict_without_meas_)
+        {
+            return;
+        }
+
+        PublishOdomLocked(t);
+    }
+
+private:
+    struct HistoryEntry
+    {
+        double stamp = 0.0;
+        double dt = 0.0;
+        Vec3d gyro = Vec3d::Zero();
+        Eigen::Matrix<double, 6, 1> kf_x = Eigen::Matrix<double, 6, 1>::Zero();
+        Eigen::Matrix<double, 6, 6> kf_P = Eigen::Matrix<double, 6, 6>::Identity();
+    };
+
+    static double NormalizeAngle(double a)
+    {
+        constexpr double kPi = 3.1415926535897932384626433832795;
+        a = std::fmod(a + kPi, 2.0 * kPi);
+        if (a < 0.0)
+        {
+            a += 2.0 * kPi;
+        }
+        return a - kPi;
+    }
+
+    static void NormalizeRPYInPlace(Eigen::Matrix<double, 6, 1> &x)
+    {
+        x(0) = NormalizeAngle(x(0));
+        x(1) = NormalizeAngle(x(1));
+        x(2) = NormalizeAngle(x(2));
+    }
+
+    static Eigen::Vector3d NormalizeInnovation(const Eigen::Vector3d &y)
+    {
+        return Eigen::Vector3d(
+            NormalizeAngle(y.x()),
+            NormalizeAngle(y.y()),
+            NormalizeAngle(y.z()));
+    }
+
+    void PredictRPYLocked(const Vec3d &gyro, double dt)
+    {
+        if (!(dt > 0.0))
+        {
+            return;
+        }
+
+        Eigen::Matrix<double, 6, 6> F = Eigen::Matrix<double, 6, 6>::Identity();
+        F.block<3, 3>(0, 3) = -Eigen::Matrix3d::Identity() * dt;
+
+        x_.segment<3>(0) += (gyro - x_.segment<3>(3)) * dt;
+        NormalizeRPYInPlace(x_);
+
+        const Eigen::Matrix<double, 6, 6> Qd = Q_ * dt;
+        P_ = F * P_ * F.transpose() + Qd;
+    }
+
+    void UpdateRPYLocked(const Eigen::Vector3d &rpy_meas)
+    {
+        Eigen::Matrix<double, 3, 6> H = Eigen::Matrix<double, 3, 6>::Zero();
+        H.block<3, 3>(0, 0) = Eigen::Matrix3d::Identity();
+
+        const Eigen::Vector3d y = NormalizeInnovation(rpy_meas - x_.segment<3>(0));
+        const Eigen::Matrix3d S = H * P_ * H.transpose() + R_;
+        const Eigen::Matrix<double, 6, 3> K = P_ * H.transpose() * S.ldlt().solve(Eigen::Matrix3d::Identity());
+
+        x_ += K * y;
+        NormalizeRPYInPlace(x_);
+
+        const Eigen::Matrix<double, 6, 6> I = Eigen::Matrix<double, 6, 6>::Identity();
+        const Eigen::Matrix<double, 6, 6> KH = K * H;
+        P_ = (I - KH) * P_ * (I - KH).transpose() + K * R_ * K.transpose();
+    }
+
+    void PublishOdomLocked(double stamp)
+    {
+        tf2::Quaternion q;
+        q.setRPY(x_(0), x_(1), x_(2));
+
+        nav_msgs::msg::Odometry odom;
+        odom.header.stamp = get_ros_time(stamp);
+        odom.header.frame_id = map_frame_;
+        odom.child_frame_id = base_frame_;
+        odom.pose.pose.position.x = position_xyz_.x();
+        odom.pose.pose.position.y = position_xyz_.y();
+        odom.pose.pose.position.z = position_xyz_.z();
+        odom.pose.pose.orientation.x = q.x();
+        odom.pose.pose.orientation.y = q.y();
+        odom.pose.pose.orientation.z = q.z();
+        odom.pose.pose.orientation.w = q.w();
+        odom_pub_->publish(odom);
+
+        if (tf_pub_)
+        {
+            geometry_msgs::msg::TransformStamped tf;
+            tf.header = odom.header;
+            tf.child_frame_id = base_frame_;
+            tf.transform.translation.x = position_xyz_.x();
+            tf.transform.translation.y = position_xyz_.y();
+            tf.transform.translation.z = position_xyz_.z();
+            tf.transform.rotation = odom.pose.pose.orientation;
+            tf_pub_->sendTransform(tf);
+        }
+    }
+
+    void AppendPathAndPublishLocked(double stamp)
+    {
+        PublishOdomLocked(stamp);
+
+        geometry_msgs::msg::PoseStamped ps;
+        ps.header.stamp = get_ros_time(stamp);
+        ps.header.frame_id = map_frame_;
+        ps.pose.position.x = position_xyz_.x();
+        ps.pose.position.y = position_xyz_.y();
+        ps.pose.position.z = position_xyz_.z();
+
+        tf2::Quaternion q;
+        q.setRPY(x_(0), x_(1), x_(2));
+        ps.pose.orientation.x = q.x();
+        ps.pose.orientation.y = q.y();
+        ps.pose.orientation.z = q.z();
+        ps.pose.orientation.w = q.w();
+
+        fused_path_.header = ps.header;
+        fused_path_.poses.push_back(ps);
+        if (path_pub_)
+        {
+            path_pub_->publish(fused_path_);
+        }
+    }
+
+    std::mutex mtx_;
+
+    rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
+    rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr path_pub_;
+    tf2_ros::TransformBroadcaster *tf_pub_ = nullptr;
+    std::string map_frame_;
+    std::string base_frame_;
+
+    bool initialized_ = false;
+    double last_imu_t_ = 0.0;
+    double last_meas_t_ = 0.0;
+    double history_sec_ = 2.0;
+    double max_predict_without_meas_ = 1.0;
+
+    static constexpr double kMaxImuDtSec = 0.2;
+
+    Eigen::Vector3d position_xyz_ = Eigen::Vector3d::Zero();
+    Eigen::Matrix<double, 6, 1> x_ = Eigen::Matrix<double, 6, 1>::Zero();
+    Eigen::Matrix<double, 6, 6> P_ = Eigen::Matrix<double, 6, 6>::Identity();
+    Eigen::Matrix<double, 6, 6> Q_ = Eigen::Matrix<double, 6, 6>::Zero();
+    Eigen::Matrix3d R_ = Eigen::Matrix3d::Identity();
+    std::deque<HistoryEntry> history_;
+    nav_msgs::msg::Path fused_path_;
+};
 
 void livox_pcl_cbk(const livox_ros_driver2::msg::CustomMsg::UniquePtr msg)
 {
@@ -144,6 +442,10 @@ void imuHandler(const sensor_msgs::msg::Imu::SharedPtr msg)
         Vec3d(msg->angular_velocity.x, msg->angular_velocity.y, msg->angular_velocity.z),
         Vec3d(msg->linear_acceleration.x, msg->linear_acceleration.y, msg->linear_acceleration.z) * gnorm);
     lio->pushData(imu);
+    if (imu_odom_fusion)
+    {
+        imu_odom_fusion->OnImu(imu);
+    }
     // {
     //     msg_temp->linear_acceleration.x = msg_temp->linear_acceleration.x * gnorm;
     //     msg_temp->linear_acceleration.y = msg_temp->linear_acceleration.y * gnorm;
@@ -274,52 +576,25 @@ int main(int argc, char **argv)
     auto pubLaserOdometryPath = node->create_publisher<nav_msgs::msg::Path>("/odometry_path", 5);
 
     // 创建tf广播器
-    std::unique_ptr<tf2_ros::TransformBroadcaster> br = std::unique_ptr<tf2_ros::TransformBroadcaster>(new tf2_ros::TransformBroadcaster(node));
+    g_tf_broadcaster = std::make_shared<tf2_ros::TransformBroadcaster>(node);
+
+    imu_odom_fusion = std::make_shared<ImuOdomFusion>(
+        laserOdoPath,
+        pubLaserOdometry,
+        pubLaserOdometryPath,
+        g_tf_broadcaster.get(),
+        "odom",
+        "aft_mapped");
 
     auto pose_pub_func = std::function<bool(std::string & topic_name, SE3 & pose, double stamp)>(
         [&](std::string &topic_name, SE3 &pose, double stamp)
         {
-            geometry_msgs::msg::TransformStamped transform;
-            Eigen::Quaterniond q_current(pose.so3().matrix());
-
-            transform.header.stamp = get_ros_time(stamp);
-            transform.transform.translation.x = pose.translation().x();
-            transform.transform.translation.y = pose.translation().y();
-            transform.transform.translation.z = pose.translation().z();
-            transform.transform.rotation.x = q_current.x();
-            transform.transform.rotation.y = q_current.y();
-            transform.transform.rotation.z = q_current.z();
-            transform.transform.rotation.w = q_current.w();
-
             if (topic_name == "laser")
             {
-                transform.header.frame_id = "odom";
-                transform.child_frame_id = "aft_mapped";
-                br->sendTransform(transform);
-
-                // publish odometry
-                nav_msgs::msg::Odometry laserOdometry;
-                laserOdometry.header.frame_id = "odom";
-                laserOdometry.child_frame_id = "aft_mapped";
-                laserOdometry.header.stamp = get_ros_time(stamp);
-
-                laserOdometry.pose.pose.orientation.x = q_current.x();
-                laserOdometry.pose.pose.orientation.y = q_current.y();
-                laserOdometry.pose.pose.orientation.z = q_current.z();
-                laserOdometry.pose.pose.orientation.w = q_current.w();
-                laserOdometry.pose.pose.position.x = pose.translation().x();
-                laserOdometry.pose.pose.position.y = pose.translation().y();
-                laserOdometry.pose.pose.position.z = pose.translation().z();
-                pubLaserOdometry->publish(laserOdometry);
-
-                //  publish path
-                geometry_msgs::msg::PoseStamped laserPose;
-                laserPose.header = laserOdometry.header;
-                laserPose.pose = laserOdometry.pose.pose;
-                laserOdoPath.header.stamp = laserOdometry.header.stamp;
-                laserOdoPath.poses.push_back(laserPose);
-                laserOdoPath.header.frame_id = "odom";
-                pubLaserOdometryPath->publish(laserOdoPath);
+                if (imu_odom_fusion)
+                {
+                    imu_odom_fusion->OnLioMeasurement(pose, stamp);
+                }
             }
             // else if (topic_name == "world")
             // {
