@@ -8,10 +8,10 @@ preprocess:
   degenerate_window_num: 10
 
 common:
-  # imu_topic: /livox/imu #/imu_raw   /gps/gtimu
-  # lid_topic: /livox/lidar #/points_raw  /rslidar_points /velodyne_points
-  imu_topic: /livox/imu_192_168_1_160 #/imu_raw   /gps/gtimu
-  lid_topic: /livox/lidar_192_168_1_160 #/points_raw  /rslidar_points /velodyne_points
+  imu_topic: /livox/imu #/imu_raw   /gps/gtimu
+  lid_topic: /livox/lidar #/points_raw  /rslidar_points /velodyne_points
+  # imu_topic: /livox/imu_192_168_1_160 #/imu_raw   /gps/gtimu
+  # lid_topic: /livox/lidar_192_168_1_160 #/points_raw  /rslidar_points /velodyne_points
   aux_lidar_topic: /livox/lidar_192_168_1_163
   gnorm: 1 # 9.805    # 部分数据，加速度模长为1->9.805gnorm
 
