@@ -86,7 +86,9 @@ public:
 
         pos_q_ = Eigen::Matrix<double, 6, 6>::Identity() * 5e-3;
         pos_r_ = Eigen::Matrix3d::Identity() * 2e-3;
+        pos_r_(2, 2) = 2e-2;
         vel_r_ = Eigen::Matrix3d::Identity() * 0.12;
+        vel_r_(2, 2) = 2.0;
     }
 
     void SetImuToBaseRotation(const Eigen::Matrix3d &r_base_imu)
@@ -99,6 +101,7 @@ public:
     {
         std::lock_guard<std::mutex> lk(mtx_);
         const Eigen::Vector3d p_meas = pose.translation();
+        position_xyz_ = p_meas;
 
         Eigen::Quaterniond q_meas(pose.rotationMatrix());
         q_meas.normalize();
@@ -110,23 +113,26 @@ public:
             NormalizeRPYInPlace(ori_x_);
             orientation_q_ = RpyToQuat(ori_x_.segment<3>(0));
 
-            pos_x_.segment<3>(0) = p_meas;
-            pos_x_.segment<3>(3).setZero();
-
             if (preinit_imu_count_ > 20)
             {
                 ori_x_.segment<3>(3) = preinit_gyro_sum_ / static_cast<double>(preinit_imu_count_);
+                const Eigen::Vector3d mean_acc = preinit_acc_sum_ / static_cast<double>(preinit_imu_count_);
+                imu_acc_includes_gravity_ = std::abs(mean_acc.norm() - gravity_) < 3.0;
                 const Eigen::Vector3d expected_static_acc_base =
                     orientation_q_.toRotationMatrix().transpose() * Eigen::Vector3d(0.0, 0.0, gravity_);
-                acc_bias_base_ = preinit_acc_sum_ / static_cast<double>(preinit_imu_count_) - expected_static_acc_base;
+                if (imu_acc_includes_gravity_)
+                {
+                    acc_bias_base_ = mean_acc - expected_static_acc_base;
+                }
+                else
+                {
+                    acc_bias_base_ = mean_acc;
+                }
             }
 
             initialized_ = true;
             last_imu_t_ = stamp;
             last_meas_t_ = stamp;
-            has_last_pos_meas_ = true;
-            last_pos_meas_ = p_meas;
-            last_pos_meas_t_ = stamp;
             history_.clear();
             AppendPathAndPublishLocked(stamp);
             return;
@@ -135,7 +141,6 @@ public:
         if (history_.empty() || stamp >= history_.back().stamp)
         {
             UpdateOrientationLocked(rpy_meas);
-            UpdatePositionLocked(p_meas, stamp);
             last_meas_t_ = stamp;
             if (!history_.empty() && std::abs(stamp - history_.back().stamp) < 1e-4)
             {
@@ -162,7 +167,6 @@ public:
 
         LoadSnapshotLocked(history_[static_cast<size_t>(idx)]);
         UpdateOrientationLocked(rpy_meas);
-        UpdatePositionLocked(p_meas, stamp);
         SaveSnapshotLocked(history_[static_cast<size_t>(idx)]);
 
         for (size_t j = static_cast<size_t>(idx) + 1; j < history_.size(); ++j)
@@ -319,8 +323,8 @@ private:
 
     void PredictAllLocked(const Vec3d &gyro, const Vec3d &acc, double dt)
     {
+        (void)acc;
         PredictOrientationLocked(gyro, dt);
-        PredictPositionLocked(acc, dt);
     }
 
     void PredictOrientationLocked(const Vec3d &gyro, double dt)
@@ -387,7 +391,11 @@ private:
         }
 
         const Eigen::Matrix3d rot = orientation_q_.toRotationMatrix();
-        const Eigen::Vector3d acc_world = rot * acc_lpf_base_ + Eigen::Vector3d(0.0, 0.0, -gravity_);
+        Eigen::Vector3d acc_world = rot * acc_lpf_base_;
+        if (imu_acc_includes_gravity_)
+        {
+            acc_world += Eigen::Vector3d(0.0, 0.0, -gravity_);
+        }
 
         Eigen::Vector3d pos = pos_x_.segment<3>(0);
         Eigen::Vector3d vel = pos_x_.segment<3>(3);
@@ -465,7 +473,7 @@ private:
 
     void PublishOdomLocked(double stamp)
     {
-        const Eigen::Vector3d pos = pos_x_.segment<3>(0);
+        const Eigen::Vector3d pos = position_xyz_;
         const Eigen::Quaterniond q = orientation_q_;
 
         nav_msgs::msg::Odometry odom;
@@ -479,9 +487,6 @@ private:
         odom.pose.pose.orientation.y = q.y();
         odom.pose.pose.orientation.z = q.z();
         odom.pose.pose.orientation.w = q.w();
-        odom.twist.twist.linear.x = pos_x_(3);
-        odom.twist.twist.linear.y = pos_x_(4);
-        odom.twist.twist.linear.z = pos_x_(5);
         odom_pub_->publish(odom);
 
         if (tf_pub_)
@@ -505,9 +510,9 @@ private:
         geometry_msgs::msg::PoseStamped ps;
         ps.header.stamp = get_ros_time(stamp);
         ps.header.frame_id = map_frame_;
-        ps.pose.position.x = pos_x_(0);
-        ps.pose.position.y = pos_x_(1);
-        ps.pose.position.z = pos_x_(2);
+        ps.pose.position.x = position_xyz_.x();
+        ps.pose.position.y = position_xyz_.y();
+        ps.pose.position.z = position_xyz_.z();
         ps.pose.orientation.x = q.x();
         ps.pose.orientation.y = q.y();
         ps.pose.orientation.z = q.z();
@@ -543,6 +548,7 @@ private:
     bool has_last_pos_meas_ = false;
     double last_pos_meas_t_ = 0.0;
     Eigen::Vector3d last_pos_meas_ = Eigen::Vector3d::Zero();
+    bool imu_acc_includes_gravity_ = true;
     Eigen::Vector3d preinit_acc_sum_ = Eigen::Vector3d::Zero();
     Eigen::Vector3d preinit_gyro_sum_ = Eigen::Vector3d::Zero();
     int preinit_imu_count_ = 0;
@@ -554,6 +560,8 @@ private:
     Eigen::Matrix<double, 6, 6> ori_q_ = Eigen::Matrix<double, 6, 6>::Zero();
     Eigen::Matrix3d ori_r_ = Eigen::Matrix3d::Identity();
     Eigen::Quaterniond orientation_q_ = Eigen::Quaterniond::Identity();
+
+    Eigen::Vector3d position_xyz_ = Eigen::Vector3d::Zero();
 
     Eigen::Matrix<double, 6, 1> pos_x_ = Eigen::Matrix<double, 6, 1>::Zero();
     Eigen::Matrix<double, 6, 6> pos_p_ = Eigen::Matrix<double, 6, 6>::Identity();
@@ -798,26 +806,7 @@ int main(int argc, char **argv)
         "odom",
         "aft_mapped");
 
-    try
-    {
-        auto yaml = YAML::LoadFile(config_file);
-        if (yaml["mapping"] && yaml["mapping"]["extrinsic_R"])
-        {
-            auto ext_r = yaml["mapping"]["extrinsic_R"].as<std::vector<double>>();
-            if (ext_r.size() == 9)
-            {
-                Eigen::Matrix3d r_imu_lidar;
-                r_imu_lidar << ext_r[0], ext_r[1], ext_r[2],
-                    ext_r[3], ext_r[4], ext_r[5],
-                    ext_r[6], ext_r[7], ext_r[8];
-                imu_odom_fusion->SetImuToBaseRotation(r_imu_lidar.transpose());
-            }
-        }
-    }
-    catch (const std::exception &e)
-    {
-        LOG(WARNING) << "Failed to read extrinsic_R for fusion: " << e.what();
-    }
+    imu_odom_fusion->SetImuToBaseRotation(Eigen::Matrix3d::Identity());
 
     auto pose_pub_func = std::function<bool(std::string & topic_name, SE3 & pose, double stamp)>(
         [&](std::string &topic_name, SE3 &pose, double stamp)
