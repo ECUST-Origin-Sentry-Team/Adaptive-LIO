@@ -8,6 +8,7 @@
 #include <functional>
 #include <memory>
 #include <deque>
+#include <algorithm>
 
 // ros2 lib
 #include "rclcpp/rclcpp.hpp"
@@ -83,9 +84,9 @@ public:
         ori_q_.block<3, 3>(3, 3) = Eigen::Matrix3d::Identity() * 3e-5;
         ori_r_ = Eigen::Matrix3d::Identity() * 4e-4;
 
-        pos_q_ = Eigen::Matrix<double, 6, 6>::Identity() * 1e-3;
+        pos_q_ = Eigen::Matrix<double, 6, 6>::Identity() * 5e-3;
         pos_r_ = Eigen::Matrix3d::Identity() * 2e-3;
-        vel_r_ = Eigen::Matrix3d::Identity() * 1e6;
+        vel_r_ = Eigen::Matrix3d::Identity() * 0.12;
     }
 
     void SetImuToBaseRotation(const Eigen::Matrix3d &r_base_imu)
@@ -115,11 +116,17 @@ public:
             if (preinit_imu_count_ > 20)
             {
                 ori_x_.segment<3>(3) = preinit_gyro_sum_ / static_cast<double>(preinit_imu_count_);
+                const Eigen::Vector3d expected_static_acc_base =
+                    orientation_q_.toRotationMatrix().transpose() * Eigen::Vector3d(0.0, 0.0, gravity_);
+                acc_bias_base_ = preinit_acc_sum_ / static_cast<double>(preinit_imu_count_) - expected_static_acc_base;
             }
 
             initialized_ = true;
             last_imu_t_ = stamp;
             last_meas_t_ = stamp;
+            has_last_pos_meas_ = true;
+            last_pos_meas_ = p_meas;
+            last_pos_meas_t_ = stamp;
             history_.clear();
             AppendPathAndPublishLocked(stamp);
             return;
@@ -178,6 +185,7 @@ public:
         if (!initialized_)
         {
             preinit_gyro_sum_ += gyro_base;
+            preinit_acc_sum_ += acc_base;
             preinit_imu_count_++;
             return;
         }
@@ -234,6 +242,10 @@ private:
 
         Eigen::Matrix<double, 6, 1> pos_x = Eigen::Matrix<double, 6, 1>::Zero();
         Eigen::Matrix<double, 6, 6> pos_p = Eigen::Matrix<double, 6, 6>::Identity();
+
+        bool has_last_pos_meas = false;
+        double last_pos_meas_t = 0.0;
+        Eigen::Vector3d last_pos_meas = Eigen::Vector3d::Zero();
     };
 
     static Eigen::Quaterniond RpyToQuat(const Eigen::Vector3d &rpy)
@@ -287,6 +299,9 @@ private:
 
         e.pos_x = pos_x_;
         e.pos_p = pos_p_;
+        e.has_last_pos_meas = has_last_pos_meas_;
+        e.last_pos_meas_t = last_pos_meas_t_;
+        e.last_pos_meas = last_pos_meas_;
     }
 
     void LoadSnapshotLocked(const HistoryEntry &e)
@@ -297,6 +312,9 @@ private:
 
         pos_x_ = e.pos_x;
         pos_p_ = e.pos_p;
+        has_last_pos_meas_ = e.has_last_pos_meas;
+        last_pos_meas_t_ = e.last_pos_meas_t;
+        last_pos_meas_ = e.last_pos_meas;
     }
 
     void PredictAllLocked(const Vec3d &gyro, const Vec3d &acc, double dt)
@@ -350,15 +368,31 @@ private:
 
     void PredictPositionLocked(const Vec3d &acc_body, double dt)
     {
-        (void)acc_body;
         if (!(dt > 0.0))
         {
             return;
         }
 
+        const Eigen::Vector3d acc_unbiased = acc_body - acc_bias_base_;
+        const double tau = 0.06;
+        const double alpha = std::clamp(dt / (tau + dt), 0.0, 1.0);
+        if (!has_acc_lpf_)
+        {
+            acc_lpf_base_ = acc_unbiased;
+            has_acc_lpf_ = true;
+        }
+        else
+        {
+            acc_lpf_base_ = alpha * acc_unbiased + (1.0 - alpha) * acc_lpf_base_;
+        }
+
+        const Eigen::Matrix3d rot = orientation_q_.toRotationMatrix();
+        const Eigen::Vector3d acc_world = rot * acc_lpf_base_ + Eigen::Vector3d(0.0, 0.0, -gravity_);
+
         Eigen::Vector3d pos = pos_x_.segment<3>(0);
         Eigen::Vector3d vel = pos_x_.segment<3>(3);
-        pos += vel * dt;
+        pos += vel * dt + 0.5 * acc_world * dt * dt;
+        vel += acc_world * dt;
         pos_x_.segment<3>(0) = pos;
         pos_x_.segment<3>(3) = vel;
 
@@ -368,7 +402,8 @@ private:
         const double dt2 = dt * dt;
         const double dt3 = dt2 * dt;
         const double dt4 = dt2 * dt2;
-        const double q = acc_noise_std_ * acc_noise_std_;
+        const double sigma_a = acc_noise_std_ + 0.2 * acc_unbiased.norm();
+        const double q = sigma_a * sigma_a;
         Eigen::Matrix<double, 6, 6> q_cv = Eigen::Matrix<double, 6, 6>::Zero();
         q_cv.block<3, 3>(0, 0) = Eigen::Matrix3d::Identity() * (0.25 * q * dt4);
         q_cv.block<3, 3>(0, 3) = Eigen::Matrix3d::Identity() * (0.5 * q * dt3);
@@ -393,7 +428,39 @@ private:
         const Eigen::Matrix<double, 6, 6> KH = K * H;
         pos_p_ = (I - KH) * pos_p_ * (I - KH).transpose() + K * pos_r_ * K.transpose();
 
-        (void)stamp;
+        if (has_last_pos_meas_)
+        {
+            const double dt = stamp - last_pos_meas_t_;
+            if (dt > 0.03 && dt < 0.4)
+            {
+                Eigen::Vector3d vel_meas = (p_meas - last_pos_meas_) / dt;
+                const double speed = vel_meas.norm();
+                const double vmax = 35.0;
+                if (speed > vmax)
+                {
+                    vel_meas *= vmax / speed;
+                }
+
+                Eigen::Matrix<double, 3, 6> Hv = Eigen::Matrix<double, 3, 6>::Zero();
+                Hv.block<3, 3>(0, 3) = Eigen::Matrix3d::Identity();
+
+                Eigen::Matrix3d rv = vel_r_;
+                rv.diagonal().array() += std::min(2.0, 0.08 * speed);
+
+                const Eigen::Vector3d yv = vel_meas - pos_x_.segment<3>(3);
+                const Eigen::Matrix3d Sv = Hv * pos_p_ * Hv.transpose() + rv;
+                const Eigen::Matrix<double, 6, 3> Kv =
+                    pos_p_ * Hv.transpose() * Sv.ldlt().solve(Eigen::Matrix3d::Identity());
+
+                pos_x_ += Kv * yv;
+                const Eigen::Matrix<double, 6, 6> KHv = Kv * Hv;
+                pos_p_ = (I - KHv) * pos_p_ * (I - KHv).transpose() + Kv * rv * Kv.transpose();
+            }
+        }
+
+        has_last_pos_meas_ = true;
+        last_pos_meas_t_ = stamp;
+        last_pos_meas_ = p_meas;
     }
 
     void PublishOdomLocked(double stamp)
@@ -467,8 +534,16 @@ private:
     double last_meas_t_ = 0.0;
     double history_sec_ = 2.0;
     double max_predict_without_meas_ = 1.0;
-    double acc_noise_std_ = 0.12;
+    double gravity_ = 9.81;
+    double acc_noise_std_ = 0.20;
     Eigen::Matrix3d r_base_imu_ = Eigen::Matrix3d::Identity();
+    Eigen::Vector3d acc_bias_base_ = Eigen::Vector3d::Zero();
+    Eigen::Vector3d acc_lpf_base_ = Eigen::Vector3d::Zero();
+    bool has_acc_lpf_ = false;
+    bool has_last_pos_meas_ = false;
+    double last_pos_meas_t_ = 0.0;
+    Eigen::Vector3d last_pos_meas_ = Eigen::Vector3d::Zero();
+    Eigen::Vector3d preinit_acc_sum_ = Eigen::Vector3d::Zero();
     Eigen::Vector3d preinit_gyro_sum_ = Eigen::Vector3d::Zero();
     int preinit_imu_count_ = 0;
 
