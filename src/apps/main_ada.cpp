@@ -103,6 +103,11 @@ public:
         t_aft_to_base_ = t_aft_base;
         q_aft_to_base_ = RpyToQuat(rpy_aft_base);
         q_aft_to_base_.normalize();
+        q_base_to_aft_ = q_aft_to_base_.conjugate();
+
+        // IMU is assumed colocated with aft_mapped.
+        // Convert imu(aft) gyro to base_link gyro for base_link attitude prediction.
+        r_base_imu_ = q_aft_to_base_.toRotationMatrix();
     }
 
     void SetBaseLinkFrame(const std::string &base_link_frame)
@@ -119,7 +124,8 @@ public:
 
         Eigen::Quaterniond q_meas_aft(pose.rotationMatrix());
         q_meas_aft.normalize();
-        const Eigen::Vector3d rpy_meas = QuatToRpy(q_meas_aft);
+        const Eigen::Quaterniond q_meas_base = q_meas_aft * q_aft_to_base_;
+        const Eigen::Vector3d rpy_meas = QuatToRpy(q_meas_base);
 
         if (!initialized_)
         {
@@ -488,7 +494,7 @@ private:
     void PublishOdomLocked(double stamp)
     {
         const Eigen::Vector3d pos = position_xyz_;
-        const Eigen::Quaterniond q = orientation_q_;
+        const Eigen::Quaterniond q = orientation_q_ * q_base_to_aft_;
 
         nav_msgs::msg::Odometry odom;
         odom.header.stamp = get_ros_time(stamp);
@@ -533,7 +539,7 @@ private:
     void AppendPathAndPublishLocked(double stamp)
     {
         PublishOdomLocked(stamp);
-        const Eigen::Quaterniond q = orientation_q_;
+        const Eigen::Quaterniond q = orientation_q_ * q_base_to_aft_;
 
         geometry_msgs::msg::PoseStamped ps;
         ps.header.stamp = get_ros_time(stamp);
@@ -589,6 +595,7 @@ private:
     Eigen::Matrix<double, 6, 6> ori_q_ = Eigen::Matrix<double, 6, 6>::Zero();
     Eigen::Matrix3d ori_r_ = Eigen::Matrix3d::Identity();
     Eigen::Quaterniond orientation_q_ = Eigen::Quaterniond::Identity();
+    Eigen::Quaterniond q_base_to_aft_ = Eigen::Quaterniond::Identity();
     Eigen::Vector3d t_aft_to_base_ = Eigen::Vector3d::Zero();
     Eigen::Quaterniond q_aft_to_base_ = Eigen::Quaterniond::Identity();
 
