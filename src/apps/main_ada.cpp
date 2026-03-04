@@ -97,15 +97,29 @@ public:
         r_base_imu_ = r_base_imu;
     }
 
+    void SetAftToBaseTransform(const Eigen::Vector3d &t_aft_base, const Eigen::Vector3d &rpy_aft_base)
+    {
+        std::lock_guard<std::mutex> lk(mtx_);
+        t_aft_to_base_ = t_aft_base;
+        q_aft_to_base_ = RpyToQuat(rpy_aft_base);
+        q_aft_to_base_.normalize();
+    }
+
+    void SetBaseLinkFrame(const std::string &base_link_frame)
+    {
+        std::lock_guard<std::mutex> lk(mtx_);
+        base_link_frame_ = base_link_frame;
+    }
+
     void OnLioMeasurement(const SE3 &pose, double stamp)
     {
         std::lock_guard<std::mutex> lk(mtx_);
         const Eigen::Vector3d p_meas = pose.translation();
         position_xyz_ = p_meas;
 
-        Eigen::Quaterniond q_meas(pose.rotationMatrix());
-        q_meas.normalize();
-        const Eigen::Vector3d rpy_meas = QuatToRpy(q_meas);
+        Eigen::Quaterniond q_meas_aft(pose.rotationMatrix());
+        q_meas_aft.normalize();
+        const Eigen::Vector3d rpy_meas = QuatToRpy(q_meas_aft);
 
         if (!initialized_)
         {
@@ -498,7 +512,21 @@ private:
             tf.transform.translation.y = pos.y();
             tf.transform.translation.z = pos.z();
             tf.transform.rotation = odom.pose.pose.orientation;
+
+            geometry_msgs::msg::TransformStamped tf_base_link;
+            tf_base_link.header.stamp = odom.header.stamp;
+            tf_base_link.header.frame_id = base_frame_;
+            tf_base_link.child_frame_id = base_link_frame_;
+            tf_base_link.transform.translation.x = t_aft_to_base_.x();
+            tf_base_link.transform.translation.y = t_aft_to_base_.y();
+            tf_base_link.transform.translation.z = t_aft_to_base_.z();
+            tf_base_link.transform.rotation.x = q_aft_to_base_.x();
+            tf_base_link.transform.rotation.y = q_aft_to_base_.y();
+            tf_base_link.transform.rotation.z = q_aft_to_base_.z();
+            tf_base_link.transform.rotation.w = q_aft_to_base_.w();
+
             tf_pub_->sendTransform(tf);
+            tf_pub_->sendTransform(tf_base_link);
         }
     }
 
@@ -533,6 +561,7 @@ private:
     tf2_ros::TransformBroadcaster *tf_pub_ = nullptr;
     std::string map_frame_;
     std::string base_frame_;
+    std::string base_link_frame_ = "base_link";
 
     bool initialized_ = false;
     double last_imu_t_ = 0.0;
@@ -560,6 +589,8 @@ private:
     Eigen::Matrix<double, 6, 6> ori_q_ = Eigen::Matrix<double, 6, 6>::Zero();
     Eigen::Matrix3d ori_r_ = Eigen::Matrix3d::Identity();
     Eigen::Quaterniond orientation_q_ = Eigen::Quaterniond::Identity();
+    Eigen::Vector3d t_aft_to_base_ = Eigen::Vector3d::Zero();
+    Eigen::Quaterniond q_aft_to_base_ = Eigen::Quaterniond::Identity();
 
     Eigen::Vector3d position_xyz_ = Eigen::Vector3d::Zero();
 
@@ -774,6 +805,8 @@ int main(int argc, char **argv)
         return -1;
     }
 
+    auto yaml_cfg = YAML::LoadFile(config_file);
+
     auto pub_scan = node->create_publisher<sensor_msgs::msg::PointCloud2>("/livox/scan", 10);
     auto cloud_pub_func = std::function<bool(std::string & topic_name, zjloc::CloudPtr & cloud, double time)>(
         [&](std::string &topic_name, zjloc::CloudPtr &cloud, double time)
@@ -806,7 +839,29 @@ int main(int argc, char **argv)
         "odom",
         "aft_mapped");
 
+    // User setup: IMU is colocated/aligned with aft_mapped frame
     imu_odom_fusion->SetImuToBaseRotation(Eigen::Matrix3d::Identity());
+    imu_odom_fusion->SetAftToBaseTransform(Eigen::Vector3d::Zero(), Eigen::Vector3d::Zero());
+    imu_odom_fusion->SetBaseLinkFrame("base_link");
+
+    if (yaml_cfg["common"])
+    {
+        const auto common = yaml_cfg["common"];
+        if (common["fusion_base_link_frame"])
+        {
+            imu_odom_fusion->SetBaseLinkFrame(common["fusion_base_link_frame"].as<std::string>());
+        }
+        if (common["fusion_aft_to_base_xyzrpy"])
+        {
+            auto arr = common["fusion_aft_to_base_xyzrpy"].as<std::vector<double>>();
+            if (arr.size() == 6)
+            {
+                imu_odom_fusion->SetAftToBaseTransform(
+                    Eigen::Vector3d(arr[0], arr[1], arr[2]),
+                    Eigen::Vector3d(arr[3], arr[4], arr[5]));
+            }
+        }
+    }
 
     auto pose_pub_func = std::function<bool(std::string & topic_name, SE3 & pose, double stamp)>(
         [&](std::string &topic_name, SE3 &pose, double stamp)
@@ -1015,11 +1070,10 @@ int main(int argc, char **argv)
     lio->setCloudConvert(convert);
     std::cout << ANSI_COLOR_GREEN_BOLD << "init successful" << ANSI_COLOR_RESET << std::endl;
 
-    auto yaml = YAML::LoadFile(config_file);
-    std::string laser_topic = yaml["common"]["lid_topic"].as<std::string>();
-    std::string aux_laser_topic = yaml["common"]["aux_lidar_topic"].as<std::string>();
-    std::string imu_topic = yaml["common"]["imu_topic"].as<std::string>();
-    gnorm = yaml["common"]["gnorm"].as<double>();
+    std::string laser_topic = yaml_cfg["common"]["lid_topic"].as<std::string>();
+    std::string aux_laser_topic = yaml_cfg["common"]["aux_lidar_topic"].as<std::string>();
+    std::string imu_topic = yaml_cfg["common"]["imu_topic"].as<std::string>();
+    gnorm = yaml_cfg["common"]["gnorm"].as<double>();
 
     // 创建订阅者
     std::shared_ptr<void> subLaserCloud =
