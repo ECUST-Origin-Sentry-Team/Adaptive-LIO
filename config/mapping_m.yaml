@@ -45,6 +45,9 @@ map_options:
 
 delay_time: 0.2
 
+aux_lidar:
+  min_points_per_measurement: 1000
+
 odometry:
   surf_res: 0.5
   log_print: false
@@ -88,7 +91,7 @@ cloud_pub:
   space_down_sample: 0.01 # should not larger than 0.05
 
 mapping_module:
-  enable_mapping: true
+  enable_mapping: false
   keyframe_dist_thresh: 1.0
   keyframe_angle_thresh: 0.8
   map_save_path: "./map_scantext.pcd"

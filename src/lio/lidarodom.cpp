@@ -112,6 +112,10 @@ namespace zjloc
 
           auto yaml = YAML::LoadFile(config_yaml_);
           delay_time_ = yaml["delay_time"].as<double>();
+          if (yaml["aux_lidar"] && yaml["aux_lidar"]["min_points_per_measurement"])
+          {
+               min_aux_points_ = yaml["aux_lidar"]["min_points_per_measurement"].as<size_t>();
+          }
           // lidar和IMU外参
           std::vector<double> ext_t = yaml["mapping"]["extrinsic_T"].as<std::vector<double>>();
           std::vector<double> ext_r = yaml["mapping"]["extrinsic_R"].as<std::vector<double>>();
@@ -1363,7 +1367,10 @@ namespace zjloc
                if (lidar_buffer_.empty())
                     return measurements;
 
-               if (imu_buffer_.back()->timestamp_ - time_curr < delay_time_) // imu现在的时间与第一次init时间相比在时间段内
+               const double lidar_begin_time = time_buffer_.front().first;
+               const double lidar_end_time = lidar_begin_time + time_buffer_.front().second;
+
+               if (imu_buffer_.back()->timestamp_ < lidar_end_time + delay_time_)
                     return measurements;
 
                MeasureGroup meas;
@@ -1390,13 +1397,13 @@ namespace zjloc
                }
 
                // IMU 消耗完毕后，必须保证还有未来 IMU，否则数组越界
-               if (!imu_buffer_.empty())
-               {
-                    double t_begin = meas.lidar_begin_time_;
-                    double t_end = imu_buffer_.front()->timestamp_;
-                    // std::cout << "end imu" << std::endl;
-                    while (!aux_lidar_buffer_.empty())
-                    {
+                if (!imu_buffer_.empty())
+                {
+                     double t_begin = meas.lidar_begin_time_;
+                     double t_end = meas.lidar_end_time_;
+                     // std::cout << "end imu" << std::endl;
+                     while (!aux_lidar_buffer_.empty())
+                     {
                          auto &aux_time = aux_lidar_time_buffer_.front();
                          auto &aux = aux_lidar_buffer_.front();
 
@@ -1438,10 +1445,10 @@ namespace zjloc
                          }
 
                          // 4. 如果本窗口内有 aux lidar 点
-                         if (!cropped.empty())
+                         if (cropped.size() >= min_aux_points_)
                          {
-                              meas.aux_lidar_ = std::move(cropped);
-                              meas.aux_lidar_time_ = t_begin;
+                               meas.aux_lidar_ = std::move(cropped);
+                               meas.aux_lidar_time_ = t_begin;
                          }
 
                          // 5. 如果这一帧 aux lidar 的点已经用完 → pop
@@ -1453,14 +1460,12 @@ namespace zjloc
                          }
 
                          break; // 一个 MeasureGroup 只处理一次 aux lidar
-                    }
+                     }
 
-                    meas.imu_.push_back(imu_buffer_.front()); //   added for Interp
-               }
-               std::cout << meas.aux_lidar_.size() << std::endl;
-               std::cout << meas.lidar_.size() << std::endl;
+                     meas.imu_.push_back(imu_buffer_.front()); //   added for Interp
+                }
 
-               measurements.push_back(meas);
+                measurements.push_back(meas);
           }
      }
 

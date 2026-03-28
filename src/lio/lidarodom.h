@@ -172,6 +172,7 @@ namespace zjloc
           int index_frame = 1;
           lioOptions_m options_;
           cloud_pub_m cloud_pub_options;
+          size_t min_aux_points_ = 100;
 
           CloudConvertInterface *convert = nullptr;
 
