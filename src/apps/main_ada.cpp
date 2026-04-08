@@ -779,6 +779,7 @@ int main(int argc, char **argv)
 
     // Init Scantext Modules
     scantext_mapping = std::make_shared<scantext::MappingCore>();
+    scantext::SCParams scantext_params;
 
     // Load configs
     try
@@ -799,6 +800,32 @@ int main(int argc, char **argv)
             if (node["auto_save_interval"])
                 cfg.auto_save_interval = node["auto_save_interval"].as<double>();
             scantext_mapping->setConfig(cfg);
+
+            if (node["scantext"])
+            {
+                auto sc_node = node["scantext"];
+                if (sc_node["num_ring"])
+                    scantext_params.num_ring = sc_node["num_ring"].as<int>();
+                if (sc_node["num_sector"])
+                    scantext_params.num_sector = sc_node["num_sector"].as<int>();
+                if (sc_node["max_radius"])
+                    scantext_params.max_radius = sc_node["max_radius"].as<double>();
+                if (sc_node["lidar_height"])
+                    scantext_params.lidar_height = sc_node["lidar_height"].as<double>();
+                if (sc_node["use_scpp"])
+                    scantext_params.use_scpp = sc_node["use_scpp"].as<bool>();
+                if (sc_node["scpp_search_ratio"])
+                    scantext_params.scpp_search_ratio = sc_node["scpp_search_ratio"].as<double>();
+                if (sc_node["cart_x_unit"])
+                    scantext_params.cart_x_unit = sc_node["cart_x_unit"].as<double>();
+                if (sc_node["cart_y_unit"])
+                    scantext_params.cart_y_unit = sc_node["cart_y_unit"].as<double>();
+                if (sc_node["cart_x_max"])
+                    scantext_params.cart_x_max = sc_node["cart_x_max"].as<double>();
+                if (sc_node["cart_y_max"])
+                    scantext_params.cart_y_max = sc_node["cart_y_max"].as<double>();
+            }
+            scantext_mapping->setScanContextParams(scantext_params);
         }
     }
     catch (const std::exception &e)
@@ -943,7 +970,7 @@ int main(int argc, char **argv)
     double last_sc_time = 0.0;
     bool has_last_sc = false;
 
-    scantext::ScanContext sc_extractor;
+    scantext::ScanContext sc_extractor(scantext_params);
 
     auto scantext_cbk =
         std::function<bool(const zjloc::CloudPtr &, const SE3 &, double)>(

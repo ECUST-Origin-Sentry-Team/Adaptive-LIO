@@ -48,6 +48,12 @@ namespace scantext
         config_ = config;
     }
 
+    void MappingCore::setScanContextParams(const SCParams &params)
+    {
+        std::lock_guard<std::mutex> lock(map_mutex_);
+        scan_context_ = ScanContext(params);
+    }
+
     bool MappingCore::isKeyFrame(const Eigen::Isometry3d &pose)
     {
         if (keyframes_.empty())

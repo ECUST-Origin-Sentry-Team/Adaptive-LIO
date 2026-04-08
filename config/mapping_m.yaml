@@ -101,3 +101,9 @@ mapping_module:
     num_ring: 20
     num_sector: 60
     max_radius: 80.0
+    use_scpp: true
+    scpp_search_ratio: 0.1
+    cart_x_unit: 5.0
+    cart_y_unit: 2.0
+    cart_x_max: 100.0
+    cart_y_max: 40.0

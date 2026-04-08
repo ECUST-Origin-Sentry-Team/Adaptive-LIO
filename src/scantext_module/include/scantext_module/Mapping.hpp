@@ -25,6 +25,7 @@ namespace scantext
         ScanContext::PointCloudType::Ptr cloud;
         ScanContext::SCDescriptor descriptor;
         ScanContext::RingKey ring_key;
+        ScanContext::CartDescriptor cart_descriptor;
     };
 
     /**
@@ -46,6 +47,7 @@ namespace scantext
         ~MappingCore() = default;
 
         void setConfig(const Config &config);
+        void setScanContextParams(const SCParams &params);
         Config getConfig() const { return config_; }
 
 
