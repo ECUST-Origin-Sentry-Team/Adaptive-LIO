@@ -43,7 +43,7 @@ map_options:
     radius_max: 1.2
     exponent: 1.0
 
-delay_time: 0.2
+delay_time: 0.05
 
 aux_lidar:
   min_points_per_measurement: 1000
@@ -88,7 +88,14 @@ odometry:
 cloud_pub:
   max_z_filter: 1.5 # the roof must be filtered
   min_z_filter: -1.0 
-  space_down_sample: 0.01 # should not larger than 0.05
+  space_down_sample: 0.05 # should not larger than 0.05
+  enable_body_filter: true
+  body_filter_x_min: -0.6 # 车体系盒滤波范围，可按车体前后尺寸调整
+  body_filter_x_max: 0.6
+  body_filter_y_min: -0.6
+  body_filter_y_max: 0.6
+  body_filter_z_min: -0.3
+  body_filter_z_max: 0.3
 
 mapping_module:
   enable_mapping: false

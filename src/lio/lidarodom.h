@@ -71,9 +71,16 @@ namespace zjloc
 
      struct cloud_pub_m
      {
-          float max_z_filter;
-          float min_z_filter;
-          float space_down_sample;
+          float max_z_filter = 1.5f;
+          float min_z_filter = -1.0f;
+          float space_down_sample = 0.01f;
+          bool enable_body_filter = false;
+          float body_filter_x_min = -0.5f;
+          float body_filter_x_max = 0.5f;
+          float body_filter_y_min = -0.5f;
+          float body_filter_y_max = 0.5f;
+          float body_filter_z_min = -1.0f;
+          float body_filter_z_max = 0.5f;
      };
      
 

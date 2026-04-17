@@ -1,6 +1,7 @@
 #include "common/config.hpp"
 #include "lidarodom.h"
 #include <glog/logging.h>
+#include <pcl/filters/crop_box.h>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/common/io.h>
 #include <pcl/filters/passthrough.h>
@@ -100,6 +101,13 @@ namespace zjloc
                OPTION_CLAUSE(pub_node, cloud_pub_options, max_z_filter, float);
                OPTION_CLAUSE(pub_node, cloud_pub_options, min_z_filter, float);
                OPTION_CLAUSE(pub_node, cloud_pub_options, space_down_sample, float);
+               OPTION_CLAUSE(pub_node, cloud_pub_options, enable_body_filter, bool);
+               OPTION_CLAUSE(pub_node, cloud_pub_options, body_filter_x_min, float);
+               OPTION_CLAUSE(pub_node, cloud_pub_options, body_filter_x_max, float);
+               OPTION_CLAUSE(pub_node, cloud_pub_options, body_filter_y_min, float);
+               OPTION_CLAUSE(pub_node, cloud_pub_options, body_filter_y_max, float);
+               OPTION_CLAUSE(pub_node, cloud_pub_options, body_filter_z_min, float);
+               OPTION_CLAUSE(pub_node, cloud_pub_options, body_filter_z_max, float);
           }
      }
 
@@ -1207,6 +1215,32 @@ namespace zjloc
                pass.setFilterLimits(cloud_pub_options.min_z_filter, cloud_pub_options.max_z_filter);
                pass.filter(*points_world);
 
+               if (cloud_pub_options.enable_body_filter)
+               {
+                    const Eigen::Matrix3d body_to_world_rot = end_quat.normalized().toRotationMatrix();
+                    const Eigen::Matrix3f world_to_body_rot = body_to_world_rot.transpose().cast<float>();
+                    const Eigen::Vector3f world_to_body_trans =
+                        (-body_to_world_rot.transpose() * end_t).cast<float>();
+
+                    Eigen::Affine3f world_to_body = Eigen::Affine3f::Identity();
+                    world_to_body.linear() = world_to_body_rot;
+                    world_to_body.translation() = world_to_body_trans;
+
+                    pcl::CropBox<pcl::PointXYZI> crop;
+                    crop.setInputCloud(points_world);
+                    crop.setTransform(world_to_body);
+                    crop.setMin(Eigen::Vector4f(cloud_pub_options.body_filter_x_min,
+                                                cloud_pub_options.body_filter_y_min,
+                                                cloud_pub_options.body_filter_z_min,
+                                                1.0f));
+                    crop.setMax(Eigen::Vector4f(cloud_pub_options.body_filter_x_max,
+                                                cloud_pub_options.body_filter_y_max,
+                                                cloud_pub_options.body_filter_z_max,
+                                                1.0f));
+                    crop.setNegative(true);
+                    crop.filter(*points_world);
+               }
+
                pcl::VoxelGrid<pcl::PointXYZI> vg;
                vg.setInputCloud(points_world);
                vg.setLeafSize(cloud_pub_options.space_down_sample, cloud_pub_options.space_down_sample, cloud_pub_options.space_down_sample);
@@ -1399,8 +1433,8 @@ namespace zjloc
                // IMU 消耗完毕后，必须保证还有未来 IMU，否则数组越界
                 if (!imu_buffer_.empty())
                 {
-                     double t_begin = meas.lidar_begin_time_;
-                     double t_end = meas.lidar_end_time_;
+                     double t_begin = meas.lidar_begin_time_ - 0.01;
+                     double t_end = meas.lidar_end_time_ + 0.01;
                      // std::cout << "end imu" << std::endl;
                      while (!aux_lidar_buffer_.empty())
                      {

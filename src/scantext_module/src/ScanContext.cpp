@@ -49,16 +49,40 @@ ScanContext::SCDescriptor ScanContext::makeScanContext(const PointCloudType& sca
 
 ScanContext::RingKey ScanContext::makeRingKey(const SCDescriptor& sc) {
     Eigen::VectorXd ring_key = Eigen::VectorXd::Zero(sc.rows());
+    constexpr double kEps = 1e-6;
     for (int r = 0; r < sc.rows(); ++r) {
-        ring_key[r] = sc.row(r).mean();
+        double sum = 0.0;
+        int cnt = 0;
+        for (int c = 0; c < sc.cols(); ++c) {
+            const double v = sc(r, c);
+            if (std::abs(v) > kEps) {
+                sum += v;
+                cnt++;
+            }
+        }
+        if (cnt > 0) {
+            ring_key[r] = sum / static_cast<double>(cnt);
+        }
     }
     return ring_key;
 }
 
 ScanContext::SectorKey ScanContext::makeSectorKey(const SCDescriptor& sc) {
     Eigen::VectorXd sector_key = Eigen::VectorXd::Zero(sc.cols());
+    constexpr double kEps = 1e-6;
     for (int c = 0; c < sc.cols(); ++c) {
-        sector_key[c] = sc.col(c).mean();
+        double sum = 0.0;
+        int cnt = 0;
+        for (int r = 0; r < sc.rows(); ++r) {
+            const double v = sc(r, c);
+            if (std::abs(v) > kEps) {
+                sum += v;
+                cnt++;
+            }
+        }
+        if (cnt > 0) {
+            sector_key[c] = sum / static_cast<double>(cnt);
+        }
     }
     return sector_key;
 }
@@ -93,9 +117,6 @@ ScanContext::CartDescriptor ScanContext::makeCartContext(const PointCloudType& s
             y = yr;
         }
 
-        if (x == 0.0 || y == 0.0) {
-            continue;
-        }
         if (!(x > -x_max && x < x_max && y > -y_max && y < y_max)) {
             continue;
         }
@@ -177,9 +198,9 @@ std::pair<double, int> ScanContext::distanceBtnScanContext(const SCDescriptor& s
     } else {
         for (int i = 0; i < num_sector; ++i) {
             shifts.insert(i);
+            }
         }
-    }
-
+        
     for (const int shift : shifts) {
         SCDescriptor sc1_shifted = circshift(sc1, shift);
         const double current_dist = distDirectSC(sc1_shifted, sc2);
@@ -231,8 +252,8 @@ double ScanContext::distDirectSC(const SCDescriptor& sc1, const SCDescriptor& sc
     double sum_sector_similarity = 0.0;
     int num_eff_cols = 0;
     for (int c = 0; c < sc1.cols(); ++c) {
-        const Eigen::VectorXd col1 = sc1.col(c);
-        const Eigen::VectorXd col2 = sc2.col(c);
+        const auto col1 = sc1.col(c);
+        const auto col2 = sc2.col(c);
 
         const double n1 = col1.norm();
         const double n2 = col2.norm();

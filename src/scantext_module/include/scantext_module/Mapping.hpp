@@ -22,6 +22,8 @@ namespace scantext
         int index;
         double time;
         Eigen::Isometry3d pose;
+        std::string cloud_path;
+        std::string descriptor_cache_path;
         ScanContext::PointCloudType::Ptr cloud;
         ScanContext::SCDescriptor descriptor;
         ScanContext::RingKey ring_key;
