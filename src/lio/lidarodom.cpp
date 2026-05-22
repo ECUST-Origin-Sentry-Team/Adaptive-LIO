@@ -1264,18 +1264,28 @@ namespace zjloc
      {
           //   use predict pose here
           Eigen::Vector3d location = current_state->translation;
-          // std::vector<voxel> voxels_to_erase;
-          // for (auto &pair : voxel_map)
-          // {
-          //      Eigen::Vector3d pt = pair.second.points[0];
-          //      if ((pt - location).squaredNorm() > (options_.max_distance * options_.max_distance))
-          //      {
-          //           voxels_to_erase.push_back(pair.first);
-          //      }
-          // }
-          // for (auto &vox : voxels_to_erase)
-          //      voxel_map.erase(vox);
-          // std::vector<voxel>().swap(voxels_to_erase);
+          const double max_distance_sq = options_.max_distance * options_.max_distance;
+          std::vector<voxel> voxels_to_erase;
+          voxels_to_erase.reserve(voxel_map.size() / 8 + 1);
+          for (const auto &pair : voxel_map)
+          {
+               if (pair.second.points.empty())
+               {
+                    voxels_to_erase.push_back(pair.first);
+                    continue;
+               }
+
+               const Eigen::Vector3d &pt = pair.second.points.front();
+               if ((pt - location).squaredNorm() > max_distance_sq)
+               {
+                    voxels_to_erase.push_back(pair.first);
+               }
+          }
+
+          for (const auto &vox : voxels_to_erase)
+          {
+               voxel_map.erase(vox);
+          }
 
           mmap->RemoveElementsFarFromLocation(location, options_.max_distance);
      }
