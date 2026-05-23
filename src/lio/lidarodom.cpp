@@ -390,11 +390,16 @@ namespace zjloc
           // all_cloud_frame.push_back(p_frame); //   TODO:     保存这个，特别费内存
           state *tmp_state = new state(current_state, true);
           all_state_frame.push_back(tmp_state);
+          while (all_state_frame.size() > 2)
+          {
+               delete all_state_frame.front();
+               all_state_frame.erase(all_state_frame.begin());
+          }
           current_state = new state(current_state, false);
 
-          if (all_state_frame.size() > 2)
+          if (all_state_frame.size() > 1)
                cache_vel = (all_state_frame[all_state_frame.size() - 1]->translation - all_state_frame[all_state_frame.size() - 2]->translation) /
-                           (meas.lidar_end_time_ - meas.lidar_begin_time_);
+                            (meas.lidar_end_time_ - meas.lidar_begin_time_);
 
           index_frame++;
           p_frame->release();
@@ -444,8 +449,7 @@ namespace zjloc
           {
                if (options_.log_print)
                     std::cout << "all_cloud_frame.size():" << all_state_frame.size() << ", " << p_frame->frame_id << std::endl;
-               // previous_state = all_cloud_frame[p_frame->frame_id - 2]->p_state;
-               previous_state = all_state_frame[p_frame->frame_id - 2];
+               previous_state = all_state_frame.back();
                previous_translation = previous_state->translation;
                previous_velocity = previous_state->translation - previous_state->translation_begin;
                previous_orientation = previous_state->rotation;

@@ -10,15 +10,17 @@ preprocess:
 common:
   # imu_topic: /livox/imu #/imu_raw   /gps/gtimu
   # lid_topic: /livox/lidar #/points_raw  /rslidar_points /velodyne_points
-  imu_topic: /livox/imu_192_168_1_160 #/imu_raw   /gps/gtimu
-  lid_topic: /livox/lidar_192_168_1_160 #/points_raw  /rslidar_points /velodyne_points
-  aux_lidar_topic: /livox/lidar_192_168_1_163
+  imu_topic: /livox/imu_192_168_1_163 #/imu_raw   /gps/gtimu
+  lid_topic: /livox/lidar_192_168_1_163 #/points_raw  /rslidar_points /velodyne_points
+  aux_lidar_topic: /livox/lidar_192_168_1_160
   gnorm: 1 # 9.805    # 部分数据，加速度模长为1->9.805gnorm
   # Fusion frame alignment
   # Assume IMU frame == aft_mapped frame.
   # Relative transform aft_mapped -> base_link: [x, y, z, roll, pitch, yaw] (m, rad)
-  fusion_aft_to_base_xyzrpy: [-0.04, -0.155, -0.33, 0, 0, 0]
+  fusion_aft_to_base_xyzrpy: [-0.04, -0.165, -0.33, 0, 0, 0]
   fusion_base_link_frame: base_link
+  fusion_restamp_tf_to_now: true   # 发布 TF 时使用当前 ROS 时间，避免处理积压导致 TF 越跑越旧
+  fusion_max_path_poses: 2000      # 限制 odometry_path 长度，避免路径消息无限增大拖慢发布链路
 
 mapping:
   extrinsic_est_en: true

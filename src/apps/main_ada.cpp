@@ -64,11 +64,13 @@ public:
     ImuOdomFusion(const nav_msgs::msg::Path &path_template,
                   const rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr &odom_pub,
                   const rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr &path_pub,
+                  const rclcpp::Clock::SharedPtr &clock,
                   tf2_ros::TransformBroadcaster *tf_pub,
                   const std::string &map_frame,
                   const std::string &base_frame)
         : odom_pub_(odom_pub),
           path_pub_(path_pub),
+          clock_(clock),
           tf_pub_(tf_pub),
           map_frame_(map_frame),
           base_frame_(base_frame),
@@ -114,6 +116,19 @@ public:
     {
         std::lock_guard<std::mutex> lk(mtx_);
         base_link_frame_ = base_link_frame;
+    }
+
+    void SetTfRestampToNow(bool enabled)
+    {
+        std::lock_guard<std::mutex> lk(mtx_);
+        restamp_tf_to_now_ = enabled;
+    }
+
+    void SetMaxPathPoses(size_t max_path_poses)
+    {
+        std::lock_guard<std::mutex> lk(mtx_);
+        max_path_poses_ = max_path_poses;
+        TrimPathLocked();
     }
 
     void OnLioMeasurement(const SE3 &pose, double stamp)
@@ -511,8 +526,15 @@ private:
 
         if (tf_pub_)
         {
+            auto tf_stamp = odom.header.stamp;
+            if (restamp_tf_to_now_ && clock_)
+            {
+                tf_stamp = get_ros_time(clock_->now().seconds());
+            }
+
             geometry_msgs::msg::TransformStamped tf;
             tf.header = odom.header;
+            tf.header.stamp = tf_stamp;
             tf.child_frame_id = base_frame_;
             tf.transform.translation.x = pos.x();
             tf.transform.translation.y = pos.y();
@@ -520,7 +542,7 @@ private:
             tf.transform.rotation = odom.pose.pose.orientation;
 
             geometry_msgs::msg::TransformStamped tf_base_link;
-            tf_base_link.header.stamp = odom.header.stamp;
+            tf_base_link.header.stamp = tf_stamp;
             tf_base_link.header.frame_id = base_frame_;
             tf_base_link.child_frame_id = base_link_frame_;
             tf_base_link.transform.translation.x = t_aft_to_base_.x();
@@ -554,6 +576,7 @@ private:
 
         fused_path_.header = ps.header;
         fused_path_.poses.push_back(ps);
+        TrimPathLocked();
         if (path_pub_)
         {
             path_pub_->publish(fused_path_);
@@ -564,10 +587,13 @@ private:
 
     rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
     rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr path_pub_;
+    rclcpp::Clock::SharedPtr clock_;
     tf2_ros::TransformBroadcaster *tf_pub_ = nullptr;
     std::string map_frame_;
     std::string base_frame_;
     std::string base_link_frame_ = "base_link";
+    bool restamp_tf_to_now_ = true;
+    size_t max_path_poses_ = 2000;
 
     bool initialized_ = false;
     double last_imu_t_ = 0.0;
@@ -608,6 +634,18 @@ private:
     Eigen::Matrix3d vel_r_ = Eigen::Matrix3d::Identity();
     std::deque<HistoryEntry> history_;
     nav_msgs::msg::Path fused_path_;
+
+    void TrimPathLocked()
+    {
+        if (max_path_poses_ == 0 || fused_path_.poses.size() <= max_path_poses_)
+        {
+            return;
+        }
+
+        fused_path_.poses.erase(
+            fused_path_.poses.begin(),
+            fused_path_.poses.begin() + (fused_path_.poses.size() - max_path_poses_));
+    }
 };
 
 void livox_pcl_cbk(const livox_ros_driver2::msg::CustomMsg::UniquePtr msg)
@@ -869,6 +907,7 @@ int main(int argc, char **argv)
         laserOdoPath,
         pubLaserOdometry,
         pubLaserOdometryPath,
+        node->get_clock(),
         g_tf_broadcaster.get(),
         "odom",
         "aft_mapped");
@@ -894,6 +933,14 @@ int main(int argc, char **argv)
                     Eigen::Vector3d(arr[0], arr[1], arr[2]),
                     Eigen::Vector3d(arr[3], arr[4], arr[5]));
             }
+        }
+        if (common["fusion_restamp_tf_to_now"])
+        {
+            imu_odom_fusion->SetTfRestampToNow(common["fusion_restamp_tf_to_now"].as<bool>());
+        }
+        if (common["fusion_max_path_poses"])
+        {
+            imu_odom_fusion->SetMaxPathPoses(common["fusion_max_path_poses"].as<size_t>());
         }
     }
 
