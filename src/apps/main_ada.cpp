@@ -40,6 +40,8 @@
 
 nav_msgs::msg::Path laserOdoPath;
 
+DEFINE_string(config_file, "", "Path to adaptive_lio config YAML.");
+
 zjloc::lidarodom_m *lio;
 zjloc::CloudConvert2 *convert;
 std::shared_ptr<scantext::MappingCore> scantext_mapping;
@@ -561,6 +563,10 @@ private:
     void AppendPathAndPublishLocked(double stamp)
     {
         PublishOdomLocked(stamp);
+        if (!path_pub_ || max_path_poses_ == 0 || path_pub_->get_subscription_count() == 0)
+        {
+            return;
+        }
         const Eigen::Quaterniond q = orientation_q_ * q_base_to_aft_;
 
         geometry_msgs::msg::PoseStamped ps;
@@ -652,7 +658,6 @@ void livox_pcl_cbk(const livox_ros_driver2::msg::CustomMsg::UniquePtr msg)
 {
     // cloud_vec	一整帧 Livox 点云，被切成的多个子点云
     // cloud_out	第 i 个子点云（时间片）
-    std::cout << "livox_pcl_cbk called." << std::endl;
     std::vector<std::vector<point3D>> cloud_vec;
     std::vector<double> t_out;
     auto shared_msg = std::make_shared<const livox_ros_driver2::msg::CustomMsg>(*msg);
@@ -672,14 +677,13 @@ void livox_pcl_cbk(const livox_ros_driver2::msg::CustomMsg::UniquePtr msg)
             subSampleFrame(cloud_out, sample_size);
             std::shuffle(cloud_out.begin(), cloud_out.end(), g); },
                                        "laser ds");
-        lio->pushData(cloud_out, std::make_pair(msg->header.stamp.sec + msg->header.stamp.nanosec * 1e-9 + t_out[i] - t_out[0], t_out[0]), false);
+        lio->pushData(std::move(cloud_out), std::make_pair(msg->header.stamp.sec + msg->header.stamp.nanosec * 1e-9 + t_out[i] - t_out[0], t_out[0]), false);
         // pair<本段数据的绝对起始时间,数据持续时长>
     }
 }
 
 void aux_livox_pcl_cbk(const livox_ros_driver2::msg::CustomMsg::UniquePtr msg)
 {
-    std::cout << "aux_livox_pcl_cbk called." << std::endl;
     std::vector<std::vector<point3D>> cloud_vec; // 附属雷达只存于第0个时间片
     std::vector<double> t_out;                   // 只有第0个时间片，代表总体的时间长度
     auto shared_msg = std::make_shared<const livox_ros_driver2::msg::CustomMsg>(*msg);
@@ -698,7 +702,7 @@ void aux_livox_pcl_cbk(const livox_ros_driver2::msg::CustomMsg::UniquePtr msg)
         std::shuffle(cloud_out.begin(), cloud_out.end(), g); },
                                    "laser ds");
 
-    lio->pushData(cloud_out, std::make_pair(msg->header.stamp.sec + msg->header.stamp.nanosec * 1e-9, t_out[0]), true);
+    lio->pushData(std::move(cloud_out), std::make_pair(msg->header.stamp.sec + msg->header.stamp.nanosec * 1e-9, t_out[0]), true);
 }
 
 void standard_pcl_cbk(const sensor_msgs::msg::PointCloud2::SharedPtr msg)
@@ -725,7 +729,7 @@ void standard_pcl_cbk(const sensor_msgs::msg::PointCloud2::SharedPtr msg)
                                        "laser ds");
 
         // 在ROS2中使用的是nanoseconds().count()来获取时间戳
-        lio->pushData(cloud_out, std::make_pair(msg->header.stamp.sec + msg->header.stamp.nanosec * 1e-9 + t_out[i] - t_out[0], t_out[0]), false);
+        lio->pushData(std::move(cloud_out), std::make_pair(msg->header.stamp.sec + msg->header.stamp.nanosec * 1e-9 + t_out[i] - t_out[0], t_out[0]), false);
     }
 }
 
@@ -812,7 +816,9 @@ int main(int argc, char **argv)
     google::ParseCommandLineFlags(&gflags_argc, &gflags_argv_ptr, true);
     auto node = rclcpp::Node::make_shared("adaptive_lio_node");
 
-    std::string config_file = std::string(ROOT_DIR) + "config/mapping_m.yaml";
+    std::string config_file = FLAGS_config_file.empty()
+                                  ? std::string(ROOT_DIR) + "config/mapping_m.yaml"
+                                  : FLAGS_config_file;
     std::cout << ANSI_COLOR_GREEN << "config_file:" << config_file << ANSI_COLOR_RESET << std::endl;
 
     // Init Scantext Modules
@@ -883,15 +889,17 @@ int main(int argc, char **argv)
     auto cloud_pub_func = std::function<bool(std::string & topic_name, zjloc::CloudPtr & cloud, double time)>(
         [&](std::string &topic_name, zjloc::CloudPtr &cloud, double time)
         {
-            sensor_msgs::msg::PointCloud2::SharedPtr cloud_ptr_output(new sensor_msgs::msg::PointCloud2());
-            pcl::toROSMsg(*cloud, *cloud_ptr_output);
+            if (topic_name != "laser" || pub_scan->get_subscription_count() == 0)
+            {
+                return true;
+            }
 
-            cloud_ptr_output->header.stamp = get_ros_time(time);
-            cloud_ptr_output->header.frame_id = "odom";
-            if (topic_name == "laser")
-                pub_scan->publish(*cloud_ptr_output);
-            else
-                ; // publisher_.publish(*cloud_ptr_output);
+            sensor_msgs::msg::PointCloud2 cloud_output;
+            pcl::toROSMsg(*cloud, cloud_output);
+
+            cloud_output.header.stamp = get_ros_time(time);
+            cloud_output.header.frame_id = "odom";
+            pub_scan->publish(cloud_output);
             return true;
         }
 
@@ -1025,8 +1033,8 @@ int main(int argc, char **argv)
                 const SE3 &pose,
                 double time) -> bool
             {
-                if (!scantext_mapping || !points_world)
-                    return false;
+                if (!scantext_mapping || !points_world || !scantext_mapping->getConfig().enable_mapping)
+                    return true;
 
                 // --- pose -> Eigen ---
                 Eigen::Isometry3d eigen_pose = Eigen::Isometry3d::Identity();

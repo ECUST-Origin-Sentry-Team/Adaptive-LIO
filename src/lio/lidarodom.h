@@ -92,7 +92,7 @@ namespace zjloc
 
           bool init(const std::string &config_yaml);
 
-          void pushData(std::vector<point3D>, std::pair<double, double> data,bool is_aux);
+          void pushData(std::vector<point3D> &&, std::pair<double, double> data,bool is_aux);
           void pushData(IMUPtr imu);
 
           void run();

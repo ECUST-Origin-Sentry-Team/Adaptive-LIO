@@ -27,6 +27,8 @@ namespace zjloc
 
           index_frame = 1;
           points_world.reset(new pcl::PointCloud<pcl::PointXYZI>());
+          points_world->points.reserve(20000);
+          all_state_frame.reserve(3);
      }
 
      lidarodom_m::~lidarodom_m()
@@ -219,13 +221,13 @@ namespace zjloc
           return true;
      }
 
-     void lidarodom_m::pushData(std::vector<point3D> msg, std::pair<double, double> data, bool is_aux)
+     void lidarodom_m::pushData(std::vector<point3D> &&msg, std::pair<double, double> data, bool is_aux)
      {
           if (is_aux)
           // 副雷达
           {
                std::lock_guard<std::mutex> lk(mtx_aux_buf);
-               aux_lidar_buffer_.push_back(msg);
+               aux_lidar_buffer_.push_back(std::move(msg));
                aux_lidar_time_buffer_.push_back(data);
                cond.notify_one();
           }
@@ -239,7 +241,7 @@ namespace zjloc
                }
 
                mtx_buf.lock();
-               lidar_buffer_.push_back(msg);
+               lidar_buffer_.push_back(std::move(msg));
                time_buffer_.push_back(data);
                last_timestamp_lidar_ = data.first;
                mtx_buf.unlock();
@@ -301,7 +303,12 @@ namespace zjloc
 
      void lidarodom_m::ProcessMeasurements(MeasureGroup &meas)
      {
-          measures_ = meas;
+          measures_.lidar_begin_time_ = meas.lidar_begin_time_;
+          measures_.lidar_end_time_ = meas.lidar_end_time_;
+          measures_.imu_ = meas.imu_;
+          measures_.imu_cont.clear();
+          measures_.lidar_.clear();
+          measures_.aux_lidar_.clear();
 
           if (imu_need_init_)
           {
@@ -310,8 +317,11 @@ namespace zjloc
           }
 
           // std::cout << ANSI_DELETE_LAST_LINE;
-          std::cout << ANSI_COLOR_GREEN << "============== process frame: "
-                    << index_frame << ANSI_COLOR_RESET << std::endl;
+          if (options_.log_print)
+          {
+               std::cout << ANSI_COLOR_GREEN << "============== process frame: "
+                         << index_frame << ANSI_COLOR_RESET << std::endl;
+          }
           imu_states_.clear(); //   need clear here
 
           // 利用IMU数据进行状态预测
@@ -323,14 +333,11 @@ namespace zjloc
                                          { stateInitialization(); },
                                          "state init");
 
-          std::vector<point3D> const_surf;
-          const_surf.insert(const_surf.end(), meas.lidar_.begin(), meas.lidar_.end());
-          // const_surf.assign(meas.lidar_.begin(), meas.lidar_.end());
-          std::vector<point3D> const_surf_aux;
-          const_surf_aux.insert(const_surf_aux.end(), meas.aux_lidar_.begin(), meas.aux_lidar_.end());
+          std::vector<point3D> const_surf = std::move(meas.lidar_);
+          std::vector<point3D> const_surf_aux = std::move(meas.aux_lidar_);
 
           cloudFrame *p_frame;
-          cloudFrame *p_frame_aux;
+          cloudFrame *p_frame_aux = nullptr;
 
           zjloc::common::Timer::Evaluate([&]()
                                          { p_frame = buildFrame(const_surf, current_state,
@@ -338,11 +345,14 @@ namespace zjloc
                                                                 meas.lidar_end_time_); },
                                          "build frame");
 
-          zjloc::common::Timer::Evaluate([&]()
-                                         { p_frame_aux = buildFrame(const_surf_aux, current_state,
-                                                                    meas.lidar_begin_time_,
-                                                                    meas.lidar_end_time_); },
-                                         "build frame");
+          if (!const_surf_aux.empty())
+          {
+               zjloc::common::Timer::Evaluate([&]()
+                                              { p_frame_aux = buildFrame(const_surf_aux, current_state,
+                                                                         meas.lidar_begin_time_,
+                                                                         meas.lidar_end_time_); },
+                                              "build frame");
+          }
 
           //   lio
           zjloc::common::Timer::Evaluate([&]()
@@ -386,6 +396,7 @@ namespace zjloc
                } },
                                          "pub cloud");
 
+          delete p_frame->p_state;
           p_frame->p_state = new state(current_state, true);
           // all_cloud_frame.push_back(p_frame); //   TODO:     保存这个，特别费内存
           state *tmp_state = new state(current_state, true);
@@ -395,7 +406,9 @@ namespace zjloc
                delete all_state_frame.front();
                all_state_frame.erase(all_state_frame.begin());
           }
-          current_state = new state(current_state, false);
+          state *next_state = new state(current_state, false);
+          delete current_state;
+          current_state = next_state;
 
           if (all_state_frame.size() > 1)
                cache_vel = (all_state_frame[all_state_frame.size() - 1]->translation - all_state_frame[all_state_frame.size() - 2]->translation) /
@@ -403,9 +416,12 @@ namespace zjloc
 
           index_frame++;
           p_frame->release();
-          p_frame_aux->release();
-          std::vector<point3D>().swap(meas.lidar_);
-          std::vector<point3D>().swap(const_surf);
+          delete p_frame;
+          if (p_frame_aux != nullptr)
+          {
+               p_frame_aux->release();
+               delete p_frame_aux;
+          }
      }
 
      void lidarodom_m::poseEstimation(cloudFrame *p_frame, cloudFrame *p_frame_aux)
@@ -462,10 +478,11 @@ namespace zjloc
           }
 
           std::vector<point3D> surf_keypoints;
+          surf_keypoints.reserve(p_frame->point_surf.size());
           grid_sampling(p_frame->point_surf, surf_keypoints,
                         options_.sampling_rate * options_.surf_res);
 
-          std::mt19937_64 g;
+          thread_local std::mt19937_64 g;
           std::shuffle(surf_keypoints.begin(), surf_keypoints.end(), g);
 
           size_t num_size = p_frame->point_surf.size();
@@ -495,6 +512,12 @@ namespace zjloc
                }
           };
 
+          ceres::Solver::Options solver_options;
+          solver_options.max_num_iterations = 5;
+          solver_options.num_threads = 3;
+          solver_options.minimizer_progress_to_stdout = false;
+          solver_options.trust_region_strategy_type = ceres::TrustRegionStrategyType::LEVENBERG_MARQUARDT;
+
           for (int iter(0); iter < options_.max_num_iteration; iter++)
           {
                transformKeypoints(surf_keypoints);
@@ -521,10 +544,12 @@ namespace zjloc
                     break;
                }
 
-               std::vector<ceres::CostFunction *> surfFactor;
-               std::vector<Eigen::Vector3d> normalVec;
-               // addSurfCost(surfFactor, normalVec, surf_keypoints, p_frame);
-               addSurfCostFactor(surfFactor, normalVec, surf_keypoints, p_frame);
+                std::vector<ceres::CostFunction *> surfFactor;
+                std::vector<Eigen::Vector3d> normalVec;
+                surfFactor.reserve(options_.max_num_residuals);
+                normalVec.reserve(options_.max_num_residuals);
+                // addSurfCost(surfFactor, normalVec, surf_keypoints, p_frame);
+                addSurfCostFactor(surfFactor, normalVec, surf_keypoints, p_frame);
 
                //   TODO: 退化后，该如何处理
                checkLocalizability(normalVec);
@@ -596,22 +621,9 @@ namespace zjloc
                     std::cout << "ERROR: " << ss_out.str();
                }
 
-               ceres::Solver::Options options;
-               options.max_num_iterations = 5;
-               options.num_threads = 3;
-               options.minimizer_progress_to_stdout = false;
-               options.trust_region_strategy_type = ceres::TrustRegionStrategyType::LEVENBERG_MARQUARDT;
+                ceres::Solver::Summary summary;
 
-               // ceres::Solver::Options options;
-               // options.linear_solver_type = ceres::DENSE_SCHUR;
-               // options.trust_region_strategy_type = ceres::DOGLEG;
-               // options.max_num_iterations = 10;
-               // options.minimizer_progress_to_stdout = false;
-               // options.num_threads = 6;
-
-               ceres::Solver::Summary summary;
-
-               ceres::Solve(options, &problem, &summary);
+                ceres::Solve(solver_options, &problem, &summary);
 
                if (!summary.IsSolutionUsable())
                {
@@ -1151,9 +1163,10 @@ namespace zjloc
           Eigen::Quaterniond begin_quat = p_frame->p_state->rotation_begin;
           Eigen::Vector3d end_t = p_frame->p_state->translation;
           Eigen::Vector3d begin_t = p_frame->p_state->translation_begin;
+          const size_t aux_point_count = p_frame_aux == nullptr ? 0 : p_frame_aux->point_surf.size();
           points_world->points.reserve(
               p_frame->point_surf.size() +
-              p_frame_aux->point_surf.size());
+              aux_point_count);
           for (auto &point : p_frame->point_surf)
           {
                {
@@ -1185,31 +1198,34 @@ namespace zjloc
                p.z = point.point.z();
                p.intensity = point.intensity;
           }
-          for (auto &point : p_frame_aux->point_surf)
+          if (p_frame_aux != nullptr)
           {
+               for (auto &point : p_frame_aux->point_surf)
                {
-                    if (options_.point_to_plane_with_distortion ||
-                        options_.icpmodel == IcpModel::CT_POINT_TO_PLANE)
                     {
-                         double alpha_time = point.alpha_time;
+                         if (options_.point_to_plane_with_distortion ||
+                             options_.icpmodel == IcpModel::CT_POINT_TO_PLANE)
+                         {
+                              double alpha_time = point.alpha_time;
 
-                         Eigen::Quaterniond q = begin_quat.slerp(alpha_time, end_quat);
-                         q.normalize();
-                         R = q.toRotationMatrix();
-                         t = (1.0 - alpha_time) * begin_t + alpha_time * end_t;
+                              Eigen::Quaterniond q = begin_quat.slerp(alpha_time, end_quat);
+                              q.normalize();
+                              R = q.toRotationMatrix();
+                              t = (1.0 - alpha_time) * begin_t + alpha_time * end_t;
+                         }
+                         else
+                         {
+                              R = end_quat.normalized().toRotationMatrix();
+                              t = end_t;
+                         }
+                         point.point = R * (TIL_ * point.raw_point) + t;
                     }
-                    else
-                    {
-                         R = end_quat.normalized().toRotationMatrix();
-                         t = end_t;
-                    }
-                    point.point = R * (TIL_ * point.raw_point) + t;
+                    auto &p = points_world->points.emplace_back();
+                    p.x = point.point.x();
+                    p.y = point.point.y();
+                    p.z = point.point.z();
+                    p.intensity = point.intensity;
                }
-               auto &p = points_world->points.emplace_back();
-               p.x = point.point.x();
-               p.y = point.point.y();
-               p.z = point.point.z();
-               p.intensity = point.intensity;
           }
           {
 
@@ -1253,13 +1269,19 @@ namespace zjloc
                vg.filter(*down);
                std::string laser_topic = "laser";
                 
-               pub_cloud_to_ros(laser_topic, down, p_frame->time_frame_end);
+                if ((index_frame % 4) == 0)
+                {
+                     pub_cloud_to_ros(laser_topic, down, p_frame->time_frame_end);
+                }
 
                if (pub_scantext_data)
                {
                     SE3 pose_of_lo_ = SE3(current_state->rotation, current_state->translation);
-                    pub_scantext_data(points_world, pose_of_lo_, p_frame->time_frame_end);
-               }
+                    if ((index_frame % 10) == 0)
+                    {
+                         pub_scantext_data(points_world, pose_of_lo_, p_frame->time_frame_end);
+                    }
+                }
           }
           points_world->clear();
      }
@@ -1314,7 +1336,7 @@ namespace zjloc
                               cur_state->rotation, cur_state->translation_begin, cur_state->translation,
                               R_imu_lidar, t_imu_lidar);
 
-          cloudFrame *p_frame = new cloudFrame(frame_surf, const_surf, cur_state);
+          cloudFrame *p_frame = new cloudFrame(std::move(frame_surf), std::move(const_surf), cur_state);
 
           p_frame->time_frame_begin = timestamp_begin;
           p_frame->time_frame_end = timestamp_end;
@@ -1423,7 +1445,7 @@ namespace zjloc
 
                MeasureGroup meas;
 
-               meas.lidar_ = lidar_buffer_.front();
+               meas.lidar_ = std::move(lidar_buffer_.front());
                meas.lidar_begin_time_ = time_buffer_.front().first;
                meas.lidar_end_time_ = meas.lidar_begin_time_ + time_buffer_.front().second;
                lidar_buffer_.pop_front();
@@ -1513,7 +1535,7 @@ namespace zjloc
                      meas.imu_.push_back(imu_buffer_.front()); //   added for Interp
                 }
 
-                measurements.push_back(meas);
+                measurements.emplace_back(std::move(meas));
           }
      }
 
@@ -1596,6 +1618,17 @@ namespace zjloc
                // options.update_bias_acce_ = false;
                // options.update_bias_gyro_ = false;
                eskf_.SetInitialConditions(options, imu_init_.GetInitBg(), imu_init_.GetInitBa(), imu_init_.GetGravity());
+               if (!measures_.imu_.empty())
+               {
+                    const IMUPtr &last_init_imu = measures_.imu_.back();
+                    eskf_.SetInitialTime(last_init_imu->timestamp_);
+                    last_imu_ = last_init_imu;
+               }
+               else
+               {
+                    eskf_.SetInitialTime(measures_.lidar_end_time_);
+                    last_imu_ = nullptr;
+               }
                imu_need_init_ = false;
                RIG_ = SO3(g2R(imu_init_.GetMeanAcc()));
 
