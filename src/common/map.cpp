@@ -53,7 +53,7 @@ void MultipleResolutionVoxelMap::RemoveElementsFarFromLocation(const Eigen::Vect
           {
                if (pair.second.points.empty())
                     voxels_to_remove.insert(pair.first);
-               if ((pair.second.points.front() - location) .norm() > distance)
+                if ((pair.second.points.front() - location).squaredNorm() > distance * distance)
                     voxels_to_remove.insert(pair.first);
           }
 
@@ -172,7 +172,7 @@ void MultipleResolutionVoxelMap::RadiusSearchInPlace(const Eigen::Vector3d &quer
                          for (int i(0); i < voxel_block.NumPoints(); ++i)
                          {
                               auto &neighbor = voxel_block.points[i];
-                              double distance = (neighbor - query).norm();
+                               double distance = (neighbor - query).squaredNorm();
                               if (priority_queue.size() == max_num_neighbors)
                               {
                                    if (distance < std::get<0>(priority_queue.top()))

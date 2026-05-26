@@ -885,7 +885,8 @@ int main(int argc, char **argv)
 
     auto yaml_cfg = YAML::LoadFile(config_file);
 
-    auto pub_scan = node->create_publisher<sensor_msgs::msg::PointCloud2>("/livox/scan", 10);
+    auto pub_scan = node->create_publisher<sensor_msgs::msg::PointCloud2>(
+        "/livox/scan", rclcpp::SensorDataQoS().keep_last(1));
     auto cloud_pub_func = std::function<bool(std::string & topic_name, zjloc::CloudPtr & cloud, double time)>(
         [&](std::string &topic_name, zjloc::CloudPtr &cloud, double time)
         {
@@ -984,14 +985,19 @@ int main(int argc, char **argv)
         double time;
     };
 
+    const bool scantext_enabled = scantext_mapping && scantext_mapping->getConfig().enable_mapping;
+
     std::queue<ScantextTask> scantext_queue;
     std::mutex scantext_queue_mutex;
     std::condition_variable scantext_queue_cv;
     bool stop_scantext_thread = false;
+    std::thread scantext_worker;
 
     // Consumer thread function
-    std::thread scantext_worker([&]()
-                                {
+    if (scantext_enabled)
+    {
+        scantext_worker = std::thread([&]()
+                                      {
     while (!stop_scantext_thread) {
         ScantextTask task;
         {
@@ -1020,6 +1026,7 @@ int main(int argc, char **argv)
             // }
         }
     } });
+    }
 
     Eigen::Isometry3d last_sc_pose = Eigen::Isometry3d::Identity();
     double last_sc_time = 0.0;
@@ -1151,7 +1158,10 @@ int main(int argc, char **argv)
     lio->setFunc(cloud_pub_func);
     lio->setFunc(pose_pub_func);
     lio->setFunc(data_pub_func);
-    lio->setFunc(scantext_cbk);
+    if (scantext_enabled)
+    {
+        lio->setFunc(scantext_cbk);
+    }
 
     convert = new zjloc::CloudConvert2;
     convert->LoadFromYAML(config_file);

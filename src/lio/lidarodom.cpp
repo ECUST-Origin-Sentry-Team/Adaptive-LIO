@@ -91,11 +91,12 @@ namespace zjloc
                OPTION_CLAUSE(odometry_node, options_, beta_location_consistency, double);
                OPTION_CLAUSE(odometry_node, options_, beta_orientation_consistency, double);
                OPTION_CLAUSE(odometry_node, options_, beta_constant_velocity, double);
-               OPTION_CLAUSE(odometry_node, options_, beta_small_velocity, double);
-               OPTION_CLAUSE(odometry_node, options_, thres_orientation_norm, double);
-               OPTION_CLAUSE(odometry_node, options_, thres_translation_norm, double);
-               OPTION_CLAUSE(odometry_node, options_, satu_acc, double);
-               OPTION_CLAUSE(odometry_node, options_, satu_gyro, double);
+                OPTION_CLAUSE(odometry_node, options_, beta_small_velocity, double);
+                OPTION_CLAUSE(odometry_node, options_, thres_orientation_norm, double);
+                OPTION_CLAUSE(odometry_node, options_, thres_translation_norm, double);
+                OPTION_CLAUSE(odometry_node, options_, fov_segment_stride, int);
+                OPTION_CLAUSE(odometry_node, options_, satu_acc, double);
+                OPTION_CLAUSE(odometry_node, options_, satu_gyro, double);
           }
           if (node["cloud_pub"])
           {
@@ -442,9 +443,12 @@ namespace zjloc
                                               "map update");
           }
 
-          zjloc::common::Timer::Evaluate([&]()
-                                         { lasermap_fov_segment(); },
-                                         "fov segment");
+          if (options_.fov_segment_stride <= 1 || (index_frame % options_.fov_segment_stride) == 0)
+          {
+               zjloc::common::Timer::Evaluate([&]()
+                                              { lasermap_fov_segment(); },
+                                              "fov segment");
+          }
      }
 
      void lidarodom_m::optimize(cloudFrame *p_frame)
@@ -552,7 +556,10 @@ namespace zjloc
                 addSurfCostFactor(surfFactor, normalVec, surf_keypoints, p_frame);
 
                //   TODO: 退化后，该如何处理
-               checkLocalizability(normalVec);
+               if (iter == 0)
+               {
+                    checkLocalizability(normalVec);
+               }
 
                int surf_num = 0;
                if (options_.log_print)
@@ -573,8 +580,8 @@ namespace zjloc
                     //      break;
                }
                //   release
-               std::vector<Eigen::Vector3d>().swap(normalVec);
-               std::vector<ceres::CostFunction *>().swap(surfFactor);
+               normalVec.clear();
+               surfFactor.clear();
 
                if (options_.icpmodel == IcpModel::CT_POINT_TO_PLANE)
                {
@@ -1059,7 +1066,7 @@ namespace zjloc
                               for (int i(0); i < voxel_block.NumPoints(); ++i)
                               {
                                    auto &neighbor = voxel_block.points[i];
-                                   double distance = (neighbor - point).norm();
+                                    double distance = (neighbor - point).squaredNorm();
                                    if (priority_queue.size() == max_num_neighbors)
                                    {
                                         if (distance < std::get<0>(priority_queue.top()))
@@ -1156,37 +1163,11 @@ namespace zjloc
      void lidarodom_m::map_incremental(cloudFrame *p_frame, cloudFrame *p_frame_aux, int min_num_points)
      {
           //   only surf
-          Eigen::Matrix3d R;
-          Eigen::Vector3d t;
-
-          Eigen::Quaterniond end_quat = p_frame->p_state->rotation;
-          Eigen::Quaterniond begin_quat = p_frame->p_state->rotation_begin;
-          Eigen::Vector3d end_t = p_frame->p_state->translation;
-          Eigen::Vector3d begin_t = p_frame->p_state->translation_begin;
           const size_t aux_point_count = p_frame_aux == nullptr ? 0 : p_frame_aux->point_surf.size();
           points_world->points.reserve(
-              p_frame->point_surf.size() +
-              aux_point_count);
+              p_frame->point_surf.size() + aux_point_count);
           for (auto &point : p_frame->point_surf)
           {
-               {
-                    if (options_.point_to_plane_with_distortion ||
-                        options_.icpmodel == IcpModel::CT_POINT_TO_PLANE)
-                    {
-                         double alpha_time = point.alpha_time;
-
-                         Eigen::Quaterniond q = begin_quat.slerp(alpha_time, end_quat);
-                         q.normalize();
-                         R = q.toRotationMatrix();
-                         t = (1.0 - alpha_time) * begin_t + alpha_time * end_t;
-                    }
-                    else
-                    {
-                         R = end_quat.normalized().toRotationMatrix();
-                         t = end_t;
-                    }
-                    point.point = R * (TIL_ * point.raw_point) + t;
-               }
                addPointToMap(voxel_map, point.point, point.intensity,
                              options_.size_voxel_map, options_.max_num_points_in_voxel,
                              options_.min_distance_points, min_num_points, p_frame);
@@ -1202,24 +1183,6 @@ namespace zjloc
           {
                for (auto &point : p_frame_aux->point_surf)
                {
-                    {
-                         if (options_.point_to_plane_with_distortion ||
-                             options_.icpmodel == IcpModel::CT_POINT_TO_PLANE)
-                         {
-                              double alpha_time = point.alpha_time;
-
-                              Eigen::Quaterniond q = begin_quat.slerp(alpha_time, end_quat);
-                              q.normalize();
-                              R = q.toRotationMatrix();
-                              t = (1.0 - alpha_time) * begin_t + alpha_time * end_t;
-                         }
-                         else
-                         {
-                              R = end_quat.normalized().toRotationMatrix();
-                              t = end_t;
-                         }
-                         point.point = R * (TIL_ * point.raw_point) + t;
-                    }
                     auto &p = points_world->points.emplace_back();
                     p.x = point.point.x();
                     p.y = point.point.y();
@@ -1227,63 +1190,62 @@ namespace zjloc
                     p.intensity = point.intensity;
                }
           }
-          {
-
-               pcl::PassThrough<pcl::PointXYZI> pass;
-               pass.setInputCloud(points_world);
-               pass.setFilterFieldName("z");
-               pass.setFilterLimits(cloud_pub_options.min_z_filter, cloud_pub_options.max_z_filter);
-               pass.filter(*points_world);
-
-               if (cloud_pub_options.enable_body_filter)
-               {
-                    const Eigen::Matrix3d body_to_world_rot = end_quat.normalized().toRotationMatrix();
-                    const Eigen::Matrix3f world_to_body_rot = body_to_world_rot.transpose().cast<float>();
-                    const Eigen::Vector3f world_to_body_trans =
-                        (-body_to_world_rot.transpose() * end_t).cast<float>();
-
-                    Eigen::Affine3f world_to_body = Eigen::Affine3f::Identity();
-                    world_to_body.linear() = world_to_body_rot;
-                    world_to_body.translation() = world_to_body_trans;
-
-                    pcl::CropBox<pcl::PointXYZI> crop;
-                    crop.setInputCloud(points_world);
-                    crop.setTransform(world_to_body);
-                    crop.setMin(Eigen::Vector4f(cloud_pub_options.body_filter_x_min,
-                                                cloud_pub_options.body_filter_y_min,
-                                                cloud_pub_options.body_filter_z_min,
-                                                1.0f));
-                    crop.setMax(Eigen::Vector4f(cloud_pub_options.body_filter_x_max,
-                                                cloud_pub_options.body_filter_y_max,
-                                                cloud_pub_options.body_filter_z_max,
-                                                1.0f));
-                    crop.setNegative(true);
-                    crop.filter(*points_world);
-               }
-
-               pcl::VoxelGrid<pcl::PointXYZI> vg;
-               vg.setInputCloud(points_world);
-               vg.setLeafSize(cloud_pub_options.space_down_sample, cloud_pub_options.space_down_sample, cloud_pub_options.space_down_sample);
-
-               pcl::PointCloud<pcl::PointXYZI>::Ptr down(new pcl::PointCloud<pcl::PointXYZI>);
-               vg.filter(*down);
-               std::string laser_topic = "laser";
-                
-                if ((index_frame % 4) == 0)
-                {
-                     pub_cloud_to_ros(laser_topic, down, p_frame->time_frame_end);
-                }
-
-               if (pub_scantext_data)
-               {
-                    SE3 pose_of_lo_ = SE3(current_state->rotation, current_state->translation);
-                    if ((index_frame % 10) == 0)
-                    {
-                         pub_scantext_data(points_world, pose_of_lo_, p_frame->time_frame_end);
-                    }
-                }
-          }
+          publishFrameProducts(SE3(current_state->rotation, current_state->translation), p_frame->time_frame_end);
           points_world->clear();
+     }
+
+     void lidarodom_m::publishFrameProducts(const SE3 &pose_of_lo, double stamp)
+     {
+          pcl::PassThrough<pcl::PointXYZI> pass;
+          pass.setInputCloud(points_world);
+          pass.setFilterFieldName("z");
+          pass.setFilterLimits(cloud_pub_options.min_z_filter, cloud_pub_options.max_z_filter);
+          pass.filter(*points_world);
+
+          if (cloud_pub_options.enable_body_filter)
+          {
+               const Eigen::Matrix3d body_to_world_rot = pose_of_lo.rotationMatrix();
+               const Eigen::Matrix3f world_to_body_rot = body_to_world_rot.transpose().cast<float>();
+               const Eigen::Vector3f world_to_body_trans =
+                   (-body_to_world_rot.transpose() * pose_of_lo.translation()).cast<float>();
+
+               Eigen::Affine3f world_to_body = Eigen::Affine3f::Identity();
+               world_to_body.linear() = world_to_body_rot;
+               world_to_body.translation() = world_to_body_trans;
+
+               pcl::CropBox<pcl::PointXYZI> crop;
+               crop.setInputCloud(points_world);
+               crop.setTransform(world_to_body);
+               crop.setMin(Eigen::Vector4f(cloud_pub_options.body_filter_x_min,
+                                           cloud_pub_options.body_filter_y_min,
+                                           cloud_pub_options.body_filter_z_min,
+                                           1.0f));
+               crop.setMax(Eigen::Vector4f(cloud_pub_options.body_filter_x_max,
+                                           cloud_pub_options.body_filter_y_max,
+                                           cloud_pub_options.body_filter_z_max,
+                                           1.0f));
+               crop.setNegative(true);
+               crop.filter(*points_world);
+          }
+
+          CloudPtr down(new pcl::PointCloud<pcl::PointXYZI>);
+          pcl::VoxelGrid<pcl::PointXYZI> vg;
+          vg.setInputCloud(points_world);
+          vg.setLeafSize(cloud_pub_options.space_down_sample,
+                         cloud_pub_options.space_down_sample,
+                         cloud_pub_options.space_down_sample);
+          vg.filter(*down);
+
+          if (pub_cloud_to_ros)
+          {
+               std::string laser_topic = "laser";
+               pub_cloud_to_ros(laser_topic, down, stamp);
+          }
+
+          if (pub_scantext_data)
+          {
+               pub_scantext_data(points_world, pose_of_lo, stamp);
+          }
      }
 
      void lidarodom_m::lasermap_fov_segment()

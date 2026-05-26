@@ -64,6 +64,7 @@ namespace zjloc
 
           double thres_orientation_norm;
           double thres_translation_norm;
+          int fov_segment_stride = 2;
 
           double satu_acc;
           double satu_gyro;
@@ -136,6 +137,8 @@ namespace zjloc
           void lasermap_fov_segment();
 
           void map_incremental(cloudFrame *p_frame, cloudFrame *p_frame_aux,int min_num_points = 0);
+
+          void publishFrameProducts(const SE3 &pose_of_lo, double stamp);
 
           void addPointToMap(voxelHashMap &map, const Eigen::Vector3d &point,
                              const double &intensity, double voxel_size,

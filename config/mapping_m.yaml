@@ -83,6 +83,7 @@ odometry:
 
   thres_translation_norm: 0.01 # m
   thres_orientation_norm: 0.1 # deg
+  fov_segment_stride: 2 # 降低地图裁剪频率，减轻后台维护开销
 
   satu_acc: 19.5 # the saturation value of IMU's acceleration. not related to the units
   satu_gyro: 16 # the saturation value of IMU's angular velocity. not related to the units
@@ -100,7 +101,7 @@ cloud_pub:
   body_filter_z_max: 0.3
 
 mapping_module:
-  enable_mapping: false
+  enable_mapping: false # false 时直接关闭 Scan Context 回调与后台 worker
   keyframe_dist_thresh: 1.0
   keyframe_angle_thresh: 0.8
   map_save_path: "./map_scantext.pcd"
