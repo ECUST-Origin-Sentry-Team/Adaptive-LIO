@@ -1262,10 +1262,6 @@ namespace zjloc
           {
                for (auto &point : p_frame_aux->point_surf)
                {
-                    if (update_map)
-                    {
-                         mmap->InsertPoint(point);
-                    }
                     auto &p = points_world->points.emplace_back();
                     p.x = point.point.x();
                     p.y = point.point.y();
