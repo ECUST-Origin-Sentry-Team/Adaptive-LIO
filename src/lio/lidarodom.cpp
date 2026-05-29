@@ -95,6 +95,12 @@ namespace zjloc
                 OPTION_CLAUSE(odometry_node, options_, thres_orientation_norm, double);
                 OPTION_CLAUSE(odometry_node, options_, thres_translation_norm, double);
                 OPTION_CLAUSE(odometry_node, options_, fov_segment_stride, int);
+                OPTION_CLAUSE(odometry_node, options_, sparse_scene_distance_thresh, double);
+                OPTION_CLAUSE(odometry_node, options_, sparse_nearest_neighbor_ratio, double);
+                OPTION_CLAUSE(odometry_node, options_, sparse_min_planarity, double);
+                OPTION_CLAUSE(odometry_node, options_, map_update_translation_trigger, double);
+                OPTION_CLAUSE(odometry_node, options_, map_update_rotation_trigger, double);
+                OPTION_CLAUSE(odometry_node, options_, map_update_max_skip_frames, int);
                 OPTION_CLAUSE(odometry_node, options_, satu_acc, double);
                 OPTION_CLAUSE(odometry_node, options_, satu_gyro, double);
           }
@@ -435,18 +441,44 @@ namespace zjloc
                                               "optimize");
           }
 
-          bool add_points = true;
-          if (add_points)
+          const Eigen::Vector3d current_translation = current_state->translation;
+          const Eigen::Quaterniond current_rotation(current_state->rotation);
+          bool should_update_map = true;
+          if (index_frame > options_.init_num_frames && has_last_map_maintenance_pose_)
+          {
+               const double translation_delta = (current_translation - last_map_maintenance_translation_).norm();
+               const double rotation_delta = AngularDistance(current_rotation, last_map_maintenance_rotation_);
+               const bool moved_enough =
+                   translation_delta >= options_.map_update_translation_trigger ||
+                   rotation_delta >= options_.map_update_rotation_trigger;
+               const bool skipped_too_long =
+                   options_.map_update_max_skip_frames > 0 &&
+                   (index_frame - last_map_maintenance_frame_) >= options_.map_update_max_skip_frames;
+               should_update_map = moved_enough || skipped_too_long;
+          }
+
+          if (should_update_map)
           { //   update map here
+                zjloc::common::Timer::Evaluate([&]()
+                                               { map_incremental(p_frame, p_frame_aux, true); },
+                                               "map update");
+                has_last_map_maintenance_pose_ = true;
+                last_map_maintenance_translation_ = current_translation;
+                last_map_maintenance_rotation_ = current_rotation;
+                last_map_maintenance_frame_ = index_frame;
+          }
+          else
+          {
                zjloc::common::Timer::Evaluate([&]()
-                                              { map_incremental(p_frame, p_frame_aux); },
+                                              { map_incremental(p_frame, p_frame_aux, false); },
                                               "map update");
           }
 
-          if (options_.fov_segment_stride <= 1 || (index_frame % options_.fov_segment_stride) == 0)
+          const bool stride_hit = options_.fov_segment_stride <= 1 || (index_frame % options_.fov_segment_stride) == 0;
+          if (should_update_map && (stride_hit || index_frame <= options_.init_num_frames))
           {
-               zjloc::common::Timer::Evaluate([&]()
-                                              { lasermap_fov_segment(); },
+                zjloc::common::Timer::Evaluate([&]()
+                                               { lasermap_fov_segment(); },
                                               "fov segment");
           }
      }
@@ -811,10 +843,19 @@ namespace zjloc
                auto &keypoint = keypoints[k];
                auto &raw_point = keypoint.raw_point;
 
-               NeighborPoints vector_neighbors;
-               mmap->RadiusSearchInPlace(keypoint.point, vector_neighbors, raw_point.norm(),
-                                         options_.max_number_neighbors,
-                                         kThresholdCapacity);
+                const bool sparse_far_point = raw_point.norm() >= options_.sparse_scene_distance_thresh;
+                const int required_neighbors = sparse_far_point
+                                                   ? std::max(options_.num_closest_neighbors + 2,
+                                                              std::max(8, options_.min_number_neighbors / 2))
+                                                   : options_.min_number_neighbors;
+                const int max_neighbors = sparse_far_point
+                                              ? std::max(required_neighbors, std::max(10, options_.max_number_neighbors / 2))
+                                              : options_.max_number_neighbors;
+
+                NeighborPoints vector_neighbors;
+                mmap->RadiusSearchInPlace(keypoint.point, vector_neighbors, raw_point.norm(),
+                                          max_neighbors,
+                                          kThresholdCapacity);
 
                // std::vector<voxel> voxels;
                // auto vector_neighbors = searchNeighbors(voxel_map, keypoint.point,
@@ -826,21 +867,34 @@ namespace zjloc
                //                                             ? nullptr
                //                                             : &voxels);
 
-               if (vector_neighbors.size() < options_.min_number_neighbors)
-                    continue;
+                if (vector_neighbors.size() < required_neighbors)
+                     continue;
+
+                const double nearest_neighbor_limit =
+                    options_.max_dist_to_plane_icp * options_.sparse_nearest_neighbor_ratio;
+                if ((vector_neighbors[0] - keypoint.point).squaredNorm() >
+                    nearest_neighbor_limit * nearest_neighbor_limit)
+                {
+                     continue;
+                }
 
                double weight;
 
-               Eigen::Vector3d location = TIL_ * raw_point;
+                Eigen::Vector3d location = TIL_ * raw_point;
 
-               auto neighborhood = estimatePointNeighborhood(vector_neighbors, location /*raw_point*/, weight);
+                auto neighborhood = estimatePointNeighborhood(vector_neighbors, location /*raw_point*/, weight);
 
-               weight = lambda_weight * weight + lambda_neighborhood *
-                                                     std::exp(-(vector_neighbors[0] -
-                                                                keypoint.point)
-                                                                   .norm() /
-                                                              (kMaxPointToPlane *
-                                                               options_.min_number_neighbors));
+                if (neighborhood.a2D < options_.sparse_min_planarity)
+                {
+                     continue;
+                }
+
+                weight = lambda_weight * weight + lambda_neighborhood *
+                                                      std::exp(-(vector_neighbors[0] -
+                                                                 keypoint.point)
+                                                                    .norm() /
+                                                               (kMaxPointToPlane *
+                                                                required_neighbors));
 
                double point_to_plane_dist;
                std::set<voxel> neighbor_voxels;
@@ -934,34 +988,52 @@ namespace zjloc
 
           for (int k = 0; k < num; k++)
           {
-               auto &keypoint = keypoints[k];
-               auto &raw_point = keypoint.raw_point;
+                auto &keypoint = keypoints[k];
+                auto &raw_point = keypoint.raw_point;
 
-               std::vector<voxel> voxels;
-               auto vector_neighbors = searchNeighbors(voxel_map, keypoint.point,
-                                                       nb_voxels_visited,
-                                                       options_.size_voxel_map,
-                                                       options_.max_number_neighbors,
-                                                       kThresholdCapacity,
-                                                       options_.estimate_normal_from_neighborhood
-                                                           ? nullptr
-                                                           : &voxels);
+                const bool sparse_far_point = raw_point.norm() >= options_.sparse_scene_distance_thresh;
+                const int required_neighbors = sparse_far_point
+                                                   ? std::max(options_.num_closest_neighbors + 2,
+                                                              std::max(8, options_.min_number_neighbors / 2))
+                                                   : options_.min_number_neighbors;
+                const int max_neighbors = sparse_far_point
+                                              ? std::max(required_neighbors, std::max(10, options_.max_number_neighbors / 2))
+                                              : options_.max_number_neighbors;
+                const double nearest_neighbor_limit =
+                    options_.max_dist_to_plane_icp * options_.sparse_nearest_neighbor_ratio;
+                const double max_neighbor_sq_distance = nearest_neighbor_limit * nearest_neighbor_limit;
 
-               if (vector_neighbors.size() < options_.min_number_neighbors)
-                    continue;
+                std::vector<voxel> voxels;
+                auto vector_neighbors = searchNeighbors(voxel_map, keypoint.point,
+                                                        nb_voxels_visited,
+                                                        options_.size_voxel_map,
+                                                        max_neighbors,
+                                                        kThresholdCapacity,
+                                                        options_.estimate_normal_from_neighborhood
+                                                            ? nullptr
+                                                            : &voxels,
+                                                        max_neighbor_sq_distance);
 
-               double weight;
+                if (vector_neighbors.size() < required_neighbors)
+                     continue;
 
-               Eigen::Vector3d location = TIL_ * raw_point;
+                double weight;
 
-               auto neighborhood = estimatePointNeighborhood(vector_neighbors, location /*raw_point*/, weight);
+                Eigen::Vector3d location = TIL_ * raw_point;
 
-               weight = lambda_weight * weight + lambda_neighborhood *
-                                                     std::exp(-(vector_neighbors[0] -
-                                                                keypoint.point)
-                                                                   .norm() /
-                                                              (kMaxPointToPlane *
-                                                               options_.min_number_neighbors));
+                auto neighborhood = estimatePointNeighborhood(vector_neighbors, location /*raw_point*/, weight);
+
+                if (neighborhood.a2D < options_.sparse_min_planarity)
+                {
+                     continue;
+                }
+
+                weight = lambda_weight * weight + lambda_neighborhood *
+                                                      std::exp(-(vector_neighbors[0] -
+                                                                 keypoint.point)
+                                                                    .norm() /
+                                                               (kMaxPointToPlane *
+                                                                required_neighbors));
 
                double point_to_plane_dist;
                std::set<voxel> neighbor_voxels;
@@ -1034,7 +1106,7 @@ namespace zjloc
      lidarodom_m::searchNeighbors(const voxelHashMap &map, const Eigen::Vector3d &point,
                                   int nb_voxels_visited, double size_voxel_map,
                                   int max_num_neighbors, int threshold_voxel_capacity,
-                                  std::vector<voxel> *voxels)
+                                  std::vector<voxel> *voxels, double max_sq_distance)
      {
 
           if (voxels != nullptr)
@@ -1066,7 +1138,11 @@ namespace zjloc
                               for (int i(0); i < voxel_block.NumPoints(); ++i)
                               {
                                    auto &neighbor = voxel_block.points[i];
-                                    double distance = (neighbor - point).squaredNorm();
+                                   double distance = (neighbor - point).squaredNorm();
+                                   if (max_sq_distance > 0.0 && distance > max_sq_distance)
+                                   {
+                                        continue;
+                                   }
                                    if (priority_queue.size() == max_num_neighbors)
                                    {
                                         if (distance < std::get<0>(priority_queue.top()))
@@ -1160,7 +1236,7 @@ namespace zjloc
           pcl_points->points.push_back(cloudTemp);
      }
 
-     void lidarodom_m::map_incremental(cloudFrame *p_frame, cloudFrame *p_frame_aux, int min_num_points)
+     void lidarodom_m::map_incremental(cloudFrame *p_frame, cloudFrame *p_frame_aux, bool update_map, int min_num_points)
      {
           //   only surf
           const size_t aux_point_count = p_frame_aux == nullptr ? 0 : p_frame_aux->point_surf.size();
@@ -1168,11 +1244,14 @@ namespace zjloc
               p_frame->point_surf.size() + aux_point_count);
           for (auto &point : p_frame->point_surf)
           {
-               addPointToMap(voxel_map, point.point, point.intensity,
-                             options_.size_voxel_map, options_.max_num_points_in_voxel,
-                             options_.min_distance_points, min_num_points, p_frame);
+               if (update_map)
+               {
+                    addPointToMap(voxel_map, point.point, point.intensity,
+                                  options_.size_voxel_map, options_.max_num_points_in_voxel,
+                                  options_.min_distance_points, min_num_points, p_frame);
 
-               mmap->InsertPoint(point);
+                    mmap->InsertPoint(point);
+               }
                auto &p = points_world->points.emplace_back();
                p.x = point.point.x();
                p.y = point.point.y();
@@ -1183,6 +1262,10 @@ namespace zjloc
           {
                for (auto &point : p_frame_aux->point_surf)
                {
+                    if (update_map)
+                    {
+                         mmap->InsertPoint(point);
+                    }
                     auto &p = points_world->points.emplace_back();
                     p.x = point.point.x();
                     p.y = point.point.y();

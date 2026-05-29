@@ -12,6 +12,7 @@
 
 // ros2 lib
 #include "rclcpp/rclcpp.hpp"
+#include "rclcpp/executors/multi_threaded_executor.hpp"
 #include "sensor_msgs/msg/imu.hpp"
 #include "sensor_msgs/msg/point_cloud2.hpp"
 #include "nav_msgs/msg/odometry.hpp"
@@ -887,6 +888,49 @@ int main(int argc, char **argv)
 
     auto pub_scan = node->create_publisher<sensor_msgs::msg::PointCloud2>(
         "/livox/scan", rclcpp::SensorDataQoS().keep_last(1));
+
+    struct ScanPublishTask
+    {
+        zjloc::CloudPtr cloud;
+        double time;
+    };
+
+    std::deque<ScanPublishTask> scan_publish_queue;
+    std::mutex scan_publish_queue_mutex;
+    std::condition_variable scan_publish_queue_cv;
+    bool stop_scan_publish_thread = false;
+    std::thread scan_publish_worker([&]()
+                                    {
+        while (true)
+        {
+            ScanPublishTask task;
+            {
+                std::unique_lock<std::mutex> lock(scan_publish_queue_mutex);
+                scan_publish_queue_cv.wait(lock, [&]() {
+                    return stop_scan_publish_thread || !scan_publish_queue.empty();
+                });
+
+                if (stop_scan_publish_thread && scan_publish_queue.empty())
+                {
+                    break;
+                }
+
+                task = std::move(scan_publish_queue.front());
+                scan_publish_queue.pop_front();
+            }
+
+            if (!task.cloud)
+            {
+                continue;
+            }
+
+            sensor_msgs::msg::PointCloud2 cloud_output;
+            pcl::toROSMsg(*task.cloud, cloud_output);
+            cloud_output.header.stamp = get_ros_time(task.time);
+            cloud_output.header.frame_id = "odom";
+            pub_scan->publish(cloud_output);
+        } });
+
     auto cloud_pub_func = std::function<bool(std::string & topic_name, zjloc::CloudPtr & cloud, double time)>(
         [&](std::string &topic_name, zjloc::CloudPtr &cloud, double time)
         {
@@ -895,12 +939,15 @@ int main(int argc, char **argv)
                 return true;
             }
 
-            sensor_msgs::msg::PointCloud2 cloud_output;
-            pcl::toROSMsg(*cloud, cloud_output);
-
-            cloud_output.header.stamp = get_ros_time(time);
-            cloud_output.header.frame_id = "odom";
-            pub_scan->publish(cloud_output);
+            {
+                std::lock_guard<std::mutex> lock(scan_publish_queue_mutex);
+                if (scan_publish_queue.size() >= 2)
+                {
+                    scan_publish_queue.pop_front();
+                }
+                scan_publish_queue.push_back({cloud, time});
+            }
+            scan_publish_queue_cv.notify_one();
             return true;
         }
 
@@ -1174,19 +1221,26 @@ int main(int argc, char **argv)
     std::string imu_topic = yaml_cfg["common"]["imu_topic"].as<std::string>();
     gnorm = yaml_cfg["common"]["gnorm"].as<double>();
 
+    auto sensor_callback_group = node->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+    rclcpp::SubscriptionOptions sensor_sub_options;
+    sensor_sub_options.callback_group = sensor_callback_group;
+
     // 创建订阅者
     std::shared_ptr<void> subLaserCloud =
         (convert->lidar_type_ == zjloc::CloudConvert2::LidarType::AVIA)
-            ? std::static_pointer_cast<void>(node->create_subscription<livox_ros_driver2::msg::CustomMsg>(laser_topic, 100, livox_pcl_cbk))
-            : std::static_pointer_cast<void>(node->create_subscription<sensor_msgs::msg::PointCloud2>(laser_topic, 100, standard_pcl_cbk));
+            ? std::static_pointer_cast<void>(node->create_subscription<livox_ros_driver2::msg::CustomMsg>(laser_topic, 100, livox_pcl_cbk, sensor_sub_options))
+            : std::static_pointer_cast<void>(node->create_subscription<sensor_msgs::msg::PointCloud2>(laser_topic, 100, standard_pcl_cbk, sensor_sub_options));
 
-    auto subAuxLaserCloud = node->create_subscription<livox_ros_driver2::msg::CustomMsg>(aux_laser_topic, 100, aux_livox_pcl_cbk);
+    auto subAuxLaserCloud = node->create_subscription<livox_ros_driver2::msg::CustomMsg>(aux_laser_topic, 100, aux_livox_pcl_cbk, sensor_sub_options);
 
-    auto sub_imu_ori = node->create_subscription<sensor_msgs::msg::Imu>(imu_topic, 500, imuHandler);
+    auto sub_imu_ori = node->create_subscription<sensor_msgs::msg::Imu>(imu_topic, 500, imuHandler, sensor_sub_options);
 
     std::thread measurement_process(&zjloc::lidarodom_m::run, lio);
-    
-    rclcpp::spin(node);
+
+    const size_t executor_threads = std::max<size_t>(2, std::min<size_t>(4, std::thread::hardware_concurrency()));
+    rclcpp::executors::MultiThreadedExecutor executor(rclcpp::ExecutorOptions(), executor_threads);
+    executor.add_node(node);
+    executor.spin();
 
     // Cleanup Scantext thread
     {
@@ -1197,7 +1251,18 @@ int main(int argc, char **argv)
     if (scantext_worker.joinable())
         scantext_worker.join();
 
-    rclcpp::shutdown();
+    {
+        std::lock_guard<std::mutex> lock(scan_publish_queue_mutex);
+        stop_scan_publish_thread = true;
+    }
+    scan_publish_queue_cv.notify_all();
+    if (scan_publish_worker.joinable())
+        scan_publish_worker.join();
+
+    if (rclcpp::ok())
+    {
+        rclcpp::shutdown();
+    }
 
     zjloc::common::Timer::PrintAll();
     zjloc::common::Timer::DumpIntoFile(DEBUG_FILE_DIR("log_time.txt"));
