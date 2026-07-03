@@ -9,6 +9,7 @@
 #include <ceres/local_parameterization.h>
 #include <ceres/rotation.h>
 #include <algorithm>
+#include <cmath>
 
 #include "common/math_utils.h"
 #include "common/cloudMap.hpp"
@@ -16,6 +17,36 @@
 
 namespace zjloc
 {
+
+     namespace
+     {
+          Eigen::Quaterniond NormalizeQuaternion(Eigen::Quaterniond q)
+          {
+               if (!std::isfinite(q.w()) || !std::isfinite(q.x()) ||
+                   !std::isfinite(q.y()) || !std::isfinite(q.z()) ||
+                   q.norm() < 1e-12)
+               {
+                    return Eigen::Quaterniond::Identity();
+               }
+               q.normalize();
+               return q;
+          }
+
+          Sophus::SO3d SafeSO3FromMatrix(const Eigen::Matrix3d &R)
+          {
+               // Sophus::SO3(Matrix3d) checks orthogonality very strictly.
+               // Some numerically valid matrices from gravity alignment can fail
+               // with ~1e-11 off-diagonal error. Going through a normalized
+               // quaternion projects the matrix back to SO(3) without changing
+               // the represented attitude in any meaningful way.
+               return Sophus::SO3d(NormalizeQuaternion(Eigen::Quaterniond(R)));
+          }
+
+          SE3 SafeSE3(const Eigen::Quaterniond &q, const Eigen::Vector3d &t)
+          {
+               return SE3(NormalizeQuaternion(q), t);
+          }
+     }
 
      lidarodom_m::lidarodom_m(/* args */)
      {
@@ -141,10 +172,10 @@ namespace zjloc
           Mat3d lidar_R_wrt_IMU = math::MatFromArray(ext_r);
           std::cout << yaml["mapping"]["extrinsic_R"] << std::endl;
           Eigen::Quaterniond q_IL(lidar_R_wrt_IMU);
-          q_IL.normalized();
-          lidar_R_wrt_IMU = q_IL;
+          q_IL = NormalizeQuaternion(q_IL);
+          lidar_R_wrt_IMU = q_IL.toRotationMatrix();
           // init TIL
-          TIL_ = SE3(q_IL, lidar_T_wrt_IMU);
+          TIL_ = SafeSE3(q_IL, lidar_T_wrt_IMU);
           R_imu_lidar = lidar_R_wrt_IMU;
           t_imu_lidar = lidar_T_wrt_IMU;
           std::cout << "RIL:\n"
@@ -236,7 +267,6 @@ namespace zjloc
                // Use the same mutex for writes to avoid data races under high-rate callbacks.
                std::lock_guard<std::mutex> lk(mtx_buf);
                if (is_aux)
-               // 副雷达
                {
                     aux_lidar_buffer_.push_back(std::move(msg));
                     aux_lidar_time_buffer_.push_back(data);
@@ -369,7 +399,7 @@ namespace zjloc
                                          "poseEstimate");
 
           //   观测
-          SE3 pose_of_lo_ = SE3(current_state->rotation, current_state->translation);
+          SE3 pose_of_lo_ = SafeSE3(current_state->rotation, current_state->translation);
 
           // std::cout << "obs: " << current_state->translation.transpose() << ", " << current_state->rotation.transpose() << std::endl;
           // SE3 pred_pose = eskf_.GetNominalSE3();
@@ -670,8 +700,8 @@ namespace zjloc
                     throw std::runtime_error("Error During Optimization");
                }
 
-               begin_quat.normalize();
-               end_quat.normalize();
+               begin_quat = NormalizeQuaternion(begin_quat);
+               end_quat = NormalizeQuaternion(end_quat);
 
                double diff_trans = 0, diff_rot = 0;
                diff_trans += (current_state->translation_begin - begin_t).norm();
@@ -1297,7 +1327,7 @@ namespace zjloc
                     p.intensity = point.intensity;
                }
           }
-          publishFrameProducts(SE3(current_state->rotation, current_state->translation), p_frame->time_frame_end);
+          publishFrameProducts(SafeSE3(current_state->rotation, current_state->translation), p_frame->time_frame_end);
           points_world->clear();
      }
 
@@ -1454,7 +1484,7 @@ namespace zjloc
                          // 噪声由初始化器估计
                          eskf_.SetInitialConditions(options, imu_init_.GetInitBg(), imu_init_.GetInitBa(), imu_init_.GetGravity());
                          //   需要设置 p v r
-                         eskf_.SetX(SE3(all_state_frame[all_state_frame.size() - 1]->rotation, all_state_frame[all_state_frame.size() - 1]->translation), cache_vel);
+                         eskf_.SetX(SafeSE3(all_state_frame[all_state_frame.size() - 1]->rotation, all_state_frame[all_state_frame.size() - 1]->translation), cache_vel);
                          Predict();
                          std::cout << ANSI_COLOR_YELLOW_BOLD << "imu is saturation,change to const velocity." << ANSI_COLOR_RESET << std::endl;
                          return true;
@@ -1468,9 +1498,9 @@ namespace zjloc
      {
           if (index_frame <= 2) //   only first frame
           {
-               current_state->rotation_begin = Eigen::Quaterniond(imu_states_.front().R_.matrix());
+               current_state->rotation_begin = NormalizeQuaternion(imu_states_.front().R_.unit_quaternion());
                current_state->translation_begin = imu_states_.front().p_;
-               current_state->rotation = Eigen::Quaterniond(imu_states_.back().R_.matrix());
+               current_state->rotation = NormalizeQuaternion(imu_states_.back().R_.unit_quaternion());
                current_state->translation = imu_states_.back().p_;
           }
           else
@@ -1482,9 +1512,9 @@ namespace zjloc
                //   TODO: add const velocity when imu is saturation
                if (saturationCheck())
                {
-                    current_state->rotation = (all_state_frame[all_state_frame.size() - 1]->rotation) *
+                    current_state->rotation = NormalizeQuaternion((all_state_frame[all_state_frame.size() - 1]->rotation) *
                                               (all_state_frame[all_state_frame.size() - 2]->rotation).inverse() *
-                                              (all_state_frame[all_state_frame.size() - 1]->rotation);
+                                              (all_state_frame[all_state_frame.size() - 1]->rotation));
                     current_state->translation = all_state_frame[all_state_frame.size() - 1]->translation +
                                                  (all_state_frame[all_state_frame.size() - 1]->rotation) *
                                                      (all_state_frame[all_state_frame.size() - 2]->rotation).inverse() *
@@ -1494,7 +1524,7 @@ namespace zjloc
                else
                {
                     //   use imu predict
-                    current_state->rotation = Eigen::Quaterniond(imu_states_.back().R_.matrix());
+                    current_state->rotation = NormalizeQuaternion(imu_states_.back().R_.unit_quaternion());
                     current_state->translation = imu_states_.back().p_;
                }
           }
@@ -1705,7 +1735,7 @@ namespace zjloc
                     last_imu_ = nullptr;
                }
                imu_need_init_ = false;
-               RIG_ = SO3(g2R(imu_init_.GetMeanAcc()));
+               RIG_ = SafeSO3FromMatrix(g2R(imu_init_.GetMeanAcc()));
 
                std::cout << ANSI_COLOR_GREEN_BOLD << "IMU初始化成功" << ANSI_COLOR_RESET << std::endl;
           }

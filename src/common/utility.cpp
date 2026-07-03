@@ -1,12 +1,13 @@
 #include "utility.h"
 
 #include <algorithm>
+#include <cmath>
 
 double AngularDistance(const Eigen::Matrix3d &rota, const Eigen::Matrix3d &rotb)
 {
-     double norm = ((rota * rotb.transpose()).trace() - 1) / 2;
-     norm = std::acos(norm) * 180 / M_PI;
-     return norm;
+     double cos_angle = ((rota * rotb.transpose()).trace() - 1) / 2;
+     cos_angle = std::clamp(cos_angle, -1.0, 1.0);
+     return std::acos(cos_angle) * 180 / M_PI;
 }
 
 double AngularDistance(const Eigen::Vector3d &qa, const Eigen::Vector3d &qb)
@@ -18,19 +19,28 @@ double AngularDistance(const Eigen::Vector3d &qa, const Eigen::Vector3d &qb)
      Eigen::Matrix3d rota = q_a.toRotationMatrix();
      Eigen::Matrix3d rotb = q_b.toRotationMatrix();
 
-     double norm = ((rota * rotb.transpose()).trace() - 1) / 2;
-     norm = std::acos(norm) * 180 / M_PI;
-     return norm;
+     double cos_angle = ((rota * rotb.transpose()).trace() - 1) / 2;
+     cos_angle = std::clamp(cos_angle, -1.0, 1.0);
+     return std::acos(cos_angle) * 180 / M_PI;
 }
 
 double AngularDistance(const Eigen::Quaterniond &q_a, const Eigen::Quaterniond &q_b)
 {
-     Eigen::Matrix3d rota = q_a.toRotationMatrix();
-     Eigen::Matrix3d rotb = q_b.toRotationMatrix();
+     Eigen::Quaterniond qa = q_a;
+     Eigen::Quaterniond qb = q_b;
+     if (qa.norm() < 1e-12 || qb.norm() < 1e-12)
+     {
+          return 0.0;
+     }
+     qa.normalize();
+     qb.normalize();
 
-     double norm = ((rota * rotb.transpose()).trace() - 1) / 2;
-     norm = std::acos(norm) * 180 / M_PI;
-     return norm;
+     Eigen::Matrix3d rota = qa.toRotationMatrix();
+     Eigen::Matrix3d rotb = qb.toRotationMatrix();
+
+     double cos_angle = ((rota * rotb.transpose()).trace() - 1) / 2;
+     cos_angle = std::clamp(cos_angle, -1.0, 1.0);
+     return std::acos(cos_angle) * 180 / M_PI;
 }
 
 void sub_sample_frame(std::vector<point3D> &frame, double size_voxel)
