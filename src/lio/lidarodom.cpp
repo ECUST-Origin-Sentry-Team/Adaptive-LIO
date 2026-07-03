@@ -8,6 +8,7 @@
 #include <ceres/ceres.h>
 #include <ceres/local_parameterization.h>
 #include <ceres/rotation.h>
+#include <algorithm>
 
 #include "common/math_utils.h"
 #include "common/cloudMap.hpp"
@@ -230,45 +231,46 @@ namespace zjloc
 
      void lidarodom_m::pushData(std::vector<point3D> &&msg, std::pair<double, double> data, bool is_aux)
      {
-          if (is_aux)
-          // 副雷达
           {
-               std::lock_guard<std::mutex> lk(mtx_aux_buf);
-               aux_lidar_buffer_.push_back(std::move(msg));
-               aux_lidar_time_buffer_.push_back(data);
-               cond.notify_one();
-          }
-          else
-          {
-               if (data.first < last_timestamp_lidar_)
+               // getMeasureMents() reads all lidar/imu queues while holding mtx_buf.
+               // Use the same mutex for writes to avoid data races under high-rate callbacks.
+               std::lock_guard<std::mutex> lk(mtx_buf);
+               if (is_aux)
+               // 副雷达
                {
-                    LOG(ERROR) << "lidar loop back, clear buffer";
-                    lidar_buffer_.clear();
-                    time_buffer_.clear();
+                    aux_lidar_buffer_.push_back(std::move(msg));
+                    aux_lidar_time_buffer_.push_back(data);
                }
+               else
+               {
+                    if (data.first < last_timestamp_lidar_)
+                    {
+                         LOG(ERROR) << "lidar loop back, clear buffer";
+                         lidar_buffer_.clear();
+                         time_buffer_.clear();
+                    }
 
-               mtx_buf.lock();
-               lidar_buffer_.push_back(std::move(msg));
-               time_buffer_.push_back(data);
-               last_timestamp_lidar_ = data.first;
-               mtx_buf.unlock();
-               cond.notify_one();
+                    lidar_buffer_.push_back(std::move(msg));
+                    time_buffer_.push_back(data);
+                    last_timestamp_lidar_ = data.first;
+               }
           }
+          cond.notify_one();
      }
      void lidarodom_m::pushData(IMUPtr imu)
      {
-          double timestamp = imu->timestamp_;
-          if (timestamp < last_timestamp_imu_)
+          const double timestamp = imu->timestamp_;
           {
-               LOG(WARNING) << "imu loop back, clear buffer";
-               imu_buffer_.clear();
+               std::lock_guard<std::mutex> lk(mtx_buf);
+               if (timestamp < last_timestamp_imu_)
+               {
+                    LOG(WARNING) << "imu loop back, clear buffer";
+                    imu_buffer_.clear();
+               }
+
+               last_timestamp_imu_ = timestamp;
+               imu_buffer_.emplace_back(imu);
           }
-
-          last_timestamp_imu_ = timestamp;
-
-          mtx_buf.lock();
-          imu_buffer_.emplace_back(imu);
-          mtx_buf.unlock();
           cond.notify_one();
      }
 
@@ -521,8 +523,6 @@ namespace zjloc
           thread_local std::mt19937_64 g;
           std::shuffle(surf_keypoints.begin(), surf_keypoints.end(), g);
 
-          size_t num_size = p_frame->point_surf.size();
-
           auto transformKeypoints = [&](std::vector<point3D> &point_frame)
           {
                Eigen::Matrix3d R;
@@ -720,7 +720,7 @@ namespace zjloc
           transformKeypoints(p_frame->point_surf);
      }
 
-     double lidarodom_m::checkLocalizability(std::vector<Eigen::Vector3d> planeNormals)
+     double lidarodom_m::checkLocalizability(const std::vector<Eigen::Vector3d> &planeNormals)
      {
           //   使用参与计算的法向量分布，进行退化检测，若全是平面场景，则z轴的奇异值会特别小；一般使用小于3/4即可
           {
@@ -897,7 +897,6 @@ namespace zjloc
                                                                 required_neighbors));
 
                double point_to_plane_dist;
-               std::set<voxel> neighbor_voxels;
                for (int i(0); i < options_.num_closest_neighbors; ++i)
                {
                     point_to_plane_dist = std::abs((keypoint.point - vector_neighbors[i]).transpose() * neighborhood.normal);
@@ -911,8 +910,6 @@ namespace zjloc
                          norm_vector.normalize();
 
                          normals.push_back(norm_vector); //   record normal
-
-                         double norm_offset = -norm_vector.dot(vector_neighbors[i]);
 
                          switch (options_.icpmodel)
                          {
@@ -985,13 +982,15 @@ namespace zjloc
 
           size_t num = keypoints.size();
           int num_residuals = 0;
+          const double sparse_scene_distance_thresh_sq =
+              options_.sparse_scene_distance_thresh * options_.sparse_scene_distance_thresh;
 
           for (int k = 0; k < num; k++)
           {
                 auto &keypoint = keypoints[k];
                 auto &raw_point = keypoint.raw_point;
 
-                const bool sparse_far_point = raw_point.norm() >= options_.sparse_scene_distance_thresh;
+                const bool sparse_far_point = raw_point.squaredNorm() >= sparse_scene_distance_thresh_sq;
                 const int required_neighbors = sparse_far_point
                                                    ? std::max(options_.num_closest_neighbors + 2,
                                                               std::max(8, options_.min_number_neighbors / 2))
@@ -1036,7 +1035,6 @@ namespace zjloc
                                                                 required_neighbors));
 
                double point_to_plane_dist;
-               std::set<voxel> neighbor_voxels;
                for (int i(0); i < options_.num_closest_neighbors; ++i)
                {
                     point_to_plane_dist = std::abs((keypoint.point - vector_neighbors[i]).transpose() * neighborhood.normal);
@@ -1050,8 +1048,6 @@ namespace zjloc
                          norm_vector.normalize();
 
                          normals.push_back(norm_vector); //   record normal
-
-                         double norm_offset = -norm_vector.dot(vector_neighbors[i]);
 
                          switch (options_.icpmodel)
                          {
@@ -1109,14 +1105,26 @@ namespace zjloc
                                   std::vector<voxel> *voxels, double max_sq_distance)
      {
 
-          if (voxels != nullptr)
-               voxels->reserve(max_num_neighbors);
+          if (max_num_neighbors <= 0)
+          {
+               if (voxels != nullptr)
+                    voxels->clear();
+               return {};
+          }
 
           short kx = static_cast<short>(point[0] / size_voxel_map);
           short ky = static_cast<short>(point[1] / size_voxel_map);
           short kz = static_cast<short>(point[2] / size_voxel_map);
 
-          priority_queue_t priority_queue;
+          // Collect all valid candidates first, then select KNN with nth_element.
+          // This avoids per-candidate heap maintenance while preserving exact KNN semantics.
+          thread_local std::vector<pair_distance_t> candidates;
+          candidates.clear();
+          const size_t min_candidate_capacity = static_cast<size_t>(max_num_neighbors) * 2;
+          if (candidates.capacity() < min_candidate_capacity)
+          {
+               candidates.reserve(min_candidate_capacity);
+          }
 
           voxel voxel_temp(kx, ky, kz);
           for (short kxx = kx - nb_voxels_visited; kxx < kx + nb_voxels_visited + 1; ++kxx)
@@ -1130,47 +1138,64 @@ namespace zjloc
                          voxel_temp.z = kzz;
 
                          auto search = map.find(voxel_temp);
-                         if (search != map.end())
+                         if (search == map.end())
                          {
-                              const auto &voxel_block = search.value();
-                              if (voxel_block.NumPoints() < threshold_voxel_capacity)
-                                   continue;
-                              for (int i(0); i < voxel_block.NumPoints(); ++i)
+                              continue;
+                         }
+
+                         const auto &voxel_block = search.value();
+                         if (voxel_block.NumPoints() < threshold_voxel_capacity)
+                         {
+                              continue;
+                         }
+
+                         for (int i(0); i < voxel_block.NumPoints(); ++i)
+                         {
+                              const auto &neighbor = voxel_block.points[i];
+                              const double distance = (neighbor - point).squaredNorm();
+                              if (max_sq_distance > 0.0 && distance > max_sq_distance)
                               {
-                                   auto &neighbor = voxel_block.points[i];
-                                   double distance = (neighbor - point).squaredNorm();
-                                   if (max_sq_distance > 0.0 && distance > max_sq_distance)
-                                   {
-                                        continue;
-                                   }
-                                   if (priority_queue.size() == max_num_neighbors)
-                                   {
-                                        if (distance < std::get<0>(priority_queue.top()))
-                                        {
-                                             priority_queue.pop();
-                                             priority_queue.emplace(distance, neighbor, voxel_temp);
-                                        }
-                                   }
-                                   else
-                                        priority_queue.emplace(distance, neighbor, voxel_temp);
+                                   continue;
                               }
+                              candidates.emplace_back(distance, neighbor, voxel_temp);
                          }
                     }
                }
           }
 
-          auto size = priority_queue.size();
-          std::vector<Eigen::Vector3d, Eigen::aligned_allocator<Eigen::Vector3d>> closest_neighbors(size);
+          if (candidates.empty())
+          {
+               if (voxels != nullptr)
+                    voxels->clear();
+               return {};
+          }
+
+          const size_t keep_size = std::min<size_t>(candidates.size(), static_cast<size_t>(max_num_neighbors));
+          auto by_distance = [](const pair_distance_t &a, const pair_distance_t &b)
+          {
+               return std::get<0>(a) < std::get<0>(b);
+          };
+
+          if (candidates.size() > keep_size)
+          {
+               std::nth_element(candidates.begin(), candidates.begin() + keep_size, candidates.end(), by_distance);
+               candidates.resize(keep_size);
+          }
+          std::sort(candidates.begin(), candidates.end(), by_distance);
+
+          std::vector<Eigen::Vector3d, Eigen::aligned_allocator<Eigen::Vector3d>> closest_neighbors;
+          closest_neighbors.reserve(keep_size);
           if (voxels != nullptr)
           {
-               voxels->resize(size);
+               voxels->clear();
+               voxels->reserve(keep_size);
           }
-          for (auto i = 0; i < size; ++i)
+
+          for (const auto &candidate : candidates)
           {
-               closest_neighbors[size - 1 - i] = std::get<1>(priority_queue.top());
+               closest_neighbors.push_back(std::get<1>(candidate));
                if (voxels != nullptr)
-                    (*voxels)[size - 1 - i] = std::get<2>(priority_queue.top());
-               priority_queue.pop();
+                    voxels->push_back(std::get<2>(candidate));
           }
 
           return closest_neighbors;
@@ -1250,7 +1275,10 @@ namespace zjloc
                                   options_.size_voxel_map, options_.max_num_points_in_voxel,
                                   options_.min_distance_points, min_num_points, p_frame);
 
-                    mmap->InsertPoint(point);
+                    // The active residual path uses voxel_map/searchNeighbors().
+                    // Keep mmap allocated for optional addSurfCost() fallback, but do not
+                    // maintain it on the current path to avoid duplicate map insertion cost.
+                    // mmap->InsertPoint(point);
                }
                auto &p = points_world->points.emplace_back();
                p.x = point.point.x();
@@ -1354,13 +1382,18 @@ namespace zjloc
                voxel_map.erase(vox);
           }
 
-          mmap->RemoveElementsFarFromLocation(location, options_.max_distance);
+          // mmap is not queried by the active addSurfCostFactor() path. Avoid duplicate
+          // far-field pruning cost unless addSurfCost() is re-enabled.
+          // mmap->RemoveElementsFarFromLocation(location, options_.max_distance);
      }
 
      cloudFrame *lidarodom_m::buildFrame(std::vector<point3D> &const_surf, state *cur_state,
                                          double timestamp_begin, double timestamp_end)
      {
-          std::vector<point3D> frame_surf(const_surf);
+          // buildFrame consumes the input vector. Keeping a second const_surf copy is
+          // unnecessary on the current pipeline because point3D::raw_point already
+          // preserves the lidar-frame point used by the residuals.
+          std::vector<point3D> frame_surf = std::move(const_surf);
           if (index_frame <= 2)
           {
                for (auto &point_temp : frame_surf)
@@ -1377,7 +1410,8 @@ namespace zjloc
                               cur_state->rotation, cur_state->translation_begin, cur_state->translation,
                               R_imu_lidar, t_imu_lidar);
 
-          cloudFrame *p_frame = new cloudFrame(std::move(frame_surf), std::move(const_surf), cur_state);
+          std::vector<point3D> empty_const_surf;
+          cloudFrame *p_frame = new cloudFrame(std::move(frame_surf), std::move(empty_const_surf), cur_state);
 
           p_frame->time_frame_begin = timestamp_begin;
           p_frame->time_frame_end = timestamp_end;

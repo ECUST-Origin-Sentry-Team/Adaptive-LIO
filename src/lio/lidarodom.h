@@ -160,7 +160,7 @@ namespace zjloc
           void addPointToPcl(pcl::PointCloud<pcl::PointXYZI>::Ptr pcl_points,
                              const Eigen::Vector3d &point, const double &intensity);
 
-          double checkLocalizability(std::vector<Eigen::Vector3d> planeNormals);
+          double checkLocalizability(const std::vector<Eigen::Vector3d> &planeNormals);
 
           // search neighbors
           Neighborhood computeNeighborhoodDistribution(
