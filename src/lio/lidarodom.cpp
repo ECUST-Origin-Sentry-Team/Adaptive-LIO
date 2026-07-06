@@ -10,6 +10,7 @@
 #include <ceres/rotation.h>
 #include <algorithm>
 #include <cmath>
+#include <array>
 
 #include "common/math_utils.h"
 #include "common/cloudMap.hpp"
@@ -45,6 +46,23 @@ namespace zjloc
           SE3 SafeSE3(const Eigen::Quaterniond &q, const Eigen::Vector3d &t)
           {
                return SE3(NormalizeQuaternion(q), t);
+          }
+
+          Eigen::Matrix3d RpyToMatrixRad(double roll, double pitch, double yaw)
+          {
+               const Eigen::AngleAxisd Rx(roll, Eigen::Vector3d::UnitX());
+               const Eigen::AngleAxisd Ry(pitch, Eigen::Vector3d::UnitY());
+               const Eigen::AngleAxisd Rz(yaw, Eigen::Vector3d::UnitZ());
+               return (Rz * Ry * Rx).toRotationMatrix();
+          }
+
+          Eigen::Vector3d Vec3FromYaml(const YAML::Node &node, const Eigen::Vector3d &fallback)
+          {
+               if (!node || !node.IsSequence() || node.size() < 3)
+               {
+                    return fallback;
+               }
+               return Eigen::Vector3d(node[0].as<double>(), node[1].as<double>(), node[2].as<double>());
           }
      }
 
@@ -133,6 +151,9 @@ namespace zjloc
                 OPTION_CLAUSE(odometry_node, options_, map_update_translation_trigger, double);
                 OPTION_CLAUSE(odometry_node, options_, map_update_rotation_trigger, double);
                 OPTION_CLAUSE(odometry_node, options_, map_update_max_skip_frames, int);
+                OPTION_CLAUSE(odometry_node, options_, enable_aux_bundle_fusion, bool);
+                OPTION_CLAUSE(odometry_node, options_, aux_lidar_time_offset, double);
+                OPTION_CLAUSE(odometry_node, options_, aux_lidar_sync_margin, double);
                 OPTION_CLAUSE(odometry_node, options_, satu_acc, double);
                 OPTION_CLAUSE(odometry_node, options_, satu_gyro, double);
           }
@@ -161,9 +182,37 @@ namespace zjloc
 
           auto yaml = YAML::LoadFile(config_yaml_);
           delay_time_ = yaml["delay_time"].as<double>();
-          if (yaml["aux_lidar"] && yaml["aux_lidar"]["min_points_per_measurement"])
+          if (yaml["aux_lidar"])
           {
-               min_aux_points_ = yaml["aux_lidar"]["min_points_per_measurement"].as<size_t>();
+               auto aux_node = yaml["aux_lidar"];
+               if (aux_node["min_points_per_measurement"])
+               {
+                    min_aux_points_ = aux_node["min_points_per_measurement"].as<size_t>();
+               }
+               if (aux_node["enable_bundle_fusion"])
+               {
+                    options_.enable_aux_bundle_fusion = aux_node["enable_bundle_fusion"].as<bool>();
+               }
+               if (aux_node["time_offset"])
+               {
+                    options_.aux_lidar_time_offset = aux_node["time_offset"].as<double>();
+               }
+               if (aux_node["sync_margin"])
+               {
+                    options_.aux_lidar_sync_margin = aux_node["sync_margin"].as<double>();
+               }
+
+               t_main_aux_ = Vec3FromYaml(aux_node["extrinsic_xyz"], Eigen::Vector3d::Zero());
+               Eigen::Vector3d rpy_rad = Eigen::Vector3d::Zero();
+               if (aux_node["extrinsic_rpy_deg"])
+               {
+                    rpy_rad = Vec3FromYaml(aux_node["extrinsic_rpy_deg"], Eigen::Vector3d::Zero()) * M_PI / 180.0;
+               }
+               else if (aux_node["extrinsic_rpy"])
+               {
+                    rpy_rad = Vec3FromYaml(aux_node["extrinsic_rpy"], Eigen::Vector3d::Zero());
+               }
+               R_main_aux_ = RpyToMatrixRad(rpy_rad.x(), rpy_rad.y(), rpy_rad.z());
           }
           // lidar和IMU外参
           std::vector<double> ext_t = yaml["mapping"]["extrinsic_T"].as<std::vector<double>>();
@@ -181,6 +230,10 @@ namespace zjloc
           std::cout << "RIL:\n"
                     << R_imu_lidar << std::endl;
           std::cout << "tIL:" << t_imu_lidar.transpose() << std::endl;
+          std::cout << "aux bundle fusion: " << (options_.enable_aux_bundle_fusion ? "enabled" : "disabled")
+                    << ", aux_time_offset=" << options_.aux_lidar_time_offset
+                    << ", aux_sync_margin=" << options_.aux_lidar_sync_margin << std::endl;
+          std::cout << "T_main_aux R:\n" << R_main_aux_ << "\nt:" << t_main_aux_.transpose() << std::endl;
 
           auto node = GetNode(config_yaml_);
           mapOptions m_options_;
@@ -375,8 +428,32 @@ namespace zjloc
           std::vector<point3D> const_surf = std::move(meas.lidar_);
           std::vector<point3D> const_surf_aux = std::move(meas.aux_lidar_);
 
-          cloudFrame *p_frame;
+          cloudFrame *p_frame = nullptr;
           cloudFrame *p_frame_aux = nullptr;
+
+          if (options_.enable_aux_bundle_fusion && !const_surf_aux.empty())
+          {
+               const double frame_dt = std::max(1e-6, meas.lidar_end_time_ - meas.lidar_begin_time_);
+               const_surf.reserve(const_surf.size() + const_surf_aux.size());
+               for (auto &aux_point : const_surf_aux)
+               {
+                    // Bundle fusion convention:
+                    //   p_main = R_main_aux_ * p_aux + t_main_aux_
+                    // If the Livox driver already publishes both topics in the same
+                    // compensated frame, keep this transform as identity in YAML.
+                    const Eigen::Vector3d p_main = R_main_aux_ * aux_point.raw_point + t_main_aux_;
+                    aux_point.raw_point = p_main;
+                    aux_point.point = p_main;
+                    aux_point.lid = 1;
+
+                    aux_point.relative_time = aux_point.timestamp - meas.lidar_begin_time_;
+                    aux_point.timespan = frame_dt;
+                    aux_point.alpha_time = std::clamp(aux_point.relative_time / frame_dt, 0.0, 1.0);
+
+                    const_surf.emplace_back(std::move(aux_point));
+               }
+               std::vector<point3D>().swap(const_surf_aux);
+          }
 
           zjloc::common::Timer::Evaluate([&]()
                                          { p_frame = buildFrame(const_surf, current_state,
@@ -384,7 +461,7 @@ namespace zjloc
                                                                 meas.lidar_end_time_); },
                                          "build frame");
 
-          if (!const_surf_aux.empty())
+          if (!options_.enable_aux_bundle_fusion && !const_surf_aux.empty())
           {
                zjloc::common::Timer::Evaluate([&]()
                                               { p_frame_aux = buildFrame(const_surf_aux, current_state,
@@ -1572,21 +1649,24 @@ namespace zjloc
                }
 
                // IMU 消耗完毕后，必须保证还有未来 IMU，否则数组越界
-                if (!imu_buffer_.empty())
-                {
-                     double t_begin = meas.lidar_begin_time_ - 0.01;
-                     double t_end = meas.lidar_end_time_ + 0.01;
-                     // std::cout << "end imu" << std::endl;
-                     while (!aux_lidar_buffer_.empty())
-                     {
+               if (!imu_buffer_.empty())
+               {
+                    const double crop_begin = meas.lidar_begin_time_;
+                    const double crop_end = meas.lidar_end_time_;
+                    const double sync_margin = std::max(0.0, options_.aux_lidar_sync_margin);
+                    const double query_begin = crop_begin - sync_margin;
+                    const double query_end = crop_end + sync_margin;
+                    const double aux_offset = options_.aux_lidar_time_offset;
+
+                    meas.aux_lidar_.clear();
+                    meas.aux_lidar_.reserve(13000);
+
+                    while (!aux_lidar_buffer_.empty())
+                    {
                          auto &aux_time = aux_lidar_time_buffer_.front();
                          auto &aux = aux_lidar_buffer_.front();
 
-                         double start_time = aux_time.first;
-                         double end_time = aux_time.first + aux_time.second;
-
-                         // 1. aux 整帧在窗口之前 → 丢弃整帧
-                         if (end_time < t_begin)
+                         if (aux.empty())
                          {
                               aux_lidar_buffer_.pop_front();
                               aux_lidar_time_buffer_.pop_front();
@@ -1594,51 +1674,71 @@ namespace zjloc
                               continue;
                          }
 
-                         // 2. aux 整帧在窗口之后 → 等下次
-                         if (start_time > t_end)
+                         const double start_time = aux_time.first + aux_offset;
+                         const double end_time = aux_time.first + aux_time.second + aux_offset;
+
+                         // 1. aux 整帧在查询窗口之前 → 丢弃整帧
+                         if (end_time < query_begin)
+                         {
+                              aux_lidar_buffer_.pop_front();
+                              aux_lidar_time_buffer_.pop_front();
+                              aux_point_cursor_ = 0;
+                              continue;
+                         }
+
+                         // 2. aux 整帧在查询窗口之后 → 等下次主雷达帧
+                         if (start_time > query_end)
                          {
                               break;
                          }
 
-                         // 3. 有时间交集 → 用“点级时间游标”裁剪
-                         std::vector<point3D> cropped;
-                         cropped.reserve(13000); // 经验值，避免频繁扩容
-
-                         // 3.1 跳过已经过期的点
-                         while (aux_point_cursor_ < aux.size() &&
-                                aux[aux_point_cursor_].timestamp < t_begin)
+                         // 3. 点级时间游标裁剪。sync_margin 只用于找可能相交的包；
+                         //    真正加入残差的 aux 点必须落在主雷达真实时间窗内。
+                         while (aux_point_cursor_ < aux.size())
                          {
-                              aux_point_cursor_++;
+                              const double corrected_ts = aux[aux_point_cursor_].timestamp + aux_offset;
+                              if (corrected_ts >= crop_begin)
+                                   break;
+                              ++aux_point_cursor_;
                          }
 
-                         // 3.2 收集时间窗内的点
-                         while (aux_point_cursor_ < aux.size() &&
-                                aux[aux_point_cursor_].timestamp <= t_end)
+                         while (aux_point_cursor_ < aux.size())
                          {
-                              cropped.push_back(aux[aux_point_cursor_]);
-                              aux_point_cursor_++;
+                              const double corrected_ts = aux[aux_point_cursor_].timestamp + aux_offset;
+                              if (corrected_ts > crop_end)
+                                   break;
+
+                              point3D p = aux[aux_point_cursor_];
+                              p.timestamp = corrected_ts;
+                              meas.aux_lidar_.emplace_back(std::move(p));
+                              ++aux_point_cursor_;
                          }
 
-                         // 4. 如果本窗口内有 aux lidar 点
-                         if (cropped.size() >= min_aux_points_)
-                         {
-                               meas.aux_lidar_ = std::move(cropped);
-                               meas.aux_lidar_time_ = t_begin;
-                         }
-
-                         // 5. 如果这一帧 aux lidar 的点已经用完 → pop
+                         // 4. 当前 aux 帧已经消费完，继续尝试下一帧，避免一个主帧内
+                         //    多个 aux 包被后一个覆盖。
                          if (aux_point_cursor_ >= aux.size())
                          {
                               aux_lidar_buffer_.pop_front();
                               aux_lidar_time_buffer_.pop_front();
                               aux_point_cursor_ = 0;
+                              continue;
                          }
 
-                         break; // 一个 MeasureGroup 只处理一次 aux lidar
-                     }
+                         // 当前 aux 帧还有未来点，后面的 aux 帧时间只会更晚，等待下次。
+                         break;
+                    }
 
-                     meas.imu_.push_back(imu_buffer_.front()); //   added for Interp
-                }
+                    if (meas.aux_lidar_.size() < min_aux_points_)
+                    {
+                         meas.aux_lidar_.clear();
+                    }
+                    else
+                    {
+                         meas.aux_lidar_time_ = crop_begin;
+                    }
+
+                    meas.imu_.push_back(imu_buffer_.front()); //   added for Interp
+               }
 
                 measurements.emplace_back(std::move(meas));
           }

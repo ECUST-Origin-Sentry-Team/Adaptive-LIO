@@ -72,6 +72,14 @@ namespace zjloc
           double map_update_rotation_trigger = 0.03;
           int map_update_max_skip_frames = 3;
 
+          // Auxiliary LiDAR bundle fusion options.
+          // When enabled, aux points are time-cropped to the main LiDAR scan,
+          // transformed to the main LiDAR output frame, merged into the main
+          // frame, and then used by the existing addSurfCostFactor() residual path.
+          bool enable_aux_bundle_fusion = true;
+          double aux_lidar_time_offset = 0.0; // corrected_aux_time = raw_aux_time + offset
+          double aux_lidar_sync_margin = 0.01;
+
           double satu_acc;
           double satu_gyro;
      };
@@ -190,6 +198,8 @@ namespace zjloc
           lioOptions_m options_;
           cloud_pub_m cloud_pub_options;
           size_t min_aux_points_ = 100;
+          Eigen::Matrix3d R_main_aux_ = Eigen::Matrix3d::Identity();
+          Eigen::Vector3d t_main_aux_ = Eigen::Vector3d::Zero();
 
           CloudConvertInterface *convert = nullptr;
 
@@ -226,6 +236,8 @@ namespace zjloc
 
           /// @brief mutex
           std::mutex mtx_buf;
+          // Deprecated: all LiDAR/IMU buffers are protected by mtx_buf so
+          // getMeasureMents() and high-rate callbacks cannot race.
           std::mutex mtx_aux_buf;
           std::mutex mtx_state;
           std::condition_variable cond;

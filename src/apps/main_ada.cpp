@@ -709,7 +709,12 @@ void aux_livox_pcl_cbk(const livox_ros_driver2::msg::CustomMsg::ConstSharedPtr m
     thread_local std::mt19937_64 g;
     zjloc::common::Timer::Evaluate([&]()
                                    { std::shuffle(cloud_out.begin(), cloud_out.end(), g);
-        sub_sample_frame(cloud_out, sample_size); },
+        sub_sample_frame(cloud_out, sample_size);
+        // Auxiliary soft synchronization uses a monotonic point cursor.
+        // sub_sample_frame() is hash-map based, so restore timestamp order.
+        std::sort(cloud_out.begin(), cloud_out.end(), [](const point3D &a, const point3D &b) {
+            return a.timestamp < b.timestamp;
+        }); },
                                    "laser ds");
 
     lio->pushData(std::move(cloud_out), std::make_pair(msg->header.stamp.sec + msg->header.stamp.nanosec * 1e-9, t_out[0]), true);

@@ -48,7 +48,16 @@ map_options:
 delay_time: 0.05
 
 aux_lidar:
+  # Bundle fusion: crop aux points by main-LiDAR frame time, transform to
+  # main-LiDAR output frame, then merge before buildFrame()/addSurfCostFactor().
+  # Your current Livox driver already applies IMU/extrinsic compensation to both
+  # topics, so identity is the correct default. Put calibration residuals here.
+  enable_bundle_fusion: true
   min_points_per_measurement: 1000
+  time_offset: -0.000465044       # corrected_aux_time = raw_aux_time + time_offset, seconds
+  sync_margin: 0.01      # only for finding overlapping aux packets; residual points use true main window
+  extrinsic_xyz: [0.001725097, 0.015043699, 0.005305687]       # p_main = R_main_aux * p_aux + t_main_aux
+  extrinsic_rpy_deg: [-0.628830, 1.0566123, 0.248179]   # residual correction between current published topics
 
 odometry:
   surf_res: 0.5
