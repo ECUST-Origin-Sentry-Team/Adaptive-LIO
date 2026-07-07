@@ -115,8 +115,8 @@ mapping_module:
   sequence_id: "00"
 
   # ERASOR2 推荐记录每一帧 scan；若磁盘压力过大，可改 false 使用下方关键帧阈值。
-  # 当前稳定版只导出主雷达、已去畸变且与 pose 同一局部坐标系的点云；
-  # aux 雷达在没有正确外参/同参考时刻去畸变前不会写入 ERASOR2。
+  # 当前版本导出主雷达 + aux 雷达点云，并使用 cloud_pub.min_z_filter/max_z_filter
+  # 对 ERASOR2 导出的 velodyne/*.bin 做上下高度限制。
   record_every_frame: true
   keyframe_dist_thresh: 1.0
   keyframe_angle_thresh: 0.8

@@ -1293,26 +1293,61 @@ namespace zjloc
 
      void lidarodom_m::map_incremental(cloudFrame *p_frame, cloudFrame *p_frame_aux, bool update_map, int min_num_points)
      {
-          //   only surf
-          // `points_world` is only for ROS/RViz display. ERASOR2 export must use a
-          // clean per-frame local scan before z filtering/body crop/downsampling.
-          // Export only the main lidar by default: aux lidar currently has no calibrated
-          // T_main_aux/T_imu_aux transform in this code path, so mixing it here creates
-          // thick-wall / time-distortion-like artifacts in the exported KITTI dataset.
-          points_world->points.reserve(p_frame->point_surf.size());
+          // `points_world` is used for ROS/RViz display.  The ERASOR2 export uses
+          // per-frame local body-frame points together with the matching T_map_body pose:
+          //     p_map = T_map_body * p_body
+          //
+          // This version intentionally restores aux-lidar export and the vertical
+          // min/max height gate requested by the user.  Aux points are converted through
+          // the same current code path as the main lidar; if a calibrated aux->body
+          // extrinsic is added later, replace the aux local_body computation below.
+          const size_t aux_point_count = p_frame_aux == nullptr ? 0 : p_frame_aux->point_surf.size();
+          points_world->points.reserve(p_frame->point_surf.size() + aux_point_count);
 
           CloudPtr export_local(new pcl::PointCloud<pcl::PointXYZI>);
-          export_local->points.reserve(p_frame->point_surf.size());
+          export_local->points.reserve(p_frame->point_surf.size() + aux_point_count);
 
           const SE3 pose_of_lo = SafeSE3(current_state->rotation, current_state->translation);
-          const Eigen::Matrix3d R_world_local = pose_of_lo.rotationMatrix().transpose();
-          const Eigen::Vector3d t_world_local = pose_of_lo.translation();
+          const Eigen::Matrix3d R_map_body = pose_of_lo.rotationMatrix();
+          const Eigen::Vector3d t_map_body = pose_of_lo.translation();
+
+          const auto pass_world_height = [&](const Eigen::Vector3d &world_point) -> bool {
+               return world_point.z() >= static_cast<double>(cloud_pub_options.min_z_filter) &&
+                      world_point.z() <= static_cast<double>(cloud_pub_options.max_z_filter);
+          };
+
+          const auto append_export_point = [&](const Eigen::Vector3d &local_body,
+                                               const Eigen::Vector3d &world_final,
+                                               const double intensity,
+                                               const bool enable_height_gate) {
+               auto &p = points_world->points.emplace_back();
+               p.x = static_cast<float>(world_final.x());
+               p.y = static_cast<float>(world_final.y());
+               p.z = static_cast<float>(world_final.z());
+               p.intensity = static_cast<float>(intensity);
+
+               // Restore the original upper/lower height restriction for ERASOR2 export.
+               // The gate is evaluated in map/world z, matching publishFrameProducts().
+               if (!enable_height_gate || pass_world_height(world_final))
+               {
+                    auto &q = export_local->points.emplace_back();
+                    q.x = static_cast<float>(local_body.x());
+                    q.y = static_cast<float>(local_body.y());
+                    q.z = static_cast<float>(local_body.z());
+                    q.intensity = static_cast<float>(intensity);
+               }
+          };
 
           for (auto &point : p_frame->point_surf)
           {
+               // point.raw_point is the deskewed main-lidar point in the frame-end lidar
+               // frame. Convert it to the same local frame as current_state, i.e. IMU/body.
+               const Eigen::Vector3d local_body = R_imu_lidar * point.raw_point + t_imu_lidar;
+               const Eigen::Vector3d world_final = R_map_body * local_body + t_map_body;
+
                if (update_map)
                {
-                    addPointToMap(voxel_map, point.point, point.intensity,
+                    addPointToMap(voxel_map, world_final, point.intensity,
                                   options_.size_voxel_map, options_.max_num_points_in_voxel,
                                   options_.min_distance_points, min_num_points, p_frame);
 
@@ -1322,21 +1357,21 @@ namespace zjloc
                     // mmap->InsertPoint(point);
                }
 
-               auto &p = points_world->points.emplace_back();
-               p.x = point.point.x();
-               p.y = point.point.y();
-               p.z = point.point.z();
-               p.intensity = point.intensity;
+               append_export_point(local_body, world_final, point.intensity, true);
+          }
 
-               // The export frame is the same local frame as pose_of_lo.  This is
-               // deliberately computed from the final world point and the final pose,
-               // so cloud_local and pose satisfy exactly: p_world = pose_of_lo * p_local.
-               const Eigen::Vector3d local = R_world_local * (point.point - t_world_local);
-               auto &q = export_local->points.emplace_back();
-               q.x = static_cast<float>(local.x());
-               q.y = static_cast<float>(local.y());
-               q.z = static_cast<float>(local.z());
-               q.intensity = static_cast<float>(point.intensity);
+          // Restore aux lidar points in the display/export cloud.  This matches the
+          // original behavior of publishing aux points, while keeping the stable export
+          // convention: local cloud and pose are in the same body frame.
+          // NOTE: no map insertion is performed for aux points, matching the original code.
+          if (p_frame_aux != nullptr)
+          {
+               for (auto &point : p_frame_aux->point_surf)
+               {
+                    const Eigen::Vector3d local_body = R_imu_lidar * point.raw_point + t_imu_lidar;
+                    const Eigen::Vector3d world_final = R_map_body * local_body + t_map_body;
+                    append_export_point(local_body, world_final, point.intensity, true);
+               }
           }
 
           export_local->width = static_cast<uint32_t>(export_local->points.size());
@@ -1346,20 +1381,6 @@ namespace zjloc
           if (pub_mapping_data && !export_local->empty())
           {
                pub_mapping_data(export_local, pose_of_lo, p_frame->time_frame_end);
-          }
-
-          if (p_frame_aux != nullptr && !p_frame_aux->point_surf.empty())
-          {
-               static bool warned_aux_export = false;
-               if (!warned_aux_export)
-               {
-                    std::cout << ANSI_COLOR_YELLOW
-                              << "[ERASOR2 export] aux lidar points are ignored because "
-                              << "no calibrated aux->main/body extrinsic is applied in this path. "
-                              << "This prevents thick-wall artifacts in exported PCD/KITTI data."
-                              << ANSI_COLOR_RESET << std::endl;
-                    warned_aux_export = true;
-               }
           }
 
           publishFrameProducts(pose_of_lo, p_frame->time_frame_end);
