@@ -9,6 +9,7 @@
 #include <memory>
 #include <deque>
 #include <algorithm>
+#include <condition_variable>
 
 // ros2 lib
 #include "rclcpp/rclcpp.hpp"
@@ -35,7 +36,7 @@
 #include "preprocess/cloud_convert/cloud_convert2.h"
 #include "lio/lidarodom.h"
 
-#include "scantext_module/Mapping.hpp"
+#include "mapping_module/Mapping.hpp"
 #include "std_srvs/srv/trigger.hpp"
 #include "geometry_msgs/msg/pose_with_covariance_stamped.hpp"
 
@@ -45,7 +46,7 @@ DEFINE_string(config_file, "", "Path to adaptive_lio config YAML.");
 
 zjloc::lidarodom_m *lio;
 zjloc::CloudConvert2 *convert;
-std::shared_ptr<scantext::MappingCore> scantext_mapping;
+std::shared_ptr<mapping::MappingCore> mapping_core;
 std::shared_ptr<tf2_ros::TransformBroadcaster> g_tf_broadcaster;
 std::shared_ptr<class ImuOdomFusion> imu_odom_fusion;
 double gnorm = 1.0;
@@ -831,17 +832,16 @@ int main(int argc, char **argv)
                                   : FLAGS_config_file;
     std::cout << ANSI_COLOR_GREEN << "config_file:" << config_file << ANSI_COLOR_RESET << std::endl;
 
-    // Init Scantext Modules
-    scantext_mapping = std::make_shared<scantext::MappingCore>();
-    scantext::SCParams scantext_params;
+    // Init mapping / ERASOR2 export module.
+    mapping_core = std::make_shared<mapping::MappingCore>();
 
-    // Load configs
+    // Load mapping/export configs
     try
     {
         auto yaml_mapping_ = YAML::LoadFile(config_file);
         if (yaml_mapping_["mapping_module"])
         {
-            scantext::MappingCore::Config cfg;
+            mapping::MappingCore::Config cfg;
             auto node = yaml_mapping_["mapping_module"];
             if (node["enable_mapping"])
                 cfg.enable_mapping = node["enable_mapping"].as<bool>();
@@ -853,38 +853,22 @@ int main(int argc, char **argv)
                 cfg.map_save_path = node["map_save_path"].as<std::string>();
             if (node["auto_save_interval"])
                 cfg.auto_save_interval = node["auto_save_interval"].as<double>();
-            scantext_mapping->setConfig(cfg);
-
-            if (node["scantext"])
-            {
-                auto sc_node = node["scantext"];
-                if (sc_node["num_ring"])
-                    scantext_params.num_ring = sc_node["num_ring"].as<int>();
-                if (sc_node["num_sector"])
-                    scantext_params.num_sector = sc_node["num_sector"].as<int>();
-                if (sc_node["max_radius"])
-                    scantext_params.max_radius = sc_node["max_radius"].as<double>();
-                if (sc_node["lidar_height"])
-                    scantext_params.lidar_height = sc_node["lidar_height"].as<double>();
-                if (sc_node["use_scpp"])
-                    scantext_params.use_scpp = sc_node["use_scpp"].as<bool>();
-                if (sc_node["scpp_search_ratio"])
-                    scantext_params.scpp_search_ratio = sc_node["scpp_search_ratio"].as<double>();
-                if (sc_node["cart_x_unit"])
-                    scantext_params.cart_x_unit = sc_node["cart_x_unit"].as<double>();
-                if (sc_node["cart_y_unit"])
-                    scantext_params.cart_y_unit = sc_node["cart_y_unit"].as<double>();
-                if (sc_node["cart_x_max"])
-                    scantext_params.cart_x_max = sc_node["cart_x_max"].as<double>();
-                if (sc_node["cart_y_max"])
-                    scantext_params.cart_y_max = sc_node["cart_y_max"].as<double>();
-            }
-            scantext_mapping->setScanContextParams(scantext_params);
+            if (node["export_erasor2"])
+                cfg.export_erasor2 = node["export_erasor2"].as<bool>();
+            if (node["erasor2_save_dir"])
+                cfg.erasor2_save_dir = node["erasor2_save_dir"].as<std::string>();
+            if (node["sequence_id"])
+                cfg.sequence_id = node["sequence_id"].as<std::string>();
+            if (node["record_every_frame"])
+                cfg.record_every_frame = node["record_every_frame"].as<bool>();
+            if (node["save_global_map"])
+                cfg.save_global_map = node["save_global_map"].as<bool>();
+            mapping_core->setConfig(cfg);
         }
     }
     catch (const std::exception &e)
     {
-        std::cerr << "Error loading scantext configs: " << e.what() << std::endl;
+        std::cerr << "Error loading mapping configs: " << e.what() << std::endl;
     }
 
     lio = new zjloc::lidarodom_m();
@@ -1031,146 +1015,78 @@ int main(int argc, char **argv)
 
     );
 
-    // Scantext processing queue
-    struct ScantextTask
+    // Mapping / ERASOR2 export queue
+    struct MappingExportTask
     {
-        scantext::ScanContext::SCDescriptor sc;
-        scantext::ScanContext::RingKey rk;
-        pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_ds;
+        pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_local;
         Eigen::Isometry3d odom_pose;
         double time;
     };
 
-    const bool scantext_enabled = scantext_mapping && scantext_mapping->getConfig().enable_mapping;
+    const bool mapping_enabled = mapping_core && mapping_core->getConfig().enable_mapping;
 
-    std::queue<ScantextTask> scantext_queue;
-    std::mutex scantext_queue_mutex;
-    std::condition_variable scantext_queue_cv;
-    bool stop_scantext_thread = false;
-    std::thread scantext_worker;
+    std::queue<MappingExportTask> mapping_queue;
+    std::mutex mapping_queue_mutex;
+    std::condition_variable mapping_queue_cv;
+    bool stop_mapping_thread = false;
+    std::thread mapping_worker;
 
     // Consumer thread function
-    if (scantext_enabled)
+    if (mapping_enabled)
     {
-        scantext_worker = std::thread([&]()
+        mapping_worker = std::thread([&]()
                                       {
-    while (!stop_scantext_thread) {
-        ScantextTask task;
+    while (!stop_mapping_thread) {
+        MappingExportTask task;
         {
-            std::unique_lock<std::mutex> lock(scantext_queue_mutex);
+            std::unique_lock<std::mutex> lock(mapping_queue_mutex);
             // Wait for task or stop signal
-            scantext_queue_cv.wait(lock, [&]() { return !scantext_queue.empty() || stop_scantext_thread; });
+            mapping_queue_cv.wait(lock, [&]() { return !mapping_queue.empty() || stop_mapping_thread; });
 
-            if (stop_scantext_thread && scantext_queue.empty()) break;
+            if (stop_mapping_thread && mapping_queue.empty()) break;
 
-            task = scantext_queue.front();
-            scantext_queue.pop();
+            task = mapping_queue.front();
+            mapping_queue.pop();
         }
 
-        if (!scantext_mapping) continue;
+        if (!mapping_core) continue;
         
 
-        // 1) mapping：如果 enable_mapping，且满足内部 keyframe 条件，则入库
-        std::shared_ptr<scantext::KeyFrame> new_kf;
-        if (scantext_mapping->getConfig().enable_mapping) {
-            bool added = scantext_mapping->addFrameWithSC(
-                task.cloud_ds, task.odom_pose, task.time, task.sc, task.rk, &new_kf);
-
-            // if (added && new_kf) {
-            //     // 增量更新 relo 的 map（重要！否则 mapping 模式下 relo 永远空 map）
-            //     scantext_relo->addKeyFrame(new_kf);
-            // }
+        // ERASOR2 export：写入 velodyne/*.bin、poses_suma_optim.txt、times.txt。
+        // 输入 cloud_local 必须保持雷达局部坐标系，只保留 x/y/z/intensity。
+        std::shared_ptr<mapping::KeyFrame> new_kf;
+        if (mapping_core->getConfig().enable_mapping) {
+            mapping_core->addFrame(
+                task.cloud_local, task.odom_pose, task.time, &new_kf);
         }
     } });
     }
 
-    Eigen::Isometry3d last_sc_pose = Eigen::Isometry3d::Identity();
-    double last_sc_time = 0.0;
-    bool has_last_sc = false;
-
-    scantext::ScanContext sc_extractor(scantext_params);
-
-    auto scantext_cbk =
+    auto mapping_cbk =
         std::function<bool(const zjloc::CloudPtr &, const SE3 &, double)>(
             [&](const zjloc::CloudPtr &points_world,
                 const SE3 &pose,
                 double time) -> bool
             {
-                if (!scantext_mapping || !points_world || !scantext_mapping->getConfig().enable_mapping)
+                if (!mapping_core || !points_world || !mapping_core->getConfig().enable_mapping)
                     return true;
 
-                // --- pose -> Eigen ---
+                // `cloud_local` is already a deskewed local scan in the same local frame
+                // as `pose` (p_map = pose * p_local). Do not inverse-transform it here;
+                // doing so would reintroduce scan/pose inconsistencies.
                 Eigen::Isometry3d eigen_pose = Eigen::Isometry3d::Identity();
                 eigen_pose.linear() = pose.rotationMatrix();
                 eigen_pose.translation() = pose.translation();
 
-                // --- Step2: 只在关键帧/低频做 SC ---
-                const double dist_th =
-                    scantext_mapping->getConfig().keyframe_dist_thresh > 1e-6 ? scantext_mapping->getConfig().keyframe_dist_thresh : 1.0;
-
-                const double ang_th =
-                    scantext_mapping->getConfig().keyframe_angle_thresh > 1e-6 ? scantext_mapping->getConfig().keyframe_angle_thresh : 0.2;
-
-                const double time_th = 1.0; // 1Hz 兜底（可放到 yaml）
-
-                bool do_sc = false;
-                if (!has_last_sc)
-                {
-                    do_sc = true;
-                }
-                else
-                {
-                    Eigen::Isometry3d delta = last_sc_pose.inverse() * eigen_pose;
-                    double dist = delta.translation().norm();
-                    double ang = Eigen::AngleAxisd(delta.rotation()).angle();
-                    double dt = time - last_sc_time;
-
-                    do_sc = (dist >= dist_th) || (ang >= ang_th) || (dt >= time_th);
-                }
-
-                if (!do_sc)
-                {
-                    return true; // 不做 SC，直接返回，不占用队列
-                }
-
-                has_last_sc = true;
-                last_sc_pose = eigen_pose;
-                last_sc_time = time;
-
                 auto cloud_local = std::make_shared<pcl::PointCloud<pcl::PointXYZI>>();
-                if (!points_world->empty())
+                *cloud_local = *points_world;
+
+                // Push full local scan to writer thread; no legacy PCD/cache output is generated.
                 {
-                    const Eigen::Matrix4f t_lidar_world = eigen_pose.matrix().cast<float>().inverse();
-                    pcl::transformPointCloud(*points_world, *cloud_local, t_lidar_world);
+                    std::lock_guard<std::mutex> lock(mapping_queue_mutex);
+                    mapping_queue.push({cloud_local, eigen_pose, time});
                 }
-
-                // --- Step1: 用当前帧雷达坐标系点云计算 descriptor/ringkey ---
-                auto sc = sc_extractor.makeScanContext(*cloud_local);
-                auto rk = sc_extractor.makeRingKey(sc);
-
-                // --- 为 ICP / (可选)建图存储 构造一个小云（上限 2000 点）---
-                constexpr size_t MAX_DS_PTS = 2000;
-                auto cloud_ds = std::make_shared<pcl::PointCloud<pcl::PointXYZI>>();
-                if (!cloud_local->empty())
-                {
-                    cloud_ds->reserve(std::min(cloud_local->size(), MAX_DS_PTS));
-                    size_t step = std::max<size_t>(1, cloud_local->size() / MAX_DS_PTS);
-
-                    for (size_t i = 0; i < cloud_local->size(); i += step)
-                    {
-                        cloud_ds->push_back(cloud_local->points[i]);
-                    }
-                }
-
-                // --- push 轻量任务到队列 ---
-                {
-                    std::lock_guard<std::mutex> lock(scantext_queue_mutex);
-                    if (scantext_queue.size() < 5)
-                    {
-                        scantext_queue.push({sc, rk, cloud_ds, eigen_pose, time});
-                    }
-                }
-                scantext_queue_cv.notify_one();
+                mapping_queue_cv.notify_one();
 
                 return true;
             });
@@ -1184,10 +1100,8 @@ int main(int argc, char **argv)
             [&](const std::shared_ptr<std_srvs::srv::Trigger::Request>,
                 std::shared_ptr<std_srvs::srv::Trigger::Response> res)
             {
-                std::string path = scantext_mapping->getConfig().map_save_path;
-                std::string db_path = std::string(ROOT_DIR) + "map_db";
-
-                scantext_mapping->saveMapAsync(path);
+                std::string path = mapping_core->getConfig().map_save_path;
+                mapping_core->saveMapAsync(path);
 
                 res->success = true;
                 res->message = "Map saving started asynchronously";
@@ -1214,9 +1128,9 @@ int main(int argc, char **argv)
     lio->setFunc(cloud_pub_func);
     lio->setFunc(pose_pub_func);
     lio->setFunc(data_pub_func);
-    if (scantext_enabled)
+    if (mapping_enabled)
     {
-        lio->setFunc(scantext_cbk);
+        lio->setFunc(mapping_cbk);
     }
 
     convert = new zjloc::CloudConvert2;
@@ -1251,14 +1165,14 @@ int main(int argc, char **argv)
     executor.add_node(node);
     executor.spin();
 
-    // Cleanup Scantext thread
+    // Cleanup mapping export thread
     {
-        std::lock_guard<std::mutex> lock(scantext_queue_mutex);
-        stop_scantext_thread = true;
+        std::lock_guard<std::mutex> lock(mapping_queue_mutex);
+        stop_mapping_thread = true;
     }
-    scantext_queue_cv.notify_all();
-    if (scantext_worker.joinable())
-        scantext_worker.join();
+    mapping_queue_cv.notify_all();
+    if (mapping_worker.joinable())
+        mapping_worker.join();
 
     {
         std::lock_guard<std::mutex> lock(scan_publish_queue_mutex);

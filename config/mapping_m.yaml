@@ -107,19 +107,21 @@ cloud_pub:
   body_filter_z_max: 0.3
 
 mapping_module:
-  enable_mapping: false # false 时直接关闭 Scan Context 回调与后台 worker
+  # 开启后会导出 ERASOR2 / KITTI 风格数据集。
+  # 输出目录：<erasor2_save_dir>/dataset/sequences/<sequence_id>/
+  enable_mapping: true
+  export_erasor2: true
+  erasor2_save_dir: "./erasor2_dataset"  # 结尾可以不带 /，代码会自动拼接 dataset/sequences
+  sequence_id: "00"
+
+  # ERASOR2 推荐记录每一帧 scan；若磁盘压力过大，可改 false 使用下方关键帧阈值。
+  # 当前稳定版只导出主雷达、已去畸变且与 pose 同一局部坐标系的点云；
+  # aux 雷达在没有正确外参/同参考时刻去畸变前不会写入 ERASOR2。
+  record_every_frame: true
   keyframe_dist_thresh: 1.0
   keyframe_angle_thresh: 0.8
-  map_save_path: "./map_scantext.pcd"
-  auto_save_interval: 20.0 # meters
-  
-  scantext:
-    num_ring: 20
-    num_sector: 60
-    max_radius: 80.0
-    use_scpp: true
-    scpp_search_ratio: 0.1
-    cart_x_unit: 5.0
-    cart_y_unit: 2.0
-    cart_x_max: 100.0
-    cart_y_max: 40.0
+
+  # 可选：累计保存一份全局 PCD 地图。ERASOR2 只需要下方导出的逐帧 bin + pose + time。
+  save_global_map: false
+  map_save_path: "./map_erasor2_record.pcd"
+  auto_save_interval: 0.0 # meters; save_global_map=false 时无效

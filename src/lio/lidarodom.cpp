@@ -1294,9 +1294,20 @@ namespace zjloc
      void lidarodom_m::map_incremental(cloudFrame *p_frame, cloudFrame *p_frame_aux, bool update_map, int min_num_points)
      {
           //   only surf
-          const size_t aux_point_count = p_frame_aux == nullptr ? 0 : p_frame_aux->point_surf.size();
-          points_world->points.reserve(
-              p_frame->point_surf.size() + aux_point_count);
+          // `points_world` is only for ROS/RViz display. ERASOR2 export must use a
+          // clean per-frame local scan before z filtering/body crop/downsampling.
+          // Export only the main lidar by default: aux lidar currently has no calibrated
+          // T_main_aux/T_imu_aux transform in this code path, so mixing it here creates
+          // thick-wall / time-distortion-like artifacts in the exported KITTI dataset.
+          points_world->points.reserve(p_frame->point_surf.size());
+
+          CloudPtr export_local(new pcl::PointCloud<pcl::PointXYZI>);
+          export_local->points.reserve(p_frame->point_surf.size());
+
+          const SE3 pose_of_lo = SafeSE3(current_state->rotation, current_state->translation);
+          const Eigen::Matrix3d R_world_local = pose_of_lo.rotationMatrix().transpose();
+          const Eigen::Vector3d t_world_local = pose_of_lo.translation();
+
           for (auto &point : p_frame->point_surf)
           {
                if (update_map)
@@ -1310,24 +1321,48 @@ namespace zjloc
                     // maintain it on the current path to avoid duplicate map insertion cost.
                     // mmap->InsertPoint(point);
                }
+
                auto &p = points_world->points.emplace_back();
                p.x = point.point.x();
                p.y = point.point.y();
                p.z = point.point.z();
                p.intensity = point.intensity;
+
+               // The export frame is the same local frame as pose_of_lo.  This is
+               // deliberately computed from the final world point and the final pose,
+               // so cloud_local and pose satisfy exactly: p_world = pose_of_lo * p_local.
+               const Eigen::Vector3d local = R_world_local * (point.point - t_world_local);
+               auto &q = export_local->points.emplace_back();
+               q.x = static_cast<float>(local.x());
+               q.y = static_cast<float>(local.y());
+               q.z = static_cast<float>(local.z());
+               q.intensity = static_cast<float>(point.intensity);
           }
-          if (p_frame_aux != nullptr)
+
+          export_local->width = static_cast<uint32_t>(export_local->points.size());
+          export_local->height = 1;
+          export_local->is_dense = false;
+
+          if (pub_mapping_data && !export_local->empty())
           {
-               for (auto &point : p_frame_aux->point_surf)
+               pub_mapping_data(export_local, pose_of_lo, p_frame->time_frame_end);
+          }
+
+          if (p_frame_aux != nullptr && !p_frame_aux->point_surf.empty())
+          {
+               static bool warned_aux_export = false;
+               if (!warned_aux_export)
                {
-                    auto &p = points_world->points.emplace_back();
-                    p.x = point.point.x();
-                    p.y = point.point.y();
-                    p.z = point.point.z();
-                    p.intensity = point.intensity;
+                    std::cout << ANSI_COLOR_YELLOW
+                              << "[ERASOR2 export] aux lidar points are ignored because "
+                              << "no calibrated aux->main/body extrinsic is applied in this path. "
+                              << "This prevents thick-wall artifacts in exported PCD/KITTI data."
+                              << ANSI_COLOR_RESET << std::endl;
+                    warned_aux_export = true;
                }
           }
-          publishFrameProducts(SafeSE3(current_state->rotation, current_state->translation), p_frame->time_frame_end);
+
+          publishFrameProducts(pose_of_lo, p_frame->time_frame_end);
           points_world->clear();
      }
 
@@ -1379,10 +1414,6 @@ namespace zjloc
                pub_cloud_to_ros(laser_topic, down, stamp);
           }
 
-          if (pub_scantext_data)
-          {
-               pub_scantext_data(points_world, pose_of_lo, stamp);
-          }
      }
 
      void lidarodom_m::lasermap_fov_segment()

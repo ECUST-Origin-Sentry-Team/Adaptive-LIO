@@ -109,7 +109,7 @@ namespace zjloc
           void setFunc(std::function<bool(std::string &topic_name, CloudPtr &cloud, double time)> &fun) { pub_cloud_to_ros = fun; }
           void setFunc(std::function<bool(std::string &topic_name, SE3 &pose, double time)> &fun) { pub_pose_to_ros = fun; }
           void setFunc(std::function<bool(std::string &topic_name, double time1, double time2)> &fun) { pub_data_to_ros = fun; }
-          void setFunc(std::function<bool(const CloudPtr &cloud, const SE3 &pose, double time)> &fun) { pub_scantext_data = fun; }
+          void setFunc(std::function<bool(const CloudPtr &cloud, const SE3 &pose, double time)> &fun) { pub_mapping_data = fun; }
           void setCloudConvert(CloudConvertInterface *cloud_convert) { convert = cloud_convert; }
 
      private:
@@ -237,8 +237,11 @@ namespace zjloc
           std::function<bool(std::string &topic_name, CloudPtr &cloud, double time)> pub_cloud_to_ros;
           std::function<bool(std::string &topic_name, SE3 &pose, double time)> pub_pose_to_ros;
           std::function<bool(std::string &topic_name, double time1, double time2)> pub_data_to_ros;
-          // Callback for ScanContext module (world cloud + world pose)
-          std::function<bool(const CloudPtr &cloud, const SE3 &pose, double time)> pub_scantext_data;
+          // Callback for mapping / ERASOR2 export module.
+          // The cloud is a deskewed local scan in the same local frame as `pose`
+          // (currently IMU/body frame: p_map = pose * p_local). It must not be
+          // the RViz/display cloud and must not include uncalibrated aux lidar points.
+          std::function<bool(const CloudPtr &cloud, const SE3 &pose, double time)> pub_mapping_data;
 
           pcl::PointCloud<pcl::PointXYZI>::Ptr points_world;
           bool has_last_map_maintenance_pose_ = false;

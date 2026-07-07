@@ -29,8 +29,7 @@ target_link_libraries(${PROJECT_NAME}
   ${PROJECT_NAME}.pre
   ${PROJECT_NAME}.lio
   ${PROJECT_NAME}.algo
-  scantext_mapping_core
-  scantext_core
+  mapping_core
   ${third_party_libs}
   glog::glog
   gflags

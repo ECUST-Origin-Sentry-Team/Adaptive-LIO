@@ -175,13 +175,13 @@ The emerging Internet of Things (IoT) applications, such as driverless cars, hav
     ros2 launch adaptive_lio run.launch.py
     ```
 
-5. Mapping And Save the PCD
+5. Mapping And Export ERASOR2 Dataset
   - Turn on the enable_mapping in the `mapping_m.yaml` if you need mapping progress
   - Save the map using `ros2 service call`  - (Also supports auto-save)
   ```bash
   ros2 service call /save_map_service std_srvs/srv/Trigger 
   ```
-  - The SC-map is stored in the map_scantext.pcd_db folder and updated in real time.
+  - ERASOR2 records are stored in `erasor2_dataset/sequences/00/` and updated in real time.
 
 ## Publications
 
