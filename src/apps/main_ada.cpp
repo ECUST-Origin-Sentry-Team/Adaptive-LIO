@@ -9,6 +9,7 @@
 #include <memory>
 #include <deque>
 #include <algorithm>
+#include <condition_variable>
 
 // ros2 lib
 #include "rclcpp/rclcpp.hpp"
@@ -48,6 +49,7 @@ zjloc::CloudConvert2 *convert;
 std::shared_ptr<scantext::MappingCore> scantext_mapping;
 std::shared_ptr<tf2_ros::TransformBroadcaster> g_tf_broadcaster;
 std::shared_ptr<class ImuOdomFusion> imu_odom_fusion;
+std::shared_ptr<class DualImuCenterOdom> dual_imu_center_odom;
 double gnorm = 1.0;
 // rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr imu_repub;
 
@@ -60,6 +62,354 @@ inline rclcpp::Time get_ros_time(double timestamp)
     uint32_t nanosec = nanosec_d;
     return rclcpp::Time(sec, nanosec);
 }
+
+inline Eigen::Quaterniond quaternion_from_rpy(const Eigen::Vector3d &rpy)
+{
+    tf2::Quaternion q;
+    q.setRPY(rpy.x(), rpy.y(), rpy.z());
+    return Eigen::Quaterniond(q.w(), q.x(), q.y(), q.z()).normalized();
+}
+
+class FrameStampSynchronizer
+{
+public:
+    void Record(double sensor_stamp, const rclcpp::Time &output_stamp)
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        entries_.push_back({sensor_stamp, output_stamp});
+        while (entries_.size() > 32)
+        {
+            entries_.pop_front();
+        }
+        cv_.notify_all();
+    }
+
+    bool WaitLookup(
+        double sensor_stamp, rclcpp::Time &output_stamp, std::chrono::milliseconds timeout)
+    {
+        std::unique_lock<std::mutex> lock(mutex_);
+        const auto find_entry = [&]() {
+            return std::find_if(
+                entries_.begin(), entries_.end(),
+                [sensor_stamp](const Entry &entry) {
+                    return std::abs(sensor_stamp - entry.sensor_stamp) <= 1e-4;
+                });
+        };
+
+        if (!cv_.wait_for(lock, timeout, [&]() { return find_entry() != entries_.end(); }))
+        {
+            return false;
+        }
+
+        const auto entry = find_entry();
+        output_stamp = entry->output_stamp;
+        entries_.erase(entry);
+        return true;
+    }
+
+private:
+    struct Entry
+    {
+        double sensor_stamp;
+        rclcpp::Time output_stamp;
+    };
+
+    std::mutex mutex_;
+    std::condition_variable cv_;
+    std::deque<Entry> entries_;
+};
+
+class DualImuCenterOdom
+{
+public:
+    struct Options
+    {
+        std::string odom_frame = "odom";
+        std::string base_frame = "base_link";
+        Eigen::Vector3d sensor_to_base_translation = Eigen::Vector3d::Zero();
+        Eigen::Quaterniond sensor_to_base_rotation = Eigen::Quaterniond::Identity();
+        Eigen::Matrix3d primary_imu_to_base_rotation = Eigen::Matrix3d::Identity();
+        Eigen::Matrix3d secondary_imu_to_base_rotation = Eigen::Matrix3d::Identity();
+        double secondary_time_offset = 0.0;
+        double sync_tolerance = 0.003;
+        double acceleration_lpf_tau = 0.06;
+        double max_speed = 35.0;
+        double gravity = 9.81;
+        bool estimate_initial_bias = true;
+        bool restamp_to_now = true;
+    };
+
+    DualImuCenterOdom(
+        const rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr &publisher,
+        const rclcpp::Clock::SharedPtr &clock,
+        const Options &options)
+        : publisher_(publisher),
+          clock_(clock),
+          options_(options)
+    {
+        options_.sensor_to_base_rotation.normalize();
+        options_.sync_tolerance = std::max(1e-5, options_.sync_tolerance);
+        options_.acceleration_lpf_tau = std::max(0.0, options_.acceleration_lpf_tau);
+        options_.max_speed = std::max(0.1, options_.max_speed);
+    }
+
+    void AddPrimary(const IMUPtr &imu)
+    {
+        AddImu(imu, true);
+    }
+
+    void AddSecondary(const IMUPtr &imu)
+    {
+        AddImu(imu, false);
+    }
+
+    void OnLioPose(
+        const SE3 &pose,
+        double sensor_stamp,
+        const rclcpp::Time &output_stamp)
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+
+        Eigen::Quaterniond q_odom_sensor(pose.rotationMatrix());
+        q_odom_sensor.normalize();
+        orientation_ =
+            (q_odom_sensor * options_.sensor_to_base_rotation).normalized();
+        position_ =
+            pose.translation() +
+            q_odom_sensor.toRotationMatrix() * options_.sensor_to_base_translation;
+
+        if (!initialized_)
+        {
+            InitializeLocked(sensor_stamp);
+        }
+
+        PublishLocked(output_stamp);
+    }
+
+private:
+    struct Sample
+    {
+        double stamp = 0.0;
+        Eigen::Vector3d gyro = Eigen::Vector3d::Zero();
+        Eigen::Vector3d acc = Eigen::Vector3d::Zero();
+    };
+
+    void AddImu(const IMUPtr &imu, bool primary)
+    {
+        if (!imu)
+        {
+            return;
+        }
+
+        std::lock_guard<std::mutex> lock(mutex_);
+        Sample sample;
+        sample.stamp = imu->timestamp_ + (primary ? 0.0 : options_.secondary_time_offset);
+        const Eigen::Matrix3d &rotation =
+            primary ? options_.primary_imu_to_base_rotation
+                    : options_.secondary_imu_to_base_rotation;
+        sample.gyro = rotation * imu->gyro_;
+        sample.acc = rotation * imu->acce_;
+
+        auto &queue = primary ? primary_queue_ : secondary_queue_;
+        queue.push_back(sample);
+        while (queue.size() > kMaxQueueSize)
+        {
+            queue.pop_front();
+        }
+
+        MatchAndProcessLocked();
+    }
+
+    void MatchAndProcessLocked()
+    {
+        while (!primary_queue_.empty() && !secondary_queue_.empty())
+        {
+            const double skew =
+                primary_queue_.front().stamp - secondary_queue_.front().stamp;
+            if (std::abs(skew) <= options_.sync_tolerance)
+            {
+                const Sample primary = primary_queue_.front();
+                const Sample secondary = secondary_queue_.front();
+                primary_queue_.pop_front();
+                secondary_queue_.pop_front();
+                ProcessAverageLocked(primary, secondary);
+                return;
+            }
+
+            if (skew < 0.0)
+            {
+                primary_queue_.pop_front();
+            }
+            else
+            {
+                secondary_queue_.pop_front();
+            }
+        }
+    }
+
+    void ProcessAverageLocked(const Sample &primary, const Sample &secondary)
+    {
+        const double stamp = primary.stamp;
+        const Eigen::Vector3d gyro = 0.5 * (primary.gyro + secondary.gyro);
+        const Eigen::Vector3d acc = 0.5 * (primary.acc + secondary.acc);
+        latest_gyro_ = gyro;
+        latest_pair_stamp_ = stamp;
+        has_pair_stamp_ = true;
+
+        if (!initialized_)
+        {
+            preinit_gyro_sum_ += gyro;
+            preinit_acc_sum_ += acc;
+            ++preinit_count_;
+            return;
+        }
+
+        const double dt = stamp - last_imu_stamp_;
+        last_imu_stamp_ = stamp;
+        if (!(dt > 0.0) || dt > kMaxImuDt)
+        {
+            has_acc_lpf_ = false;
+            return;
+        }
+
+        const Eigen::Vector3d omega = gyro - gyro_bias_;
+        const double angle = omega.norm() * dt;
+        if (angle > 1e-12)
+        {
+            const Eigen::Quaterniond dq(
+                Eigen::AngleAxisd(angle, omega.normalized()));
+            orientation_ = (orientation_ * dq).normalized();
+        }
+
+        const Eigen::Vector3d acc_unbiased = acc - acc_bias_;
+        const double gain = options_.acceleration_lpf_tau <= 0.0
+                                ? 1.0
+                                : std::clamp(
+                                      dt / (options_.acceleration_lpf_tau + dt),
+                                      0.0,
+                                      1.0);
+        if (!has_acc_lpf_)
+        {
+            acc_lpf_ = acc_unbiased;
+            has_acc_lpf_ = true;
+        }
+        else
+        {
+            acc_lpf_ = gain * acc_unbiased + (1.0 - gain) * acc_lpf_;
+        }
+
+        Eigen::Vector3d acc_world = orientation_.toRotationMatrix() * acc_lpf_;
+        if (acc_includes_gravity_)
+        {
+            acc_world += Eigen::Vector3d(0.0, 0.0, -options_.gravity);
+        }
+        velocity_world_ += acc_world * dt;
+
+        const double speed = velocity_world_.norm();
+        if (speed > options_.max_speed)
+        {
+            velocity_world_ *= options_.max_speed / speed;
+        }
+
+        PublishLocked(ResolveStampLocked(stamp));
+    }
+
+    void InitializeLocked(double sensor_stamp)
+    {
+        if (options_.estimate_initial_bias && preinit_count_ >= kMinBiasSamples)
+        {
+            const double count = static_cast<double>(preinit_count_);
+            gyro_bias_ = preinit_gyro_sum_ / count;
+            const Eigen::Vector3d mean_acc = preinit_acc_sum_ / count;
+            acc_includes_gravity_ =
+                std::abs(mean_acc.norm() - options_.gravity) < 3.0;
+            if (acc_includes_gravity_)
+            {
+                const Eigen::Vector3d expected_acc =
+                    orientation_.toRotationMatrix().transpose() *
+                    Eigen::Vector3d(0.0, 0.0, options_.gravity);
+                acc_bias_ = mean_acc - expected_acc;
+            }
+            else
+            {
+                acc_bias_ = mean_acc;
+            }
+        }
+
+        last_imu_stamp_ = has_pair_stamp_ ? latest_pair_stamp_ : sensor_stamp;
+        velocity_world_.setZero();
+        initialized_ = true;
+    }
+
+    rclcpp::Time ResolveStampLocked(double sensor_stamp) const
+    {
+        if (options_.restamp_to_now && clock_)
+        {
+            return clock_->now();
+        }
+        return get_ros_time(sensor_stamp);
+    }
+
+    void PublishLocked(const rclcpp::Time &stamp)
+    {
+        if (!publisher_ || !initialized_)
+        {
+            return;
+        }
+
+        const Eigen::Vector3d velocity_base =
+            orientation_.conjugate() * velocity_world_;
+        const Eigen::Vector3d angular_velocity =
+            latest_gyro_ - gyro_bias_;
+
+        nav_msgs::msg::Odometry odom;
+        odom.header.stamp = stamp;
+        odom.header.frame_id = options_.odom_frame;
+        odom.child_frame_id = options_.base_frame;
+        odom.pose.pose.position.x = position_.x();
+        odom.pose.pose.position.y = position_.y();
+        odom.pose.pose.position.z = position_.z();
+        odom.pose.pose.orientation.x = orientation_.x();
+        odom.pose.pose.orientation.y = orientation_.y();
+        odom.pose.pose.orientation.z = orientation_.z();
+        odom.pose.pose.orientation.w = orientation_.w();
+        odom.twist.twist.linear.x = velocity_base.x();
+        odom.twist.twist.linear.y = velocity_base.y();
+        odom.twist.twist.linear.z = velocity_base.z();
+        odom.twist.twist.angular.x = angular_velocity.x();
+        odom.twist.twist.angular.y = angular_velocity.y();
+        odom.twist.twist.angular.z = angular_velocity.z();
+        publisher_->publish(odom);
+    }
+
+    static constexpr size_t kMaxQueueSize = 64;
+    static constexpr int kMinBiasSamples = 20;
+    static constexpr double kMaxImuDt = 0.2;
+
+    std::mutex mutex_;
+    rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr publisher_;
+    rclcpp::Clock::SharedPtr clock_;
+    Options options_;
+    std::deque<Sample> primary_queue_;
+    std::deque<Sample> secondary_queue_;
+
+    bool initialized_ = false;
+    bool has_pair_stamp_ = false;
+    bool has_acc_lpf_ = false;
+    bool acc_includes_gravity_ = true;
+    double last_imu_stamp_ = 0.0;
+    double latest_pair_stamp_ = 0.0;
+    Eigen::Vector3d position_ = Eigen::Vector3d::Zero();
+    Eigen::Quaterniond orientation_ = Eigen::Quaterniond::Identity();
+    Eigen::Vector3d velocity_world_ = Eigen::Vector3d::Zero();
+    Eigen::Vector3d latest_gyro_ = Eigen::Vector3d::Zero();
+    Eigen::Vector3d gyro_bias_ = Eigen::Vector3d::Zero();
+    Eigen::Vector3d acc_bias_ = Eigen::Vector3d::Zero();
+    Eigen::Vector3d acc_lpf_ = Eigen::Vector3d::Zero();
+    Eigen::Vector3d preinit_gyro_sum_ = Eigen::Vector3d::Zero();
+    Eigen::Vector3d preinit_acc_sum_ = Eigen::Vector3d::Zero();
+    int preinit_count_ = 0;
+};
 
 class ImuOdomFusion
 {
@@ -121,10 +471,10 @@ public:
         base_link_frame_ = base_link_frame;
     }
 
-    void SetTfRestampToNow(bool enabled)
+    void SetRestampOutputsToNow(bool enabled)
     {
         std::lock_guard<std::mutex> lk(mtx_);
-        restamp_tf_to_now_ = enabled;
+        restamp_outputs_to_now_ = enabled;
     }
 
     void SetMaxPathPoses(size_t max_path_poses)
@@ -134,9 +484,10 @@ public:
         TrimPathLocked();
     }
 
-    void OnLioMeasurement(const SE3 &pose, double stamp)
+    rclcpp::Time OnLioMeasurement(const SE3 &pose, double stamp)
     {
         std::lock_guard<std::mutex> lk(mtx_);
+        const auto synchronized_output_stamp = ResolveOutputStampLocked(stamp, nullptr);
         const Eigen::Vector3d p_meas = pose.translation();
         position_xyz_ = p_meas;
 
@@ -172,8 +523,8 @@ public:
             last_imu_t_ = stamp;
             last_meas_t_ = stamp;
             history_.clear();
-            AppendPathAndPublishLocked(stamp);
-            return;
+            AppendPathAndPublishLocked(stamp, &synchronized_output_stamp);
+            return synchronized_output_stamp;
         }
 
         if (history_.empty() || stamp >= history_.back().stamp)
@@ -185,8 +536,8 @@ public:
                 SaveSnapshotLocked(history_.back());
             }
             const double publish_stamp = history_.empty() ? stamp : history_.back().stamp;
-            AppendPathAndPublishLocked(publish_stamp);
-            return;
+            AppendPathAndPublishLocked(publish_stamp, &synchronized_output_stamp);
+            return synchronized_output_stamp;
         }
 
         int idx = -1;
@@ -215,7 +566,8 @@ public:
         }
 
         last_meas_t_ = stamp;
-        AppendPathAndPublishLocked(history_.back().stamp);
+        AppendPathAndPublishLocked(history_.back().stamp, &synchronized_output_stamp);
+        return synchronized_output_stamp;
     }
 
     void OnImu(const IMUPtr &imu)
@@ -509,13 +861,30 @@ private:
         last_pos_meas_ = p_meas;
     }
 
-    void PublishOdomLocked(double stamp)
+    rclcpp::Time ResolveOutputStampLocked(
+        double sensor_stamp, const rclcpp::Time *synchronized_output_stamp) const
+    {
+        if (!restamp_outputs_to_now_)
+        {
+            return get_ros_time(sensor_stamp);
+        }
+        if (synchronized_output_stamp)
+        {
+            return *synchronized_output_stamp;
+        }
+        return clock_ ? clock_->now() : get_ros_time(sensor_stamp);
+    }
+
+    void PublishOdomLocked(
+        double sensor_stamp, const rclcpp::Time *synchronized_output_stamp = nullptr)
     {
         const Eigen::Vector3d pos = position_xyz_;
         const Eigen::Quaterniond q = orientation_q_ * q_base_to_aft_;
+        const auto output_stamp =
+            ResolveOutputStampLocked(sensor_stamp, synchronized_output_stamp);
 
         nav_msgs::msg::Odometry odom;
-        odom.header.stamp = get_ros_time(stamp);
+        odom.header.stamp = output_stamp;
         odom.header.frame_id = map_frame_;
         odom.child_frame_id = base_frame_;
         odom.pose.pose.position.x = pos.x();
@@ -529,15 +898,8 @@ private:
 
         if (tf_pub_)
         {
-            auto tf_stamp = odom.header.stamp;
-            if (restamp_tf_to_now_ && clock_)
-            {
-                tf_stamp = get_ros_time(clock_->now().seconds());
-            }
-
             geometry_msgs::msg::TransformStamped tf;
             tf.header = odom.header;
-            tf.header.stamp = tf_stamp;
             tf.child_frame_id = base_frame_;
             tf.transform.translation.x = pos.x();
             tf.transform.translation.y = pos.y();
@@ -545,7 +907,7 @@ private:
             tf.transform.rotation = odom.pose.pose.orientation;
 
             geometry_msgs::msg::TransformStamped tf_base_link;
-            tf_base_link.header.stamp = tf_stamp;
+            tf_base_link.header.stamp = output_stamp;
             tf_base_link.header.frame_id = base_frame_;
             tf_base_link.child_frame_id = base_link_frame_;
             tf_base_link.transform.translation.x = t_aft_to_base_.x();
@@ -561,9 +923,12 @@ private:
         }
     }
 
-    void AppendPathAndPublishLocked(double stamp)
+    void AppendPathAndPublishLocked(
+        double sensor_stamp, const rclcpp::Time *synchronized_output_stamp = nullptr)
     {
-        PublishOdomLocked(stamp);
+        const auto output_stamp =
+            ResolveOutputStampLocked(sensor_stamp, synchronized_output_stamp);
+        PublishOdomLocked(sensor_stamp, &output_stamp);
         if (!path_pub_ || max_path_poses_ == 0 || path_pub_->get_subscription_count() == 0)
         {
             return;
@@ -571,7 +936,7 @@ private:
         const Eigen::Quaterniond q = orientation_q_ * q_base_to_aft_;
 
         geometry_msgs::msg::PoseStamped ps;
-        ps.header.stamp = get_ros_time(stamp);
+        ps.header.stamp = output_stamp;
         ps.header.frame_id = map_frame_;
         ps.pose.position.x = position_xyz_.x();
         ps.pose.position.y = position_xyz_.y();
@@ -599,7 +964,7 @@ private:
     std::string map_frame_;
     std::string base_frame_;
     std::string base_link_frame_ = "base_link";
-    bool restamp_tf_to_now_ = true;
+    bool restamp_outputs_to_now_ = true;
     size_t max_path_poses_ = 2000;
 
     bool initialized_ = false;
@@ -761,12 +1126,36 @@ void imuHandler(const sensor_msgs::msg::Imu::SharedPtr msg)
     {
         imu_odom_fusion->OnImu(imu);
     }
+    if (dual_imu_center_odom)
+    {
+        // Side-channel only: the main LIO and its single-IMU fusion have already
+        // consumed the primary IMU above.
+        dual_imu_center_odom->AddPrimary(imu);
+    }
     // {
     //     msg_temp->linear_acceleration.x = msg_temp->linear_acceleration.x * gnorm;
     //     msg_temp->linear_acceleration.y = msg_temp->linear_acceleration.y * gnorm;
     //     msg_temp->linear_acceleration.z = msg_temp->linear_acceleration.z * gnorm;
     //     imu_repub->publish(*msg_temp);
     // }
+}
+
+void auxImuHandler(const sensor_msgs::msg::Imu::SharedPtr msg)
+{
+    if (!dual_imu_center_odom)
+    {
+        return;
+    }
+
+    IMUPtr imu = std::make_shared<zjloc::IMU>(
+        msg->header.stamp.sec + msg->header.stamp.nanosec * 1e-9,
+        Vec3d(msg->angular_velocity.x, msg->angular_velocity.y, msg->angular_velocity.z),
+        Vec3d(
+            msg->linear_acceleration.x,
+            msg->linear_acceleration.y,
+            msg->linear_acceleration.z) *
+            gnorm);
+    dual_imu_center_odom->AddSecondary(imu);
 }
 
 int main(int argc, char **argv)
@@ -899,6 +1288,21 @@ int main(int argc, char **argv)
     }
 
     auto yaml_cfg = YAML::LoadFile(config_file);
+    bool restamp_outputs_to_now = true;
+    if (yaml_cfg["common"])
+    {
+        const auto common = yaml_cfg["common"];
+        if (common["fusion_restamp_outputs_to_now"])
+        {
+            restamp_outputs_to_now = common["fusion_restamp_outputs_to_now"].as<bool>();
+        }
+        else if (common["fusion_restamp_tf_to_now"])
+        {
+            // Backward compatibility with the old TF-only setting.
+            restamp_outputs_to_now = common["fusion_restamp_tf_to_now"].as<bool>();
+        }
+    }
+    FrameStampSynchronizer frame_stamp_synchronizer;
 
     auto pub_scan = node->create_publisher<sensor_msgs::msg::PointCloud2>(
         "/livox/scan", rclcpp::SensorDataQoS().keep_last(1));
@@ -906,7 +1310,7 @@ int main(int argc, char **argv)
     struct ScanPublishTask
     {
         zjloc::CloudPtr cloud;
-        double time;
+        double sensor_stamp;
     };
 
     std::deque<ScanPublishTask> scan_publish_queue;
@@ -938,9 +1342,20 @@ int main(int argc, char **argv)
                 continue;
             }
 
+            rclcpp::Time output_stamp(0, 0);
+            if (!frame_stamp_synchronizer.WaitLookup(
+                    task.sensor_stamp, output_stamp, std::chrono::milliseconds(2000)))
+            {
+                RCLCPP_WARN_THROTTLE(
+                    node->get_logger(), *node->get_clock(), 2000,
+                    "Dropping /livox/scan: no synchronized TF stamp for sensor time %.9f",
+                    task.sensor_stamp);
+                continue;
+            }
+
             sensor_msgs::msg::PointCloud2 cloud_output;
             pcl::toROSMsg(*task.cloud, cloud_output);
-            cloud_output.header.stamp = get_ros_time(task.time);
+            cloud_output.header.stamp = output_stamp;
             cloud_output.header.frame_id = "odom";
             pub_scan->publish(cloud_output);
         } });
@@ -969,6 +1384,115 @@ int main(int argc, char **argv)
 
     auto pubLaserOdometry = node->create_publisher<nav_msgs::msg::Odometry>("/odom", 100);
     auto pubLaserOdometryPath = node->create_publisher<nav_msgs::msg::Path>("/odometry_path", 5);
+
+    bool center_odom_enabled = false;
+    std::string aux_imu_topic;
+    std::string center_odom_topic = "/odom_base_link";
+    if (yaml_cfg["common"])
+    {
+        const auto common = yaml_cfg["common"];
+        center_odom_enabled =
+            common["center_odom_enable"] && common["center_odom_enable"].as<bool>();
+        if (common["aux_imu_topic"])
+        {
+            aux_imu_topic = common["aux_imu_topic"].as<std::string>();
+        }
+        if (common["center_odom_topic"])
+        {
+            center_odom_topic = common["center_odom_topic"].as<std::string>();
+        }
+    }
+
+    if (center_odom_enabled && aux_imu_topic.empty())
+    {
+        RCLCPP_WARN(
+            node->get_logger(),
+            "center_odom_enable is true but aux_imu_topic is empty; "
+            "disabling the dual-IMU side channel");
+        center_odom_enabled = false;
+    }
+
+    if (center_odom_enabled)
+    {
+        DualImuCenterOdom::Options options;
+        options.restamp_to_now = restamp_outputs_to_now;
+        const auto common = yaml_cfg["common"];
+        if (common["fusion_base_link_frame"])
+        {
+            options.base_frame = common["fusion_base_link_frame"].as<std::string>();
+        }
+        if (common["fusion_aft_to_base_xyzrpy"])
+        {
+            const auto values =
+                common["fusion_aft_to_base_xyzrpy"].as<std::vector<double>>();
+            if (values.size() == 6)
+            {
+                options.sensor_to_base_translation =
+                    Eigen::Vector3d(values[0], values[1], values[2]);
+                options.sensor_to_base_rotation =
+                    quaternion_from_rpy(Eigen::Vector3d(values[3], values[4], values[5]));
+            }
+        }
+        const auto read_rotation = [&](const char *key) -> Eigen::Matrix3d {
+            if (!common[key])
+            {
+                return Eigen::Matrix3d::Identity();
+            }
+            const auto values = common[key].as<std::vector<double>>();
+            if (values.size() != 3)
+            {
+                RCLCPP_WARN(
+                    node->get_logger(),
+                    "%s must contain [roll, pitch, yaw]; using identity",
+                    key);
+                return Eigen::Matrix3d::Identity();
+            }
+            return quaternion_from_rpy(
+                       Eigen::Vector3d(values[0], values[1], values[2]))
+                .toRotationMatrix();
+        };
+        options.primary_imu_to_base_rotation =
+            read_rotation("center_primary_imu_to_base_rpy");
+        options.secondary_imu_to_base_rotation =
+            read_rotation("center_secondary_imu_to_base_rpy");
+        if (common["center_secondary_imu_time_offset"])
+        {
+            options.secondary_time_offset =
+                common["center_secondary_imu_time_offset"].as<double>();
+        }
+        if (common["center_imu_sync_tolerance"])
+        {
+            options.sync_tolerance =
+                common["center_imu_sync_tolerance"].as<double>();
+        }
+        if (common["center_acceleration_lpf_tau"])
+        {
+            options.acceleration_lpf_tau =
+                common["center_acceleration_lpf_tau"].as<double>();
+        }
+        if (common["center_max_speed"])
+        {
+            options.max_speed = common["center_max_speed"].as<double>();
+        }
+        if (common["center_gravity"])
+        {
+            options.gravity = common["center_gravity"].as<double>();
+        }
+        if (common["center_estimate_initial_bias"])
+        {
+            options.estimate_initial_bias =
+                common["center_estimate_initial_bias"].as<bool>();
+        }
+
+        auto pubCenterOdometry =
+            node->create_publisher<nav_msgs::msg::Odometry>(center_odom_topic, 100);
+        dual_imu_center_odom = std::make_shared<DualImuCenterOdom>(
+            pubCenterOdometry, node->get_clock(), options);
+    }
+    else
+    {
+        dual_imu_center_odom.reset();
+    }
 
     // 创建tf广播器
     g_tf_broadcaster = std::make_shared<tf2_ros::TransformBroadcaster>(node);
@@ -1004,10 +1528,7 @@ int main(int argc, char **argv)
                     Eigen::Vector3d(arr[3], arr[4], arr[5]));
             }
         }
-        if (common["fusion_restamp_tf_to_now"])
-        {
-            imu_odom_fusion->SetTfRestampToNow(common["fusion_restamp_tf_to_now"].as<bool>());
-        }
+        imu_odom_fusion->SetRestampOutputsToNow(restamp_outputs_to_now);
         if (common["fusion_max_path_poses"])
         {
             imu_odom_fusion->SetMaxPathPoses(common["fusion_max_path_poses"].as<size_t>());
@@ -1021,7 +1542,13 @@ int main(int argc, char **argv)
             {
                 if (imu_odom_fusion)
                 {
-                    imu_odom_fusion->OnLioMeasurement(pose, stamp);
+                    const auto output_stamp = imu_odom_fusion->OnLioMeasurement(pose, stamp);
+                    // Publish the cloud only after the matching odom/TF has been sent.
+                    frame_stamp_synchronizer.Record(stamp, output_stamp);
+                    if (dual_imu_center_odom)
+                    {
+                        dual_imu_center_odom->OnLioPose(pose, stamp, output_stamp);
+                    }
                 }
             }
             // else if (topic_name == "world")
@@ -1248,6 +1775,18 @@ int main(int argc, char **argv)
     auto subAuxLaserCloud = node->create_subscription<livox_ros_driver2::msg::CustomMsg>(aux_laser_topic, 100, aux_livox_pcl_cbk, sensor_sub_options);
 
     auto sub_imu_ori = node->create_subscription<sensor_msgs::msg::Imu>(imu_topic, 500, imuHandler, sensor_sub_options);
+    rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr sub_aux_imu;
+    if (center_odom_enabled)
+    {
+        sub_aux_imu = node->create_subscription<sensor_msgs::msg::Imu>(
+            aux_imu_topic, 500, auxImuHandler, sensor_sub_options);
+        RCLCPP_INFO(
+            node->get_logger(),
+            "Dual-IMU side channel enabled: %s + %s -> %s; primary LIO remains single-IMU",
+            imu_topic.c_str(),
+            aux_imu_topic.c_str(),
+            center_odom_topic.c_str());
+    }
 
     std::thread measurement_process(&zjloc::lidarodom_m::run, lio);
 

@@ -11,15 +11,32 @@ common:
   # imu_topic: /livox/imu #/imu_raw   /gps/gtimu
   # lid_topic: /livox/lidar #/points_raw  /rslidar_points /velodyne_points
   imu_topic: /livox/imu_192_168_1_163 #/imu_raw   /gps/gtimu
+  # 仅供旁路车体中心速度积分，不会送入 Adaptive-LIO 主定位。
+  aux_imu_topic: /livox/imu_192_168_1_160
   lid_topic: /livox/lidar_192_168_1_163 #/points_raw  /rslidar_points /velodyne_points
   aux_lidar_topic: /livox/lidar_192_168_1_160
-  gnorm: 1 # 9.805    # 部分数据，加速度模长为1->9.805gnorm
+  # IMU 加速度单位为 g：静止时 Z≈1.0，因此乘 9.81 转换为 m/s^2。
+  gnorm: 1.0
   # Fusion frame alignment
   # Assume IMU frame == aft_mapped frame.
   # Relative transform aft_mapped -> base_link: [x, y, z, roll, pitch, yaw] (m, rad)
   fusion_aft_to_base_xyzrpy: [-0.04, 0.165, -0.33, 0, 0, 0]
   fusion_base_link_frame: base_link
-  fusion_restamp_tf_to_now: true   # 发布 TF 时使用当前 ROS 时间，避免处理积压导致 TF 越跑越旧
+  # 双 IMU旁路：两路旋转到 base_link 后平均，加速度积分为中心速度。
+  # 主 LIO仍只使用上面的 imu_topic。
+  center_odom_enable: true
+  center_odom_topic: /odom_base_link
+  center_primary_imu_to_base_rpy: [0, 0, 0]
+  center_secondary_imu_to_base_rpy: [0, 0, 0]
+  center_secondary_imu_time_offset: -0.000465044
+  center_imu_sync_tolerance: 0.003
+  center_acceleration_lpf_tau: 0.06
+  center_estimate_initial_bias: true
+  center_gravity: 9.81
+  center_max_speed: 35.0
+  # 同一 LIO 帧的 /odom、TF、/livox/scan 使用同一个当前 ROS 时间戳。
+  # 这样既修正雷达与主机的时钟偏移，又不会让点云和 TF 错帧。
+  fusion_restamp_outputs_to_now: true
   fusion_max_path_poses: 300       # 限制 odometry_path 长度，避免路径消息无限增大拖慢发布链路
 
 mapping:
