@@ -6,11 +6,11 @@
 #include <pcl/common/io.h>
 #include <pcl/filters/passthrough.h>
 #include <ceres/ceres.h>
-#include <ceres/local_parameterization.h>
+// #include <ceres/local_parameterization.h>
+#include <ceres/manifold.h>
 #include <ceres/rotation.h>
 #include <algorithm>
 #include <cmath>
-#include <array>
 
 #include "common/math_utils.h"
 #include "common/cloudMap.hpp"
@@ -315,6 +315,13 @@ namespace zjloc
 
      void lidarodom_m::pushData(std::vector<point3D> &&msg, std::pair<double, double> data, bool is_aux)
      {
+          if (!std::isfinite(data.first) || !std::isfinite(data.second) || data.second <= 0.0)
+          {
+               LOG(ERROR) << std::setprecision(18)
+                          << "drop lidar with invalid time [begin=" << data.first
+                          << ", duration=" << data.second << "]";
+               return;
+          }
           {
                // getMeasureMents() reads all lidar/imu queues while holding mtx_buf.
                // Use the same mutex for writes to avoid data races under high-rate callbacks.
@@ -326,11 +333,15 @@ namespace zjloc
                }
                else
                {
-                    if (data.first < last_timestamp_lidar_)
+                    if (data.first <= last_timestamp_lidar_)
                     {
-                         LOG(ERROR) << "lidar loop back, clear buffer";
-                         lidar_buffer_.clear();
-                         time_buffer_.clear();
+                         // Fail closed: accepting an old scan would make the ESKF
+                         // interpolate backwards and can move the map. A real clock
+                         // reset requires an explicit estimator reset/restart.
+                         LOG(ERROR) << std::setprecision(18)
+                                    << "drop non-monotonic lidar [stamp=" << data.first
+                                    << ", last=" << last_timestamp_lidar_ << "]";
+                         return;
                     }
 
                     lidar_buffer_.push_back(std::move(msg));
@@ -342,13 +353,33 @@ namespace zjloc
      }
      void lidarodom_m::pushData(IMUPtr imu)
      {
+          if (imu == nullptr)
+          {
+               LOG(ERROR) << "drop null imu";
+               return;
+          }
           const double timestamp = imu->timestamp_;
           {
                std::lock_guard<std::mutex> lk(mtx_buf);
-               if (timestamp < last_timestamp_imu_)
+               if (!std::isfinite(timestamp))
                {
-                    LOG(WARNING) << "imu loop back, clear buffer";
-                    imu_buffer_.clear();
+                    LOG(ERROR) << "drop imu with non-finite timestamp";
+                    return;
+               }
+               if (!imu->gyro_.allFinite() || !imu->acce_.allFinite())
+               {
+                    LOG(ERROR) << std::setprecision(18)
+                               << "drop imu with non-finite measurement [stamp=" << timestamp << "]";
+                    return;
+               }
+               if (timestamp <= last_timestamp_imu_)
+               {
+                    // Never clear good buffered samples or lower the timestamp
+                    // watermark because of one delayed/duplicated UDP packet.
+                    LOG(WARNING) << std::setprecision(18)
+                                 << "drop non-monotonic imu before buffering [stamp=" << timestamp
+                                 << ", last=" << last_timestamp_imu_ << "]";
+                    return;
                }
 
                last_timestamp_imu_ = timestamp;
@@ -417,9 +448,20 @@ namespace zjloc
           imu_states_.clear(); //   need clear here
 
           // 利用IMU数据进行状态预测
+          bool imu_prediction_valid = false;
           zjloc::common::Timer::Evaluate([&]()
-                                         { Predict(); },
+                                         { imu_prediction_valid = Predict(); },
                                          "predict");
+          if (!imu_prediction_valid)
+          {
+               // The ESKF may have advanced its clock past a forward data gap so
+               // subsequent frames can recover, but this scan has incomplete
+               // motion coverage and must not update the pose or map.
+               LOG(ERROR) << std::setprecision(18)
+                          << "drop lidar frame because IMU prediction is incomplete [begin="
+                          << meas.lidar_begin_time_ << ", end=" << meas.lidar_end_time_ << "]";
+               return;
+          }
           //
           zjloc::common::Timer::Evaluate([&]()
                                          { stateInitialization(); },
@@ -429,18 +471,18 @@ namespace zjloc
           std::vector<point3D> const_surf_aux = std::move(meas.aux_lidar_);
 
           cloudFrame *p_frame = nullptr;
-          cloudFrame *p_frame_aux = nullptr;
+          cloudFrame *p_frame_aux_publish_only = nullptr;
 
-          if (options_.enable_aux_bundle_fusion && !const_surf_aux.empty())
+          if (!const_surf_aux.empty())
           {
                const double frame_dt = std::max(1e-6, meas.lidar_end_time_ - meas.lidar_begin_time_);
-               const_surf.reserve(const_surf.size() + const_surf_aux.size());
                for (auto &aux_point : const_surf_aux)
                {
-                    // Bundle fusion convention:
+                    // Auxiliary extrinsic convention:
                     //   p_main = R_main_aux_ * p_aux + t_main_aux_
-                    // If the Livox driver already publishes both topics in the same
-                    // compensated frame, keep this transform as identity in YAML.
+                    // Apply it in both modes. When bundle fusion is disabled, these
+                    // transformed points are used by the /livox/scan publication path
+                    // only and never enter optimization or the voxel map.
                     const Eigen::Vector3d p_main = R_main_aux_ * aux_point.raw_point + t_main_aux_;
                     aux_point.raw_point = p_main;
                     aux_point.point = p_main;
@@ -449,10 +491,17 @@ namespace zjloc
                     aux_point.relative_time = aux_point.timestamp - meas.lidar_begin_time_;
                     aux_point.timespan = frame_dt;
                     aux_point.alpha_time = std::clamp(aux_point.relative_time / frame_dt, 0.0, 1.0);
-
-                    const_surf.emplace_back(std::move(aux_point));
                }
-               std::vector<point3D>().swap(const_surf_aux);
+
+               if (options_.enable_aux_bundle_fusion)
+               {
+                    const_surf.reserve(const_surf.size() + const_surf_aux.size());
+                    for (auto &aux_point : const_surf_aux)
+                    {
+                         const_surf.emplace_back(std::move(aux_point));
+                    }
+                    std::vector<point3D>().swap(const_surf_aux);
+               }
           }
 
           zjloc::common::Timer::Evaluate([&]()
@@ -464,15 +513,15 @@ namespace zjloc
           if (!options_.enable_aux_bundle_fusion && !const_surf_aux.empty())
           {
                zjloc::common::Timer::Evaluate([&]()
-                                              { p_frame_aux = buildFrame(const_surf_aux, current_state,
-                                                                         meas.lidar_begin_time_,
-                                                                         meas.lidar_end_time_); },
-                                              "build frame");
+                                              { p_frame_aux_publish_only = buildFrame(const_surf_aux, current_state,
+                                                                                      meas.lidar_begin_time_,
+                                                                                      meas.lidar_end_time_); },
+                                              "build aux publish frame");
           }
 
           //   lio
           zjloc::common::Timer::Evaluate([&]()
-                                         { poseEstimation(p_frame, p_frame_aux); },
+                                         { poseEstimation(p_frame, p_frame_aux_publish_only); },
                                          "poseEstimate");
 
           //   观测
@@ -533,14 +582,14 @@ namespace zjloc
           index_frame++;
           p_frame->release();
           delete p_frame;
-          if (p_frame_aux != nullptr)
+          if (p_frame_aux_publish_only != nullptr)
           {
-               p_frame_aux->release();
-               delete p_frame_aux;
+               p_frame_aux_publish_only->release();
+               delete p_frame_aux_publish_only;
           }
      }
 
-     void lidarodom_m::poseEstimation(cloudFrame *p_frame, cloudFrame *p_frame_aux)
+     void lidarodom_m::poseEstimation(cloudFrame *p_frame, cloudFrame *p_frame_aux_publish_only)
      {
           //   TODO: check current_state data
           if (index_frame > 1)
@@ -548,6 +597,21 @@ namespace zjloc
                zjloc::common::Timer::Evaluate([&]()
                                               { optimize(p_frame); },
                                               "optimize");
+          }
+
+          // The auxiliary frame in non-fusion mode is output-only. buildFrame()
+          // already performed motion compensation; refresh only its world points
+          // with the optimized main-LiDAR pose before publishing. It is deliberately
+          // not passed to optimize(), residual construction, or map insertion.
+          if (p_frame_aux_publish_only != nullptr)
+          {
+               for (auto &point : p_frame_aux_publish_only->point_surf)
+               {
+                    transformPoint(options_.motion_compensation, point,
+                                   current_state->rotation_begin, current_state->rotation,
+                                   current_state->translation_begin, current_state->translation,
+                                   R_imu_lidar, t_imu_lidar);
+               }
           }
 
           const Eigen::Vector3d current_translation = current_state->translation;
@@ -569,7 +633,7 @@ namespace zjloc
           if (should_update_map)
           { //   update map here
                 zjloc::common::Timer::Evaluate([&]()
-                                               { map_incremental(p_frame, p_frame_aux, true); },
+                                               { map_incremental(p_frame, p_frame_aux_publish_only, true); },
                                                "map update");
                 has_last_map_maintenance_pose_ = true;
                 last_map_maintenance_translation_ = current_translation;
@@ -579,7 +643,7 @@ namespace zjloc
           else
           {
                zjloc::common::Timer::Evaluate([&]()
-                                              { map_incremental(p_frame, p_frame_aux, false); },
+                                              { map_incremental(p_frame, p_frame_aux_publish_only, false); },
                                               "map update");
           }
 
@@ -1368,12 +1432,14 @@ namespace zjloc
           pcl_points->points.push_back(cloudTemp);
      }
 
-     void lidarodom_m::map_incremental(cloudFrame *p_frame, cloudFrame *p_frame_aux, bool update_map, int min_num_points)
+     void lidarodom_m::map_incremental(cloudFrame *p_frame, cloudFrame *p_frame_aux_publish_only,
+                                       bool update_map, int min_num_points)
      {
           //   only surf
-          const size_t aux_point_count = p_frame_aux == nullptr ? 0 : p_frame_aux->point_surf.size();
-          points_world->points.reserve(
-              p_frame->point_surf.size() + aux_point_count);
+          const size_t aux_point_count = p_frame_aux_publish_only == nullptr
+                                             ? 0
+                                             : p_frame_aux_publish_only->point_surf.size();
+          points_world->points.reserve(p_frame->point_surf.size() + aux_point_count);
           for (auto &point : p_frame->point_surf)
           {
                if (update_map)
@@ -1393,9 +1459,65 @@ namespace zjloc
                p.z = point.point.z();
                p.intensity = point.intensity;
           }
-          if (p_frame_aux != nullptr)
+          publishFrameProducts(SafeSE3(current_state->rotation, current_state->translation),
+                               p_frame->time_frame_end, p_frame_aux_publish_only);
+          points_world->clear();
+     }
+
+     void lidarodom_m::publishFrameProducts(const SE3 &pose_of_lo, double stamp,
+                                            const cloudFrame *p_frame_aux_publish_only)
+     {
+          auto filter_output_cloud = [&]()
           {
-               for (auto &point : p_frame_aux->point_surf)
+               pcl::PassThrough<pcl::PointXYZI> pass;
+               pass.setInputCloud(points_world);
+               pass.setFilterFieldName("z");
+               pass.setFilterLimits(cloud_pub_options.min_z_filter, cloud_pub_options.max_z_filter);
+               pass.filter(*points_world);
+
+               if (cloud_pub_options.enable_body_filter)
+               {
+                    const Eigen::Matrix3d body_to_world_rot = pose_of_lo.rotationMatrix();
+                    const Eigen::Matrix3f world_to_body_rot = body_to_world_rot.transpose().cast<float>();
+                    const Eigen::Vector3f world_to_body_trans =
+                        (-body_to_world_rot.transpose() * pose_of_lo.translation()).cast<float>();
+
+                    Eigen::Affine3f world_to_body = Eigen::Affine3f::Identity();
+                    world_to_body.linear() = world_to_body_rot;
+                    world_to_body.translation() = world_to_body_trans;
+
+                    pcl::CropBox<pcl::PointXYZI> crop;
+                    crop.setInputCloud(points_world);
+                    crop.setTransform(world_to_body);
+                    crop.setMin(Eigen::Vector4f(cloud_pub_options.body_filter_x_min,
+                                                cloud_pub_options.body_filter_y_min,
+                                                cloud_pub_options.body_filter_z_min,
+                                                1.0f));
+                    crop.setMax(Eigen::Vector4f(cloud_pub_options.body_filter_x_max,
+                                                cloud_pub_options.body_filter_y_max,
+                                                cloud_pub_options.body_filter_z_max,
+                                                1.0f));
+                    crop.setNegative(true);
+                    crop.filter(*points_world);
+               }
+          };
+
+          // Keep ScanContext on the main LIO cloud in non-fusion mode. The
+          // auxiliary frame is appended only after this callback, so disabling
+          // bundle fusion means exactly "publish only" for the auxiliary points.
+          bool main_cloud_already_filtered = false;
+          if (pub_scantext_data)
+          {
+               filter_output_cloud();
+               main_cloud_already_filtered = true;
+               pub_scantext_data(points_world, pose_of_lo, stamp);
+          }
+
+          const bool has_aux_publish_points =
+              p_frame_aux_publish_only != nullptr && !p_frame_aux_publish_only->point_surf.empty();
+          if (has_aux_publish_points)
+          {
+               for (const auto &point : p_frame_aux_publish_only->point_surf)
                {
                     auto &p = points_world->points.emplace_back();
                     p.x = point.point.x();
@@ -1404,42 +1526,12 @@ namespace zjloc
                     p.intensity = point.intensity;
                }
           }
-          publishFrameProducts(SafeSE3(current_state->rotation, current_state->translation), p_frame->time_frame_end);
-          points_world->clear();
-     }
 
-     void lidarodom_m::publishFrameProducts(const SE3 &pose_of_lo, double stamp)
-     {
-          pcl::PassThrough<pcl::PointXYZI> pass;
-          pass.setInputCloud(points_world);
-          pass.setFilterFieldName("z");
-          pass.setFilterLimits(cloud_pub_options.min_z_filter, cloud_pub_options.max_z_filter);
-          pass.filter(*points_world);
-
-          if (cloud_pub_options.enable_body_filter)
+          if (!main_cloud_already_filtered || has_aux_publish_points)
           {
-               const Eigen::Matrix3d body_to_world_rot = pose_of_lo.rotationMatrix();
-               const Eigen::Matrix3f world_to_body_rot = body_to_world_rot.transpose().cast<float>();
-               const Eigen::Vector3f world_to_body_trans =
-                   (-body_to_world_rot.transpose() * pose_of_lo.translation()).cast<float>();
-
-               Eigen::Affine3f world_to_body = Eigen::Affine3f::Identity();
-               world_to_body.linear() = world_to_body_rot;
-               world_to_body.translation() = world_to_body_trans;
-
-               pcl::CropBox<pcl::PointXYZI> crop;
-               crop.setInputCloud(points_world);
-               crop.setTransform(world_to_body);
-               crop.setMin(Eigen::Vector4f(cloud_pub_options.body_filter_x_min,
-                                           cloud_pub_options.body_filter_y_min,
-                                           cloud_pub_options.body_filter_z_min,
-                                           1.0f));
-               crop.setMax(Eigen::Vector4f(cloud_pub_options.body_filter_x_max,
-                                           cloud_pub_options.body_filter_y_max,
-                                           cloud_pub_options.body_filter_z_max,
-                                           1.0f));
-               crop.setNegative(true);
-               crop.filter(*points_world);
+               // If ScanContext already filtered the main cloud, applying these
+               // filters again handles only the newly appended auxiliary points.
+               filter_output_cloud();
           }
 
           CloudPtr down(new pcl::PointCloud<pcl::PointXYZI>);
@@ -1456,10 +1548,6 @@ namespace zjloc
                pub_cloud_to_ros(laser_topic, down, stamp);
           }
 
-          if (pub_scantext_data)
-          {
-               pub_scantext_data(points_world, pose_of_lo, stamp);
-          }
      }
 
      void lidarodom_m::lasermap_fov_segment()
@@ -1744,41 +1832,95 @@ namespace zjloc
           }
      }
 
-     void lidarodom_m::Predict()
+     bool lidarodom_m::Predict()
      {
           imu_states_.emplace_back(eskf_.GetNominalState());
+          bool prediction_complete = true;
 
           /// 对IMU状态进行预测
-          double time_current = measures_.lidar_end_time_;
-          Vec3d last_gyr, last_acc;
+          const double time_current = measures_.lidar_end_time_;
           for (auto &imu : measures_.imu_)
           {
-               double time_imu = imu->timestamp_;
-               // std::cout << std::setprecision(18) << "imu: " << time_imu << std::endl;
-               if (imu->timestamp_ <= time_current)
+               if (imu == nullptr || !std::isfinite(imu->timestamp_))
                {
-                    if (last_imu_ == nullptr)
-                         last_imu_ = imu;
-                    eskf_.Predict(*imu);
-                    imu_states_.emplace_back(eskf_.GetNominalState());
+                    LOG(ERROR) << "ignore invalid imu in synchronized measurement";
+                    prediction_complete = false;
+                    continue;
+               }
 
+               const double time_imu = imu->timestamp_;
+               // std::cout << std::setprecision(18) << "imu: " << time_imu << std::endl;
+               if (time_imu <= time_current)
+               {
+                    const double filter_time = eskf_.GetNominalState().timestamp_;
+                    if (time_imu <= filter_time)
+                    {
+                         LOG(WARNING) << std::setprecision(18)
+                                      << "ignore stale synchronized imu [stamp=" << time_imu
+                                      << ", filter=" << filter_time << "]";
+                         continue;
+                    }
+
+                    if (!eskf_.Predict(*imu))
+                    {
+                         // The only remaining failure here is a forward gap. Keep
+                         // consuming this measurement to re-establish a continuous
+                         // clock, but reject the LiDAR frame at the caller.
+                         prediction_complete = false;
+                    }
+                    imu_states_.emplace_back(eskf_.GetNominalState());
                     last_imu_ = imu;
                }
                else
                {
-                    double dt_1 = time_imu - time_current;
-                    double dt_2 = time_current - last_imu_->timestamp_;
-                    double w1 = dt_1 / (dt_1 + dt_2);
-                    double w2 = dt_2 / (dt_1 + dt_2);
+                    const double filter_time = eskf_.GetNominalState().timestamp_;
+                    if (filter_time >= time_current)
+                    {
+                         // The filter already represents the scan end. The future
+                         // sample remains buffered as the left endpoint next time.
+                         break;
+                    }
+                    if (last_imu_ == nullptr || !std::isfinite(last_imu_->timestamp_) ||
+                        last_imu_->timestamp_ > time_current || last_imu_->timestamp_ >= time_imu)
+                    {
+                         LOG(ERROR) << std::setprecision(18)
+                                    << "cannot interpolate imu at lidar end [last="
+                                    << (last_imu_ == nullptr ? -1.0 : last_imu_->timestamp_)
+                                    << ", lidar_end=" << time_current << ", next=" << time_imu << "]";
+                         prediction_complete = false;
+                         break;
+                    }
+
+                    const double dt_1 = time_imu - time_current;
+                    const double dt_2 = time_current - last_imu_->timestamp_;
+                    const double interval = dt_1 + dt_2;
+                    if (!(interval > 0.0) || !std::isfinite(interval))
+                    {
+                         LOG(ERROR) << "cannot interpolate imu across an invalid interval";
+                         prediction_complete = false;
+                         break;
+                    }
+                    const double w1 = dt_1 / interval;
+                    const double w2 = dt_2 / interval;
                     Eigen::Vector3d acc_temp = w1 * last_imu_->acce_ + w2 * imu->acce_;
                     Eigen::Vector3d gyr_temp = w1 * last_imu_->gyro_ + w2 * imu->gyro_;
                     IMUPtr imu_temp = std::make_shared<zjloc::IMU>(time_current, gyr_temp, acc_temp);
-                    eskf_.Predict(*imu_temp);
+                    if (!eskf_.Predict(*imu_temp))
+                    {
+                         prediction_complete = false;
+                    }
                     imu_states_.emplace_back(eskf_.GetNominalState());
 
                     last_imu_ = imu_temp;
+                    break;
                }
           }
+
+          if (imu_states_.size() < 2 || eskf_.GetNominalState().timestamp_ < time_current)
+          {
+               prediction_complete = false;
+          }
+          return prediction_complete;
      }
 
      void lidarodom_m::Undistort(std::vector<point3D> &points)

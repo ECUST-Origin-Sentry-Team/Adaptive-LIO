@@ -7,11 +7,12 @@
 
 // ceres
 #include <ceres/ceres.h>
-#include <ceres/local_parameterization.h>
+// #include <ceres/local_parameterization.h>
+#include <ceres/manifold.h>
 
 #include "lio_utils.h"
 
-class PoseParameterization : public ceres::LocalParameterization
+class PoseParameterization : public ceres::Manifold
 {
     virtual bool Plus(const double *x, const double *delta, double *x_plus_delta) const;
     virtual bool ComputeJacobian(const double *x, double *jacobian) const;
@@ -19,7 +20,7 @@ class PoseParameterization : public ceres::LocalParameterization
     virtual int LocalSize() const { return 6; };
 };
 
-class RotationParameterization : public ceres::LocalParameterization
+class RotationParameterization : public ceres::Manifold
 {
     virtual bool Plus(const double *x, const double *delta, double *x_plus_delta) const;
     virtual bool ComputeJacobian(const double *x, double *jacobian) const;

@@ -11,6 +11,7 @@
 #include "tools/nav_state.h"
 #include "tools/odom.h"
 
+#include <cmath>
 #include <glog/logging.h>
 #include <iomanip>
 
@@ -268,11 +269,18 @@ namespace zjloc
     {
         double dt = imu.timestamp_ - current_time_unc;
         // std::cout << "----[]" << dt << std::endl;
-        assert(imu.timestamp_ <= current_time_unc);
-        if (dt > 0 || fabs(dt) > (5 * options_.imu_dt_))
+        if (!std::isfinite(dt) || !imu.gyro_.allFinite() || !imu.acce_.allFinite() || dt >= 0)
         {
-            LOG(INFO) << std::setprecision(18) << "[back]skip this imu because dt_ = " << dt << "[" << imu.timestamp_ << ", " << current_time_unc << "]";
-            current_time_unc = imu.timestamp_;
+            LOG(WARNING) << std::setprecision(18)
+                         << "[back] drop non-monotonic imu because dt = " << dt
+                         << " [imu=" << imu.timestamp_ << ", filter=" << current_time_unc << "]";
+            return false;
+        }
+        if (std::abs(dt) > (5 * options_.imu_dt_))
+        {
+            LOG(WARNING) << std::setprecision(18)
+                         << "[back] stop prediction across imu gap because dt = " << dt
+                         << " [imu=" << imu.timestamp_ << ", filter=" << current_time_unc << "]";
             return false;
         }
         R_unc = R_unc * SO3::exp((imu.gyro_ - bg_) * dt);
@@ -281,17 +289,25 @@ namespace zjloc
                 0.5 * (R_unc * (imu.acce_ - ba_) + g_) * dt * dt;
 
         current_time_unc = imu.timestamp_;
+        return true;
     }
 
     template <typename S>
     bool ESKF<S>::Predict_Cont(const IMU &imu)
     {
-        assert(imu.timestamp_ >= current_time_cont);
         double dt = imu.timestamp_ - current_time_cont;
-        if (dt > (5 * options_.imu_dt_) || dt < 0)
+        if (!std::isfinite(dt) || !imu.gyro_.allFinite() || !imu.acce_.allFinite() || dt <= 0)
         {
-            // 时间间隔不对，可能是第一个IMU数据，没有历史信息
-            LOG(INFO) << std::setprecision(18) << "[continue]skip this imu because dt_ = " << dt << "[" << imu.timestamp_ << ", " << current_time_cont << "]";
+            LOG(WARNING) << std::setprecision(18)
+                         << "[continue] drop non-monotonic imu because dt = " << dt
+                         << " [imu=" << imu.timestamp_ << ", filter=" << current_time_cont << "]";
+            return false;
+        }
+        if (dt > (5 * options_.imu_dt_))
+        {
+            LOG(WARNING) << std::setprecision(18)
+                         << "[continue] resync after imu gap because dt = " << dt
+                         << " [imu=" << imu.timestamp_ << ", filter=" << current_time_cont << "]";
             current_time_cont = imu.timestamp_;
             return false;
         }
@@ -305,18 +321,31 @@ namespace zjloc
         v_cont = new_v;
         p_cont = new_p;
         current_time_cont = imu.timestamp_;
+        return true;
     }
 
     template <typename S>
     bool ESKF<S>::Predict(const IMU &imu)
     {
-        assert(imu.timestamp_ >= current_time_);
-
         double dt = imu.timestamp_ - current_time_;
-        if (dt > (5 * options_.imu_dt_) || dt < 0)
+        if (!std::isfinite(dt) || !imu.gyro_.allFinite() || !imu.acce_.allFinite() || dt <= 0)
         {
-            // 时间间隔不对，可能是第一个IMU数据，没有历史信息
-            LOG(INFO) << std::setprecision(18) << "skip this imu because dt_ = " << dt << "[" << imu.timestamp_ << ", " << current_time_ << "]";
+            // A stale sample must never move the filter clock backwards. Doing so
+            // turns the next valid IMU into a large forward gap and corrupts the
+            // state sequence used for scan undistortion.
+            LOG(WARNING) << std::setprecision(18)
+                         << "drop non-monotonic imu because dt = " << dt
+                         << " [imu=" << imu.timestamp_ << ", filter=" << current_time_ << "]";
+            return false;
+        }
+        if (dt > (5 * options_.imu_dt_))
+        {
+            // Do not integrate one measurement over an unobserved interval. Move
+            // forward once so later regular samples can recover; the caller must
+            // reject the LiDAR frame that spans this gap.
+            LOG(WARNING) << std::setprecision(18)
+                         << "resync after imu gap because dt = " << dt
+                         << " [imu=" << imu.timestamp_ << ", filter=" << current_time_ << "]";
             current_time_ = imu.timestamp_;
             return false;
         }

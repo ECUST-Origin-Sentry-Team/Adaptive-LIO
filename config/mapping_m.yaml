@@ -12,12 +12,12 @@ common:
   # lid_topic: /livox/lidar #/points_raw  /rslidar_points /velodyne_points
   imu_topic: /livox/imu_192_168_1_163 #/imu_raw   /gps/gtimu
   lid_topic: /livox/lidar_192_168_1_163 #/points_raw  /rslidar_points /velodyne_points
-  aux_lidar_topic: /livox/lidar_192_168_1_160
+  aux_lidar_topic: /livox/lidar_192_168_1_16
   gnorm: 1 # 9.805    # 部分数据，加速度模长为1->9.805gnorm
   # Fusion frame alignment
   # Assume IMU frame == aft_mapped frame.
   # Relative transform aft_mapped -> base_link: [x, y, z, roll, pitch, yaw] (m, rad)
-  fusion_aft_to_base_xyzrpy: [-0.04, 0.165, -0.33, 0, 0, 0]
+  fusion_aft_to_base_xyzrpy: [0.0, 0.257, -0.236, 0, 0, 3.1415]
   fusion_base_link_frame: base_link
   fusion_restamp_tf_to_now: true   # 发布 TF 时使用当前 ROS 时间，避免处理积压导致 TF 越跑越旧
   fusion_max_path_poses: 300       # 限制 odometry_path 长度，避免路径消息无限增大拖慢发布链路
@@ -41,7 +41,7 @@ map_options:
       min_distance_between_points: 0.2
   neig_options:
     distance_max: 80
-    radius_min: 0.2
+    radius_min: 0.21
     radius_max: 1.2
     exponent: 1.0
 
@@ -52,14 +52,15 @@ aux_lidar:
   # main-LiDAR output frame, then merge before buildFrame()/addSurfCostFactor().
   # Your current Livox driver already applies IMU/extrinsic compensation to both
   # topics, so identity is the correct default. Put calibration residuals here.
-  enable_bundle_fusion: true
+  enable_bundle_fusion: false
   min_points_per_measurement: 1000
-  time_offset: -0.000465044       # corrected_aux_time = raw_aux_time + time_offset, seconds
+  time_offset: 0.0       # corrected_aux_time = raw_aux_time + time_offset, seconds
   sync_margin: 0.01      # only for finding overlapping aux packets; residual points use true main window
-  extrinsic_xyz: [0.001725097, 0.015043699, 0.005305687]       # p_main = R_main_aux * p_aux + t_main_aux
-  extrinsic_rpy_deg: [-0.628830, 1.0566123, 0.248179]   # residual correction between current published topics
+  extrinsic_xyz: [0.005470, -0.025557, 0.005081]       # p_main = R_main_aux * p_aux + t_main_aux
+  extrinsic_rpy_deg: [1.601, 0.189, 0.799]   # residual correction between current published topics
 
 odometry:
+
   surf_res: 0.5
   log_print: false
   max_num_iteration: 4
@@ -104,16 +105,16 @@ odometry:
   satu_gyro: 16 # the saturation value of IMU's angular velocity. not related to the units
 
 cloud_pub:
-  max_z_filter: 1.5 # the roof must be filtered
+  max_z_filter: 2.0 # the roof must be filtered
   min_z_filter: -1.0 
-  space_down_sample: 0.05 # should not larger than 0.05
+  space_down_sample: 0.01 # should not larger than 0.05
   enable_body_filter: true
-  body_filter_x_min: -0.6 # 车体系盒滤波范围，可按车体前后尺寸调整
-  body_filter_x_max: 0.6
-  body_filter_y_min: -0.6
-  body_filter_y_max: 0.6
-  body_filter_z_min: -0.3
-  body_filter_z_max: 0.3
+  body_filter_x_min: -0.3 # 车体系盒滤波范围，可按车体前后尺寸调整
+  body_filter_x_max: 0.3
+  body_filter_y_min: -0.3
+  body_filter_y_max: 0.3
+  body_filter_z_min: -0.2
+  body_filter_z_max: 0.2
 
 mapping_module:
   enable_mapping: false # false 时直接关闭 Scan Context 回调与后台 worker

@@ -127,7 +127,8 @@ namespace zjloc
 
           /// 利用IMU预测状态信息
           /// 这段时间的预测数据会放入imu_states_里
-          void Predict();
+          /// @return false when the current LiDAR frame crosses an IMU gap
+          bool Predict();
 
           /// 对measures_中的点云去畸变
           void Undistort(std::vector<point3D> &points);
@@ -144,15 +145,17 @@ namespace zjloc
           cloudFrame *buildFrame(std::vector<point3D> &const_surf, state *cur_state,
                                  double timestamp_begin, double timestamp_end);
 
-          void poseEstimation(cloudFrame *p_frame,cloudFrame *p_frame_aux);
+          void poseEstimation(cloudFrame *p_frame, cloudFrame *p_frame_aux_publish_only);
 
           void optimize(cloudFrame *p_frame);
 
           void lasermap_fov_segment();
 
-          void map_incremental(cloudFrame *p_frame, cloudFrame *p_frame_aux, bool update_map, int min_num_points = 0);
+          void map_incremental(cloudFrame *p_frame, cloudFrame *p_frame_aux_publish_only,
+                               bool update_map, int min_num_points = 0);
 
-          void publishFrameProducts(const SE3 &pose_of_lo, double stamp);
+          void publishFrameProducts(const SE3 &pose_of_lo, double stamp,
+                                    const cloudFrame *p_frame_aux_publish_only);
 
           void addPointToMap(voxelHashMap &map, const Eigen::Vector3d &point,
                              const double &intensity, double voxel_size,
