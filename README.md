@@ -1,262 +1,300 @@
-# Adaptive-LIO 独立测试工作空间
+# Adaptive-LIO
 
-这个工作空间用于测试 ECUST Origin Sentry 当前改造版 Adaptive-LIO。它保留 LiDAR + IMU 里程计、编译所需的 Livox 消息依赖、RViz 配置和跑包脚本，可以独立编译与测试。仓库分支为 `ljb`。
+**面向 RoboMaster 哨兵机器人的 LiDAR–IMU 里程计 | ROS 2 Jazzy**
 
-本地目录为 `/home/lyu/real/adalio_test_ws`。脚本按自身所在位置查找工作空间，克隆或移动到其他目录后也可使用。测试 rosbag 已复制到本地，但通过 `.gitignore` 排除，不上传到 GitHub；克隆仓库后需要自行准备数据。
+[![ROS 2](https://img.shields.io/badge/ROS_2-Jazzy-22314E)](https://docs.ros.org/en/jazzy/)
+[![Ubuntu](https://img.shields.io/badge/Ubuntu-24.04-E95420)](https://ubuntu.com/)
+[![C++](https://img.shields.io/badge/C%2B%2B-17-00599C)](https://isocpp.org/)
+[![Original Paper](https://img.shields.io/badge/Paper-Adaptive--LIO-004088)](https://ieeexplore.ieee.org/document/10806842)
 
-## 1. 文件与功能包
+> 本仓库是基于 [原版 Adaptive-LIO](https://github.com/chengwei0427/Adaptive-LIO) 的工程化改造版本，主要用于 ECUST Origin Sentry 的 LiDAR–IMU 里程计开发与独立验证。**它不是原论文的逐行复现，也不包含完整导航、全局定位或底盘控制系统。**
+>
+> 当前默认分支为 `ljb`；下文所述均以该分支配置与源码为准。
 
-```text
-adalio_test_ws/
-├── README.md
-├── .gitignore
-├── start_bag_odometry.sh       # 启动 Adaptive-LIO 与跑包 RViz
-├── play_bag_163.sh             # 回放 163 主雷达及其 IMU
-├── bag_odometry.rviz           # 点云、轨迹、Odometry、TF 显示
-├── src/
-│   ├── Adaptive-LIO/
-│   │   ├── CMakeLists.txt / package.xml
-│   │   ├── config/             # 传感器、外参、滤波与匹配配置
-│   │   ├── launch/             # ROS 2 节点启动入口
-│   │   ├── src/                # 里程计实现
-│   │   ├── thirdparty/         # Sophus、robin-map 等头文件依赖
-│   │   ├── test/               # 确定性测试与用户回放检查工具
-│   │   ├── docs/               # 点/状态契约、质量策略、改造报告
-│   │   └── validation/         # 历史实现与验证记录
-│   └── livox_ros_driver2/      # CustomMsg/CustomPoint 消息及驱动源码
-├── rosbag2_2026_07_07-16_37_53/ # 仅本地：metadata.yaml 与 MCAP
-└── build/ install/ log/        # 编译生成，不上传
-```
+## 项目概览
 
-| ROS 包 | 用途 | 跑包时是否启动 |
-|---|---|---|
-| `adaptive_lio` | IMU 预测、点云去畸变、Ceres 配准、ESKF 更新、里程计与点云输出 | 是 |
-| `livox_ros_driver2` | 提供包内记录使用的 `CustomMsg` / `CustomPoint` 类型；附带 Livox SDK 库 | 否；跑包只使用它生成的消息类型 |
+该系统以 **LiDAR 几何观测约束漂移、IMU 高频传播提供及时运动状态** 为核心思路，采用内外双层 ESKF 数据流：
 
-这里没有复制导航、决策或底盘控制程序。`Adaptive-LIO/src/scantext_module` 是包内部的可选关键帧/地图模块，默认关闭。
+- **内层 ESKF（权威后验）**：IMU 传播 → 点云去畸变 → Ceres 帧末位姿配准 → 观测质量门控 → ESKF 校正；只有被接受的观测才能更新地图。
+- **外层 ESKF（高频输出）**：安装内层提供的完整状态与协方差快照，重放快照之后的 IMU 历史，为 `/odom` 和 TF 提供连续状态。
+- **点与时间语义统一**：使用传感器时间；逐点去畸变到当前 LiDAR 帧末 IMU 坐标；Ceres 只估计帧末位姿，不重复执行旧式插值补偿。
+- **工程诊断**：保留几何退化分析、完整 6×6 观测协方差实验路径、IMU 质量检查，以及分阶段耗时和逐帧处理耗时统计。
 
-## 2. 设计架构与数据流
+**当前默认状态**：纯 LiDAR + IMU；主雷达工作，副雷达融合关闭；固定 LiDAR 观测协方差；ScanContext 关键帧地图模块关闭；异常 IMU 的短时保持关闭。实验选项存在不等于已完成真实数据标定或实车验收。
 
-当前实现使用内、外两层 ESKF。内层接收 LiDAR 配准观测，是权威后验；外层接收完整状态快照并重放 IMU，用于输出及时的 `/odom` 和 TF。
+### 系统数据流
+
+下图按照实际运行线程分为三个部分：**传感器接入与同步、内层 LiDAR–IMU 融合、外层高频 IMU 里程计输出**。实线表示默认数据路径，虚线表示可选的副雷达路径。内层的 LiDAR 更新与外层的 IMU 传播并行进行，并不是逐帧串行等待地图发布。
 
 ```mermaid
-flowchart TD
-    IMU[IMU 输入] --> SI[加速度单位换算与统一质量检查]
-    SI --> INNER[内层 ESKF 预测轨迹]
-    SI --> HISTORY[外层 IMU 历史]
-    LIDAR[主 LiDAR 回调] --> CONVERT[格式转换与体素采样]
-    CONVERT --> SYNC[排队并等待 IMU 覆盖帧末]
-    SYNC --> INNER
-    INNER --> DESKEW[冻结预测轨迹：去畸变到帧末 IMU 坐标]
-    DESKEW --> MATCH[Ceres 帧末 6 自由度配准候选]
-    MATCH --> GATE[最终对应几何诊断与观测门控]
-    GATE --> UPDATE[接受：内层 ESKF 更新并提交后验]
-    GATE --> REJECT[拒绝：保留预测状态并跳过地图产品]
-    UPDATE --> SNAPSHOT[完整状态与协方差值快照]
-    REJECT --> SNAPSHOT
-    UPDATE --> PRODUCTS[按后验刷新世界点：地图与注册点云]
-    SNAPSHOT --> REPLAY[外层安装快照并重放同一 IMU 历史]
-    HISTORY --> REPLAY
-    REPLAY --> OUTPUT[odom / TF / odometry_path]
-    PRODUCTS --> SCAN[livox/scan 与可选关键帧地图]
+flowchart TB
+    subgraph INPUT["① 传感器接入与质量检查"]
+        direction LR
+        L0["主 LiDAR / CustomMsg<br/>帧时间戳 + 逐点 offset_time"] --> L1["格式转换与点时间解析<br/>随机降采样 / 主雷达入队"]
+        I0["IMU / sensor_msgs/Imu<br/>角速度 + 加速度"] --> I1["gnorm 单位换算<br/>时间有效性 / 饱和与故障检查"]
+        I1 --> IQ{"IMU 质量判定"}
+        IQ -->|可用| I2["统一处理后的 IMU<br/>数值 + 质量掩码 / 噪声尺度"]
+        IQ -->|过期或重复| DROP["丢弃该输入"]
+        IQ -->|不可恢复故障| FAULT["两层滤波停止<br/>需要重启节点"]
+        A0["副 LiDAR / 可选订阅<br/>默认关闭"] -.-> A1["时间偏移校正 / 裁剪到主帧<br/>外参 T_main_aux 变换"]
+    end
+
+    subgraph INNER["② 内层 ESKF：低频 LiDAR 约束与权威后验"]
+        direction TB
+        SYNC["主帧 [t0, t1] + IMU 队列<br/>等待 IMU 覆盖帧末及 delay_time"] --> INIT{"静态 IMU 初始化完成？"}
+        INIT -->|否| INITWAIT["TryInitIMU<br/>完成初始化前不执行配准"]
+        INIT -->|是| PROP["内层 ESKF 传播到 t1<br/>记录帧内 IMU 预测位姿轨迹"]
+        PROP --> DESKEW["冻结预测轨迹 / 逐点去畸变<br/>原始采样时刻 → 帧末 IMU 坐标"]
+        DESKEW --> FRAME["构建帧末工作点<br/>有效时间覆盖筛选 / 点云建帧"]
+        FRAME --> SEED{"局部体素地图为空？"}
+        SEED -->|是| SEED_CHECK{"有效预测且点数足够？"}
+        SEED_CHECK -->|是| SEED_OK["种子帧：不构造 LiDAR 观测<br/>用有效预测状态初始化地图"]
+        SEED_CHECK -->|否| REJECT["拒绝本帧<br/>保留内层传播先验"]
+        SEED -->|否| MATCH["局部体素地图邻域搜索<br/>空间 / 法向分桶选择点到平面残差"]
+        MATCH --> CERES["Ceres 优化帧末 SE(3) 候选位姿<br/>不重复插值运动补偿"]
+        CERES --> GEOM["最终对应点几何诊断<br/>信息谱 / 有效秩 / 弱约束方向"]
+        GEOM --> R["构造 LiDAR 观测协方差 R<br/>默认固定 0.01 I6 / 自适应实验选项"]
+        R --> GATE{"支持数 / 匹配质量 / 创新门控<br/>平移与旋转硬阈值 + 创新分数"}
+        GATE -->|通过| UPDATE["ObserveSE3：内层 ESKF 校正<br/>状态与协方差更新"]
+        GATE -->|未通过| REJECT
+        UPDATE -->|校正成功| ACCEPT["接受本帧后验<br/>推进 last_accepted 时间"]
+        UPDATE -->|状态校正失败| REJECT
+        SEED_OK --> ACCEPT
+        ACCEPT --> COMMIT["从内层 ESKF 导出权威状态<br/>提交 p / R / v / 零偏等派生状态"]
+        REJECT --> COMMIT
+        COMMIT --> SNAP["完整值快照：导航状态、重力<br/>18×18 P、传播参数与 Q / 序号"]
+        SNAP --> PRODUCTS{"本帧是否接受？"}
+        PRODUCTS -->|接受或种子帧| WORLD["以后验位姿重新计算世界点<br/>非 Ceres 候选位姿直接入图"]
+        PRODUCTS -->|拒绝| SKIP["不更新地图 / 关键帧<br/>不发布该帧注册点云"]
+        WORLD --> MAP["局部体素地图增量维护<br/>视野裁剪 / 可选关键帧地图"]
+        MAP --> CLOUD["注册点云经异步队列发布<br/>/livox/scan"]
+    end
+
+    subgraph OUTER["③ 外层 ESKF：独立 IMU 重放与高频输出"]
+        direction TB
+        HISTORY["保留同一质量判定结果的 IMU 历史<br/>不在重放时重新评估质量"] --> REPLAY["有新快照时恢复完整滤波状态<br/>连续传播 / 重放快照后的 IMU"]
+        SNAP --> REPLAY
+        REPLAY --> CHECK{"状态有效 / 时间单调<br/>距最近接受帧未超时？"}
+        CHECK -->|是| PROJECT["将外层状态投影为 Odometry<br/>位姿 / 机体系速度 / 协方差"]
+        CHECK -->|否| HOLD["不发布过期结果<br/>不伪造时间戳或重复 TF"]
+        PROJECT --> ODOM["/odom<br/>nav_msgs/Odometry"]
+        PROJECT --> TF["/tf<br/>odom → aft_mapped → base_link"]
+        PROJECT --> PATH["/odometry_path<br/>限长且按条件发布"]
+    end
+
+    L1 --> SYNC
+    I2 -->|内层 IMU 队列| SYNC
+    I2 -->|外层 IMU 输入队列| HISTORY
+    A1 -.->|开启 bundle_fusion 时合并到主帧点集| DESKEW
+    A1 -.->|关闭融合但已订阅：只在接受帧追加发布| CLOUD
 ```
 
-### 时间与点坐标
+**读图提示：**种子帧只利用已验证的 IMU 预测状态初始化地图，不执行 `ObserveSE3`；匹配拒绝帧依然向外层发送内层传播状态的完整快照，但**不更新地图，也不发布该帧的注册点云**。外层只从已安装的权威快照向后进行 IMU 传播，不会对同一 LiDAR 候选观测做第二次融合。`/odom`、TF 和 Path 来自外层；局部地图与 `/livox/scan` 来自内层。副雷达相关虚线在默认配置下不激活。
 
-Livox 点内 `offset_time` 从纳秒转换为秒，并与消息头时间相加得到点采样时间。LiDAR、IMU、帧首和帧末均使用传感器时间；耗时统计另外使用主机单调时钟。
+## 快速开始
 
-每个点保留原始 `raw_point` 和采样时间。`DeskewToEndImu` 使用冻结的 IMU 预测轨迹，将它转换为帧末 IMU 坐标下的 `end_point`。Ceres 只优化帧末位姿，不再次通过 `alpha_time` 做插值去畸变。成功更新内层滤波器后，世界点按后验位姿统一刷新，再用于地图和发布。
+### 1. 环境
 
-种子帧用有效预测状态初始化地图，不伪造 LiDAR 观测。被拒绝的帧保留预测状态，不更新地图、关键帧或注册点云，也不推进最近接受帧时间。外层接收的是完整快照，包含导航状态、重力、18×18 协方差和传播配置；随后按相同 IMU 处理策略重放。
-
-### 主要源码入口
-
-| 文件或目录，均相对 `src/Adaptive-LIO/` | 作用 |
-|---|---|
-| `src/apps/main_ada.cpp` | ROS 订阅、传感器转换、工作线程、点云及标量发布 |
-| `src/preprocess/cloud_convert/` | Livox 与标准点云格式转换、点时间生成 |
-| `src/lio/lidarodom.cpp` | 帧同步、预测、去畸变、配准与后验提交事务 |
-| `src/algo/point_time.h` | 点时间覆盖检查、去畸变到帧末 |
-| `src/lio/lidarFactor.h` | Ceres 点到平面残差 |
-| `src/algo/eskf.hpp` | ESKF 预测与 SE(3) 观测更新 |
-| `src/algo/lidar_geometry_quality.h` / `lidar_observation.h` | 最终对应几何谱与秩、完整 6×6 观测协方差 |
-| `src/algo/lidar_sampling.h` | 按空间及法向分桶选择配准候选 |
-| `src/algo/imu_quality.h` | 统一 IMU 有效性、量程与短时保持策略 |
-| `src/algo/imu_odom_predictor.h` / `src/apps/imu_odom_output.h` | 外层快照安装、IMU 重放与唯一 odom/TF 输出 |
-| `src/common/timer/` | 阶段耗时与主雷达逐帧总耗时统计 |
-
-## 3. 环境与依赖
-
-当前验证环境为 Ubuntu 24.04、ROS 2 Jazzy、GCC 13，使用 C++17；已安装 Eigen 3.4、PCL 1.14、OpenCV 4.6、Ceres 2.2、yaml-cpp 0.8。CMake 查找系统安装的 Ceres 2.x，不要求固定 `/opt/ceres-2.2` 路径。
-
-先安装并配置 ROS 2 Jazzy 的 apt 软件源和基础环境，再安装构建、数学库及 ROS 依赖：
+当前独立构建基线为 **Ubuntu 24.04 + ROS 2 Jazzy + C++17**，使用 Eigen、PCL、Ceres 2.x、glog、gflags、yaml-cpp 等。需要先按 [ROS 2 Jazzy 安装文档](https://docs.ros.org/en/jazzy/Installation.html) 配置 ROS 环境。
 
 ```bash
 sudo apt update
 sudo apt install -y \
   build-essential cmake git python3-colcon-common-extensions python3-rosdep \
   libeigen3-dev libpcl-dev libceres-dev libgoogle-glog-dev libgflags-dev \
-  libyaml-cpp-dev libopencv-dev libsuitesparse-dev libapr1-dev \
-  ros-jazzy-desktop ros-jazzy-ament-cmake-auto \
-  ros-jazzy-ament-lint-auto ros-jazzy-ament-lint-common \
-  ros-jazzy-pcl-conversions ros-jazzy-tf2-geometry-msgs \
-  ros-jazzy-message-filters ros-jazzy-rosidl-default-generators \
+  libyaml-cpp-dev libopencv-dev libsuitesparse-dev \
+  ros-jazzy-ament-cmake-auto ros-jazzy-pcl-conversions \
+  ros-jazzy-tf2-geometry-msgs ros-jazzy-message-filters \
   ros-jazzy-rosbag2 ros-jazzy-rosbag2-storage-mcap
 ```
 
-主要 ROS 接口依赖包括 `rclcpp`、`rclcpp_components`、`sensor_msgs`、`nav_msgs`、`geometry_msgs`、`std_msgs`、`std_srvs`、`tf2_ros`、`pcl_conversions` 和 `livox_ros_driver2`。Livox 包携带 SDK 头文件及对应架构的库，构建时选择 amd64、arm64 或 riscv64 版本；实际独立构建验证以当前 amd64 环境为准。
+仓库 `src/livox_ros_driver2/` 提供 `livox_ros_driver2` 消息类型和驱动源码；**回放已有 rosbag 时不需要启动硬件驱动**。在目标机器上还需要匹配相应架构的 Livox SDK 库。
 
-可用 `rosdep` 补齐包清单中的系统依赖；第一次使用时初始化一次，之后更新并安装：
+### 2. 获取并编译
 
 ```bash
-# 仅未初始化 rosdep 的机器需要执行：sudo rosdep init
+git clone --branch ljb https://github.com/ECUST-Origin-Sentry-Team/Adaptive-LIO.git adalio_ws
+cd adalio_ws
+source /opt/ros/jazzy/setup.bash
+
+# 已初始化 rosdep 的机器：
 rosdep update
-source /opt/ros/jazzy/setup.bash
 rosdep install --from-paths src --ignore-src -r -y --rosdistro jazzy
-```
 
-上面的显式库安装列表用于覆盖当前包清单尚未完整声明的 Ceres、glog、gflags、OpenCV 和 SuiteSparse 依赖。
-
-## 4. 克隆与独立编译
-
-```bash
-git clone --branch ljb https://github.com/ECUST-Origin-Sentry-Team/Adaptive-LIO.git adalio_test_ws
-cd adalio_test_ws
-source /opt/ros/jazzy/setup.bash
 CMAKE_BUILD_PARALLEL_LEVEL=2 colcon build --symlink-install \
   --packages-up-to adaptive_lio --cmake-args -DBUILD_TESTING=ON
 source install/setup.bash
 ```
 
-`--packages-up-to adaptive_lio` 会先构建本工作空间的 `livox_ros_driver2`，再构建里程计。首次构建前只需 source ROS Jazzy；不需要 source 原导航工作空间。应在打开的新终端中构建，避免旧工作空间的环境覆盖。
+首次使用 `rosdep` 但尚未初始化时，先运行 `sudo rosdep init`。构建建议在**未 source 其他 ROS 工作空间**的新终端中进行，防止同名依赖和消息定义冲突。`--packages-up-to` 会连同需要的 `livox_ros_driver2` 一起构建。
 
-## 5. 默认配置与 ROS 接口
+### 3. 实时运行
 
-默认参数文件是 `src/Adaptive-LIO/config/mapping_m.yaml`。
+先确认传感器驱动正在发布 YAML 中配置的话题，然后在已 source 的终端执行：
 
-| 配置 | 当前值或用途 |
-|---|---|
-| `common.lid_topic` | `/livox/lidar_192_168_1_163` |
-| `common.imu_topic` | `/livox/imu_192_168_1_163` |
-| `common.gnorm` | `9.805`，将当前 Livox IMU 的 g 单位加速度转换为 m/s² |
-| `preprocess.sweep_cut_num` | `1`，当前测试每个主 LiDAR 消息作为一个处理帧 |
-| `delay_time` | 默认 `0.05` 秒，等待 IMU 覆盖及额外余量 |
-| `odometry.point_time_model` | `IMU_DESKEW_END`，统一帧末去畸变路径 |
-| `odometry.lidar_covariance_mode` | `fixed`，固定 `0.01 I₆` 观测方差；自适应模式保留为实验选项 |
-| `aux_lidar.enable_bundle_fusion` | `false`，且默认未配置副雷达订阅 |
-| `mapping_module.enable_mapping` | `false`，默认关闭 ScanContext 地图模块 |
-| `imu_quality.hold_seconds` | `0`，默认不启用异常 IMU 的短时保持 |
-| `common.fusion_aft_to_base_xyzrpy` | `aft_mapped → base_link` 外参；换机器时按实际安装检查 |
+```bash
+ros2 launch adaptive_lio run.launch.py
+```
 
-`mapping_m_low_delay.yaml` 提供 `delay_time: 0.0` 的配置供用户对照测试；应分别记录等待与处理耗时。IMU 量程、LiDAR/IMU 外参和加速度单位需要与真实输入一致，自适应观测协方差与 IMU 保持参数尚未完成传感器标定，默认不开启。
+修改配置时可以指定绝对路径：
 
-| 输出 | 消息类型或 TF 关系 | 数据来源 |
+```bash
+ros2 launch adaptive_lio run.launch.py \
+  adaptive_lio_cfg_dir:="$(pwd)/src/Adaptive-LIO/config/mapping_m.yaml"
+```
+
+注意：当前 `run.launch.py` **只启动 Adaptive-LIO 节点**，不自动启动 Livox 驱动或 RViz；即使声明了 `rviz` 参数，RViz 节点也没有添加到 LaunchDescription。需要可视化时另行运行 `rviz2`。
+
+### 4. 录制数据回放
+
+仓库**不包含**原始 rosbag。根目录脚本默认面向 163 号主雷达的点云与 IMU：
+
+| 终端 | 命令 | 功能 |
 |---|---|---|
-| `/odom` | `nav_msgs/msg/Odometry`，`odom` / `aft_mapped` | 外层重放后的状态，携带 pose/twist 协方差 |
-| `/tf` | `odom → aft_mapped → base_link` | 与 odom 同状态时间的位姿及配置外参 |
-| `/odometry_path` | `nav_msgs/msg/Path` | 有订阅者时发布，路径最多保留配置中的 300 个点 |
-| `/livox/scan` | `sensor_msgs/msg/PointCloud2` | 接受/种子帧的后验注册点云，异步发布 |
-| `/velocity`、`/move_dist` | `std_msgs/msg/Float32` | 保留的低频标量输出 |
-| `/save_map_service` | `std_srvs/srv/Trigger` | 地图模块启用后的异步保存入口 |
+| A | `./start_bag_odometry.sh` | 启动 LIO 与配置好的 RViz（RViz 使用仿真时间） |
+| B | `./play_bag_163.sh /absolute/path/to/rosbag_directory` | 以 1 倍速回放主雷达与 IMU，并发布 `/clock` |
 
-该工作空间不提供 `map → odom` 全局定位关系，跑包 RViz 固定坐标系为 `odom`。
+如果数据放在仓库根目录下的 `rosbag2_2026_07_07-16_37_53/`，终端 B 可以省略路径。脚本会检查 `metadata.yaml` 是否存在；输入数据至少需要含有：
 
-## 6. 用户自行跑包
-
-本地复制的包位于工作空间根目录 `rosbag2_2026_07_07-16_37_53/`，包含 `metadata.yaml` 和原始 `.mcap` 文件。它约 277.5 秒，记录 160/163 两台 LiDAR 的点云与 IMU；当前回放脚本只选择 163 主雷达和它的 IMU。
-
-克隆后可将数据目录放到同名位置，或把其他数据路径传给 `play_bag_163.sh`。
-
-终端 1，先启动里程计和 RViz：
-
-```bash
-cd /path/to/adalio_test_ws
-./start_bag_odometry.sh
+```text
+/livox/lidar_192_168_1_163
+/livox/imu_192_168_1_163
 ```
 
-终端 2，开始回放：
+更换设备或 bag 时，**同时检查** `config/mapping_m.yaml` 中的话题及 `play_bag_163.sh` 中的 `--topics` 列表。播放前用 `ros2 bag info /path/to/bag` 确认消息类型与时间范围。初始化阶段需有足够有效 IMU 数据；正式工作后日志会出现 `init successful`。
+
+## ROS 接口和坐标系
+
+| 方向 | 接口 | 类型 / 说明 |
+|---|---|---|
+| 订阅 | `common.lid_topic` | 主 LiDAR 点云；默认 `/livox/lidar_192_168_1_163` |
+| 订阅 | `common.imu_topic` | IMU；默认 `/livox/imu_192_168_1_163` |
+| 发布 | `/odom` | `nav_msgs/msg/Odometry`；外层 IMU 重放后的状态，包含位姿、速度相关信息与协方差 |
+| 发布 | `/tf` | `odom → aft_mapped → base_link` |
+| 发布 | `/odometry_path` | `nav_msgs/msg/Path`；有限长度历史轨迹 |
+| 发布 | `/livox/scan` | `sensor_msgs/msg/PointCloud2`；被接受或初始化种子帧对应的注册点云 |
+| 发布 | `/velocity`、`/move_dist` | `std_msgs/msg/Float32`；保留的标量诊断输出 |
+| 服务 | `/save_map_service` | `std_srvs/srv/Trigger`；与可选地图模块关联 |
+
+**坐标系职责**：`odom` 为本地连续里程计参考系；`aft_mapped` 是里程计跟踪的 IMU 相关状态坐标系；`base_link` 通过配置外参连接到车体。默认外参在 `common.fusion_aft_to_base_xyzrpy`，需按传感器安装和整车 TF 规划重新标定。**本包不发布 `map → odom`**，因此接入 Nav2、GICP 重定位或其他全局定位器时，必须由外部模块负责该变换，不应额外重复发布 `odom → base_link`。
+
+基础检查命令：
 
 ```bash
-cd /path/to/adalio_test_ws
-./play_bag_163.sh
-# 或使用另一个数据目录（仍需包含脚本选择的 163 话题）：
-./play_bag_163.sh /absolute/path/to/rosbag_directory
-```
-
-程序需要数据完成 IMU 初始化；启动后另一终端即可开始播放，等待日志出现 `init successful` 后再观察正式里程计输出。播放速率为 1 倍，发布 `/clock`；RViz 启用 `use_sim_time`。空格暂停/继续；Ctrl+C 停止对应脚本。更换话题名称时，同时修改 YAML 输入话题和回放脚本的 `--topics`。
-
-查看数据和输出可使用：
-
-```bash
-ros2 bag info /absolute/path/to/rosbag_directory
-source /opt/ros/jazzy/setup.bash
-source install/setup.bash
 ros2 topic hz /odom
-ros2 topic hz /livox/scan
 ros2 topic echo /odom --once
+ros2 topic hz /livox/scan
 ros2 run tf2_ros tf2_echo odom aft_mapped
 ```
 
-跑包时不必启动 Livox 硬件驱动。实时传感器输入可单独启动驱动并使用包内 launch；`run.launch.py` 当前只启动里程计，跑包 RViz 由根目录脚本单独启动。
+## 核心算法与状态一致性
 
-### RViz 默认显示
+### LiDAR 帧处理
 
-`bag_odometry.rviz` 显示 Grid、`/livox/scan` 点云、`/odometry_path` 轨迹、`/odom` 和 TF。`LIO Odometry` 使用 Arrow，轴长 `0.1 m`、轴半径 `0.01 m`、头长 `0.03 m`、头半径 `0.01 m`；保留 100 个姿态，位置/角度容差均为 `0.1`。`Covariance` 可视化默认关闭，但 `/odom` 消息仍保留协方差数据。
+1. 从主雷达消息生成点时间，保留原始点与采样时间；使用 **传感器时间**，而非回调到达的主机时间，计算运动补偿。
+2. IMU 完成对应时间窗口的预测后，将点去畸变到**当前帧末 IMU 坐标系**；时间未覆盖或无效的点明确剔除。
+3. 依据局部地图构建点到平面残差，Ceres 优化**帧末 6 自由度候选位姿**；按空间与法向分桶采样，避免仅依赖输入点顺序。
+4. 根据支持数量、几何约束、创新等判定候选是否可靠。通过门控的候选作为 SE(3) 观测校正内层 ESKF，并用已提交的后验刷新世界点；失败则保留传播先验，跳过本帧地图产品。
+5. 将完整内层快照发送给外层，包括导航状态、重力、18×18 协方差、传播配置和噪声信息；外层按同一 IMU 质量策略重放后续历史以产生及时输出。
 
-## 7. 不跑包的测试
+这套设计**不是滑窗优化或全局因子图**。ScanContext 代码仍在仓库中，但默认不启动其地图工作线程，也不等于当前已经启用回环校正或全局重定位。
 
-完成独立构建后，从工作空间根目录运行五组确定性测试：
+### IMU 质量与协方差
+
+IMU 数据进入系统时统一进行单位换算和有效性检查。默认 `imu_quality.hold_seconds: 0`：检测到不可恢复的无效测量或已配置量程下的饱和故障时，系统采取保守的故障停止策略；短时轴保持是实验选项，**未经过具体传感器标定，不应直接在实车启用**。
+
+LiDAR 观测协方差默认 `odometry.lidar_covariance_mode: fixed`。`adaptive` 几何退化感知模式已实现，但尺度、相关性膨胀和接受率尚需要独立数据校准。任何合成测试结果都不应等同于已证明实际里程计精度提升。
+
+## 配置指南
+
+默认配置：[`src/Adaptive-LIO/config/mapping_m.yaml`](src/Adaptive-LIO/config/mapping_m.yaml)；低等待时间对照：[`mapping_m_low_delay.yaml`](src/Adaptive-LIO/config/mapping_m_low_delay.yaml)。两者主要差别是 `delay_time`（分别为 **0.05 s** 与 **0.0 s**）。
+
+| 配置键 | 默认值 | 含义 / 使用提示 |
+|---|---|---|
+| `common.lid_topic` / `common.imu_topic` | 163 设备话题 | 首先核对实际输入，设备不同必须修改 |
+| `common.gnorm` | `9.805` | 按当前数据的 g 单位加速度换算为 m/s²；不要对已为 m/s² 的数据重复缩放 |
+| `common.fusion_aft_to_base_xyzrpy` | 仓库预设外参 | `aft_mapped → base_link` 的安装变换；换车必须重检 |
+| `preprocess.sweep_cut_num` | `1` | 当前测试按主雷达完整消息处理 |
+| `delay_time` | `0.05` s | 等待 IMU 覆盖后的额外时间策略；`0.0` 需同包实测对照 |
+| `odometry.point_time_model` | `IMU_DESKEW_END` | 唯一有效的当前点时间处理路径 |
+| `odometry.lidar_covariance_mode` | `fixed` | `adaptive` 仍属于未校准实验配置 |
+| `odometry.max_num_residuals` | `500` | Ceres 残差预算上限 |
+| `aux_lidar.enable_bundle_fusion` | `false` | 主副雷达联合匹配默认关闭，副雷达话题默认不订阅 |
+| `mapping_module.enable_mapping` | `false` | 默认关闭可选 ScanContext/关键帧地图模块 |
+| `imu_quality.hold_seconds` | `0.0` | 默认不做异常 IMU 轴保持 |
+
+旧版 `icpmodel`、`motion_compensation`、`point_to_plane_with_distortion` 等不再是可切换的有效运行配置。对照旧工程迁移时，应以当前 YAML 和 [`point_state_contract.md`](src/Adaptive-LIO/docs/point_state_contract.md) 为准，不要直接复制早期参数。
+
+## 代码结构
+
+```text
+.
+├── README.md                     # 本文档
+├── start_bag_odometry.sh         # LIO + RViz 跑包入口
+├── play_bag_163.sh               # 163 主雷达数据回放
+├── bag_odometry.rviz             # 可视化配置
+└── src/
+    ├── Adaptive-LIO/
+    │   ├── config/               # 传感器与算法参数
+    │   ├── launch/               # ROS 2 启动文件
+    │   ├── src/
+    │   │   ├── apps/             # ROS 订阅、发布和高频输出
+    │   │   ├── preprocess/       # 点云转换、逐点时间
+    │   │   ├── lio/              # 配准、滤波状态提交与局部地图
+    │   │   ├── algo/             # ESKF、IMU 质量、几何门控、去畸变
+    │   │   ├── scantext_module/  # 可选 ScanContext 相关模块
+    │   │   └── common/           # 配置、地图与性能统计
+    │   ├── test/                 # 确定性测试与回放检查工具
+    │   ├── docs/                 # 算法约定、改造与分析报告
+    │   └── validation/           # 构建、回归与历史验证记录
+    └── livox_ros_driver2/        # Livox 消息与驱动依赖
+```
+
+建议从 [`main_ada.cpp`](src/Adaptive-LIO/src/apps/main_ada.cpp) 阅读节点接口，然后看 [`lidarodom.cpp`](src/Adaptive-LIO/src/lio/lidarodom.cpp) 的帧处理事务，接着读 [`eskf.hpp`](src/Adaptive-LIO/src/algo/eskf.hpp)、[`imu_odom_predictor.h`](src/Adaptive-LIO/src/algo/imu_odom_predictor.h) 及 [`imu_odom_output.h`](src/Adaptive-LIO/src/apps/imu_odom_output.h)。
+
+## 测试与验证边界
+
+构建时使用 `-DBUILD_TESTING=ON`，然后运行：
 
 ```bash
-source /opt/ros/jazzy/setup.bash
-source install/setup.bash
 ctest --test-dir build/adaptive_lio \
   -R '^adaptive_lio_(core|geometry|registration|pipeline|imu_quality)$' \
   --output-on-failure
 ```
 
-| 测试 | 覆盖内容 |
-|---|---|
-| `core` | 状态快照、传播、坐标投影、双层重放、历史/超时、主副雷达时间裁剪 |
-| `geometry` | 固定协方差等价、完整 SPD 矩阵门控/更新、几何秩与分桶覆盖 |
-| `registration` | 静止/平移/旋转/组合运动去畸变、外参、点时间覆盖、实际 Ceres 因子雅可比 |
-| `pipeline` | 真实帧处理中的种子、接受、拒绝、恢复与地图/发布一致性 |
-| `imu_quality` | NaN、削顶、时间异常、默认故障处理、有限保持与重放一致性 |
-
-也可以在包目录独立运行部分测试，核心脚本不依赖 ROS，配准脚本需要 Ceres：
+五组测试覆盖状态快照与 IMU 重放、几何信息矩阵、Ceres 因子和去畸变、种子/接受/拒绝事务、IMU 质量与故障边界。若需要脱离 rosbag 的源码级检查，也可运行：
 
 ```bash
-cd src/Adaptive-LIO
-bash test/run_core_tests.sh
-bash test/run_registration_tests.sh
+bash src/Adaptive-LIO/test/run_core_tests.sh
+bash src/Adaptive-LIO/test/run_registration_tests.sh
 ```
 
-`src/Adaptive-LIO/test/replay_smoke.py` 是用户可选的回放一致性工具，运行它会实际启动 bag 和里程计；本次工作空间准备不自动执行它。可先查看参数：
+仓库中存有 **2026-10-10 改造阶段** 的验证记录：当时最终 R6 代码通过编译和五组确定性 CTest，但**最终 R6 版本没有继续执行完整 bag/实车验收**。`validation/` 中的历史回放结果和计时不能直接当成当前任何新参数或代码修改后的性能结论。详见 [论文对照改造报告](src/Adaptive-LIO/docs/paper_alignment_report_2026-10-10.md)。
 
-```bash
-python3 src/Adaptive-LIO/test/replay_smoke.py --help
-```
+### 性能日志如何理解
 
-测试证明的是实现一致性；无真值 bag、RViz 轨迹连续或测试通过均不能单独证明绝对定位精度提升。
+`frame_callback_to_done` 是主 LiDAR 回调进入后至 LIO 处理返回的单帧墙钟统计，包含点转换、队列等待和 IMU 同步等待；**不包含回调前传输及回调返回后的异步发布**。`processMeasurement` 是 LIO 处理内部耗时。`predict` / `optimize` 等阶段的样本数可能不同，**不能直接相加各阶段平均值作为一帧总耗时**。回放和设备的传感器时间用于状态估计；耗时计时使用主机单调时钟，二者不可混作延迟测量。
 
-本测试空间在 2026-10-10 的验证结果：只使用 ROS 2 Jazzy 基础环境独立构建，两个包编译成功；上表五组 CTest 全部通过。运行库指向本工作空间，rosbag 副本的 SHA-256 与原始数据一致，两个启动脚本通过 Bash 语法检查。本次没有执行 bag 回放；编译保留了现有源码和第三方库警告。
+遇到 `deskew_uncovered_or_invalid=N` 时，表示该帧有 N 个点因时间覆盖不足或无效被丢弃，**不等价于整帧配准失败**；还需结合 `lio_quality` 中的接受状态和原因判断。
 
-## 8. 日志与计时解释
+## 已知限制
 
-正常退出时，节点打印均值并写入 `src/Adaptive-LIO/Log/log_time.txt`。运行前保持该目录可写。计时包含所有完成处理的主雷达帧，包括初始化期间进入处理函数的帧；尚在队列中或在入口被丢弃的帧不计入。
+- 该仓库提供**局部里程计**，不提供闭环全局图优化、`map → odom` 全局定位或 Nav2 整套导航功能。
+- 主副雷达联合匹配、ScanContext 地图、自适应 LiDAR 协方差、IMU 短时保持均不是默认工作配置。
+- 当前外参与 IMU 单位换算针对特定设备和驱动发布约定。移植时须核对**原始消息语义**，不可直接复用数值。
+- 通过单元测试与 RViz 轨迹连续，不等于完成精度、退化鲁棒性、延迟预算或实车安全性验收。
+- 当前缺少随仓库分发的公开标准数据集与定量 A/B 精度结果，因此不作未证实的性能领先声明。
 
-- `frame_callback_to_done`：每个主雷达处理帧从点云回调入口到 LIO 处理返回的墙钟耗时，包含转换、降采样、队列等待和 IMU 同步等待；不包含进入回调前的消息传递以及之后的异步点云发布。
-- `processMeasurement`：只统计 LIO 帧处理函数。
-- `optimize`、`predict` 等：各阶段调用耗时；调用次数不一定等于总帧数，不能直接把这些均值相加当成逐帧总耗时。
-- `lio_quality`：接受/拒绝状态、支持数、代价、最终对应几何秩、观测模式与候选/后验差异。
-- `imu_output`：外层重放、状态历史、超时与 IMU 质量统计。
+## 技术文档
 
-`deskew_uncovered_or_invalid=N` 表示这一帧有 N 个点因时间覆盖不足或数据无效被剔除。相邻 LiDAR 帧有短时间重叠时，部分帧首点可能早于当前预测轨迹起点；程序继续处理其他点。该警告本身不是整帧成功/失败结论，应结合 `lio_quality` 的 `accepted` 与 `reason` 判断。
+深入阅读可参考 [点与状态契约](src/Adaptive-LIO/docs/point_state_contract.md)、[几何与观测协方差](src/Adaptive-LIO/docs/geometry_covariance.md)、[IMU 质量与重放](src/Adaptive-LIO/docs/imu_quality.md)、[完整改造报告](src/Adaptive-LIO/docs/paper_alignment_report_2026-10-10.md)、[测试说明](src/Adaptive-LIO/test/README.md)。
 
-bag 播放完后 IMU 不再输入，出现 `IMU input interrupted` 提示符合输入停止的情况。节点若出现持续缺失历史、IMU 传播故障或队列溢出，应检查数据时间与输入状态，并重新启动整个里程计节点。
+## 上游与致谢
 
-## 9. 上传范围与原项目说明
+本项目在原版 **Adaptive-LIO: Enhancing Robustness and Precision through Environmental Adaptation in LiDAR Inertial Odometry** 基础上进行工程化开发。原版作者、论文、历史实验与原始开源许可应以[上游仓库](https://github.com/chengwei0427/Adaptive-LIO)和本项目的 [`src/Adaptive-LIO/README.md`](src/Adaptive-LIO/README.md) 为准。
 
-Git 上传源代码、SDK 依赖、配置、RViz、脚本和文档。`rosbag*`、`.mcap`、`.db3`、`build/`、`install/`、`log/` 及运行计时输出均已忽略；本地数据复制不会影响上传。
+- 原始项目：[chengwei0427/Adaptive-LIO](https://github.com/chengwei0427/Adaptive-LIO)
+- 论文：[IEEE Xplore](https://ieeexplore.ieee.org/document/10806842) · [arXiv](https://arxiv.org/abs/2503.05077)
+- 工程维护：**ECUST Origin Sentry Team**
 
-上游项目介绍与作者引用保留在 [Adaptive-LIO 包 README](src/Adaptive-LIO/README.md) 中。当前实现细节见 [点与状态契约](src/Adaptive-LIO/docs/point_state_contract.md)、[几何与协方差](src/Adaptive-LIO/docs/geometry_covariance.md)、[IMU 质量与重放](src/Adaptive-LIO/docs/imu_quality.md) 及 [论文对照改造报告](src/Adaptive-LIO/docs/paper_alignment_report_2026-10-10.md)。历史报告中的完整导航工程路径是当时记录；本测试空间以本文的相对目录和命令为准。
+如在自己的研究中使用原始算法，请引用原论文；使用本工程改造版本时，请同时注明本仓库及所使用的分支或提交版本。
