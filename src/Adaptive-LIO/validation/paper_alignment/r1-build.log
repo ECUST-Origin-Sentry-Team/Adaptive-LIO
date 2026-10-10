@@ -1,0 +1,416 @@
+WARNING: Package name "Sentry_state" does not follow the naming conventions. It should start with a lower case letter and only contain lower case letters, digits, underscores, and dashes.
+Starting >>> adaptive_lio
+--- stderr: adaptive_lio
+CMake Warning (dev) at /usr/lib/x86_64-linux-gnu/cmake/pcl/Modules/FindFLANN.cmake:45 (find_package):
+  Policy CMP0144 is not set: find_package uses upper-case <PACKAGENAME>_ROOT
+  variables.  Run "cmake --help-policy CMP0144" for policy details.  Use the
+  cmake_policy command to set the policy and suppress this warning.
+
+  CMake variable FLANN_ROOT is set to:
+
+    /usr
+
+  For compatibility, find_package is ignoring the variable, but code in a
+  .cmake module might still use it.
+Call Stack (most recent call first):
+  /usr/lib/x86_64-linux-gnu/cmake/pcl/PCLConfig.cmake:261 (find_package)
+  /usr/lib/x86_64-linux-gnu/cmake/pcl/PCLConfig.cmake:306 (find_flann)
+  /usr/lib/x86_64-linux-gnu/cmake/pcl/PCLConfig.cmake:570 (find_external_library)
+  CMakeLists.txt:29 (find_package)
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+** WARNING ** io features related to pcap will be disabled
+Current CPU archtecture: x86_64
+Processer number:  16
+core for MP: 3
+CMake Warning (dev) at /usr/share/cmake-3.28/Modules/FindPackageHandleStandardArgs.cmake:438 (message):
+  The package name passed to `find_package_handle_standard_args` (CSPARSE)
+  does not match the name of the calling package (CSparse).  This can lead to
+  problems in calling code that expects `find_package` result variables
+  (e.g., `_FOUND`) to follow a certain pattern.
+Call Stack (most recent call first):
+  cmake/FindCSparse.cmake:26 (find_package_handle_standard_args)
+  cmake/packages.cmake:44 (find_package)
+  CMakeLists.txt:59 (include)
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+CMake Warning (dev) at /usr/share/cmake-3.28/Modules/FindPackageHandleStandardArgs.cmake:438 (message):
+  The package name passed to `find_package_handle_standard_args` (CHOLMOD)
+  does not match the name of the calling package (Cholmod).  This can lead to
+  problems in calling code that expects `find_package` result variables
+  (e.g., `_FOUND`) to follow a certain pattern.
+Call Stack (most recent call first):
+  cmake/FindCholmod.cmake:91 (find_package_handle_standard_args)
+  cmake/packages.cmake:48 (find_package)
+  CMakeLists.txt:59 (include)
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+CMake Warning (dev) at cmake/packages.cmake:52 (find_package):
+  Policy CMP0074 is not set: find_package uses <PackageName>_ROOT variables.
+  Run "cmake --help-policy CMP0074" for policy details.  Use the cmake_policy
+  command to set the policy and suppress this warning.
+
+  CMake variable PCL_ROOT is set to:
+
+    /usr
+
+  For compatibility, CMake is ignoring the variable.
+Call Stack (most recent call first):
+  CMakeLists.txt:59 (include)
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+CMake Warning (dev) at src/scantext_module/CMakeLists.txt:4 (find_package):
+  Policy CMP0074 is not set: find_package uses <PackageName>_ROOT variables.
+  Run "cmake --help-policy CMP0074" for policy details.  Use the cmake_policy
+  command to set the policy and suppress this warning.
+
+  CMake variable PCL_ROOT is set to:
+
+    /usr
+
+  For compatibility, CMake is ignoring the variable.
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+In file included from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/map.hpp:4,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/map.cpp:1:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/cloudMap.hpp: In member function ‘bool voxelBlock::IsFull() const’:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/cloudMap.hpp:71:46: warning: comparison of integer expressions of different signedness: ‘const int’ and ‘std::vector<Eigen::Matrix<double, 3, 1>, Eigen::aligned_allocator<Eigen::Matrix<double, 3, 1> > >::size_type’ {aka ‘long unsigned int’} [-Wsign-compare]
+   71 |      bool IsFull() const { return num_points == points.size(); }
+      |                                   ~~~~~~~~~~~^~~~~~~~~~~~~~~~
+In file included from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/utility.h:8,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/utility.cpp:1:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/cloudMap.hpp: In member function ‘bool voxelBlock::IsFull() const’:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/cloudMap.hpp:71:46: warning: comparison of integer expressions of different signedness: ‘const int’ and ‘std::vector<Eigen::Matrix<double, 3, 1>, Eigen::aligned_allocator<Eigen::Matrix<double, 3, 1> > >::size_type’ {aka ‘long unsigned int’} [-Wsign-compare]
+   71 |      bool IsFull() const { return num_points == points.size(); }
+      |                                   ~~~~~~~~~~~^~~~~~~~~~~~~~~~
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/map.cpp: In member function ‘void MultipleResolutionVoxelMap::InsertPoint(const point3D&)’:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/map.cpp:5:36: warning: comparison of integer expressions of different signedness: ‘int’ and ‘std::vector<ResolutionParam>::size_type’ {aka ‘long unsigned int’} [-Wsign-compare]
+    5 |      for (auto map_idx(0); map_idx < options_.resolutions.size(); map_idx++)
+      |                            ~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/map.cpp: In member function ‘void MultipleResolutionVoxelMap::InsertPointInVoxelMap(const point3D&, size_t)’:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/map.cpp:24:36: warning: comparison of integer expressions of different signedness: ‘std::vector<Eigen::Matrix<double, 3, 1>, Eigen::aligned_allocator<Eigen::Matrix<double, 3, 1> > >::size_type’ {aka ‘long unsigned int’} and ‘const int’ [-Wsign-compare]
+   24 |      if (voxel_block.points.size() < res_param.max_num_points)
+      |          ~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/map.cpp:28:28: warning: comparison of integer expressions of different signedness: ‘int’ and ‘std::vector<Eigen::Matrix<double, 3, 1>, Eigen::aligned_allocator<Eigen::Matrix<double, 3, 1> > >::size_type’ {aka ‘long unsigned int’} [-Wsign-compare]
+   28 |           for (int i(0); i < voxel_block.points.size(); ++i)
+      |                          ~~^~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/map.cpp: In member function ‘void MultipleResolutionVoxelMap::RemoveElementsFarFromLocation(const Eigen::Vector3d&, double)’:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/map.cpp:48:37: warning: comparison of integer expressions of different signedness: ‘int’ and ‘std::vector<MultipleResolutionVoxelMap::VoxelHashMap>::size_type’ {aka ‘long unsigned int’} [-Wsign-compare]
+   48 |      for (auto map_idx = 0; map_idx < voxel_maps_.size(); map_idx++)
+      |                             ~~~~~~~~^~~~~~~~~~~~~~~~~~~~
+In file included from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/so3.hpp:8,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/utility.h:10:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/so2.hpp: At global scope:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/so2.hpp:564:43: warning: extra ‘;’ [-Wpedantic]
+  564 |   SOPHUS_INHERIT_ASSIGNMENT_OPERATORS(Map);
+      |                                           ^
+      |                                           -
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/so3.hpp:860:49: warning: extra ‘;’ [-Wpedantic]
+  860 |         SOPHUS_INHERIT_ASSIGNMENT_OPERATORS(Map);
+      |                                                 ^
+      |                                                 -
+In file included from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/utils_trans.h:7,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/utils_trans.cpp:1:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/cloudMap.hpp: In member function ‘bool voxelBlock::IsFull() const’:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/cloudMap.hpp:71:46: warning: comparison of integer expressions of different signedness: ‘const int’ and ‘std::vector<Eigen::Matrix<double, 3, 1>, Eigen::aligned_allocator<Eigen::Matrix<double, 3, 1> > >::size_type’ {aka ‘long unsigned int’} [-Wsign-compare]
+   71 |      bool IsFull() const { return num_points == points.size(); }
+      |                                   ~~~~~~~~~~~^~~~~~~~~~~~~~~~
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/utils_trans.cpp: In function ‘void point3DtoPCL(const std::vector<point3D>&, pcl::PointCloud<pcl::PointXYZI>::Ptr&, bool)’:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/utils_trans.cpp:16:24: warning: comparison of integer expressions of different signedness: ‘int’ and ‘std::vector<point3D>::size_type’ {aka ‘long unsigned int’} [-Wsign-compare]
+   16 |      for (int i = 0; i < v_point_temp.size(); i++)
+      |                      ~~^~~~~~~~~~~~~~~~~~~~~
+In file included from /usr/include/eigen3/Eigen/Core:294,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/cloudMap.hpp:12:
+In constructor ‘Eigen::PlainObjectBase<Derived>::PlainObjectBase(Eigen::PlainObjectBase<Derived>&&) [with Derived = Eigen::Matrix<double, 3, 1>]’,
+    inlined from ‘Eigen::Matrix<_Scalar, _Rows, _Cols, _Options, _MaxRows, _MaxCols>::Matrix(Eigen::Matrix<_Scalar, _Rows, _Cols, _Options, _MaxRows, _MaxCols>&&) [with _Scalar = double; int _Rows = 3; int _Cols = 1; int _Options = 0; int _MaxRows = 3; int _MaxCols = 1]’ at /usr/include/eigen3/Eigen/src/Core/Matrix.h:274:30,
+    inlined from ‘point3D::point3D(point3D&&)’ at /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/cloudMap.hpp:18:8,
+    inlined from ‘std::_Require<std::__not_<std::__is_tuple_like<_Tp> >, std::is_move_constructible<_Tp>, std::is_move_assignable<_Tp> > std::swap(_Tp&, _Tp&) [with _Tp = point3D]’ at /usr/include/c++/13/bits/move.h:197:11,
+    inlined from ‘void std::pair<_T1, _T2>::swap(std::pair<_T1, _T2>&) [with _T1 = voxel; _T2 = point3D]’ at /usr/include/c++/13/bits/stl_pair.h:212:6,
+    inlined from ‘typename std::enable_if<std::__and_<std::__is_swappable<_T1>, std::__is_swappable<_T2> >::value>::type std::swap(pair<_T1, _T2>&, pair<_T1, _T2>&) [with _T1 = voxel; _T2 = point3D]’ at /usr/include/c++/13/bits/stl_pair.h:881:15,
+    inlined from ‘void tsl::detail_robin_hash::bucket_entry<ValueType, StoreHash>::swap_with_value_in_bucket(distance_type&, tsl::detail_robin_hash::truncated_hash_type&, value_type&) [with ValueType = std::pair<voxel, point3D>; bool StoreHash = true]’ at /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/tessil-src/include/tsl/robin_hash.h:275:13,
+    inlined from ‘void tsl::detail_robin_hash::robin_hash<ValueType, KeySelect, ValueSelect, Hash, KeyEqual, Allocator, StoreHash, GrowthPolicy>::insert_value_impl(std::size_t, distance_type, tsl::detail_robin_hash::truncated_hash_type, value_type&) [with ValueType = std::pair<voxel, point3D>; KeySelect = tsl::robin_map<voxel, point3D>::KeySelect; ValueSelect = tsl::robin_map<voxel, point3D>::ValueSelect; Hash = std::hash<voxel>; KeyEqual = std::equal_to<voxel>; Allocator = std::allocator<std::pair<voxel, point3D> >; bool StoreHash = false; GrowthPolicy = tsl::rh::power_of_two_growth_policy<2>]’ at /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/tessil-src/include/tsl/robin_hash.h:1278:53,
+    inlined from ‘void tsl::detail_robin_hash::robin_hash<ValueType, KeySelect, ValueSelect, Hash, KeyEqual, Allocator, StoreHash, GrowthPolicy>::insert_value(std::size_t, distance_type, tsl::detail_robin_hash::truncated_hash_type, Args&& ...) [with Args = {const std::piecewise_construct_t&, std::tuple<const voxel&>, std::tuple<>}; ValueType = std::pair<voxel, point3D>; KeySelect = tsl::robin_map<voxel, point3D>::KeySelect; ValueSelect = tsl::robin_map<voxel, point3D>::ValueSelect; Hash = std::hash<voxel>; KeyEqual = std::equal_to<voxel>; Allocator = std::allocator<std::pair<voxel, point3D> >; bool StoreHash = false; GrowthPolicy = tsl::rh::power_of_two_growth_policy<2>]’ at /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/tessil-src/include/tsl/robin_hash.h:1259:26,
+    inlined from ‘std::pair<tsl::detail_robin_hash::robin_hash<ValueType, KeySelect, ValueSelect, Hash, KeyEqual, Allocator, StoreHash, GrowthPolicy>::robin_iterator<false>, bool> tsl::detail_robin_hash::robin_hash<ValueType, KeySelect, ValueSelect, Hash, KeyEqual, Allocator, StoreHash, GrowthPolicy>::insert_impl(const K&, Args&& ...) [with K = voxel; Args = {const std::piecewise_construct_t&, std::tuple<const voxel&>, std::tuple<>}; ValueType = std::pair<voxel, point3D>; KeySelect = tsl::robin_map<voxel, point3D>::KeySelect; ValueSelect = tsl::robin_map<voxel, point3D>::ValueSelect; Hash = std::hash<voxel>; KeyEqual = std::equal_to<voxel>; Allocator = std::allocator<std::pair<voxel, point3D> >; bool StoreHash = false; GrowthPolicy = tsl::rh::power_of_two_growth_policy<2>]’ at /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/tessil-src/include/tsl/robin_hash.h:1240:25,
+    inlined from ‘std::pair<tsl::detail_robin_hash::robin_hash<ValueType, KeySelect, ValueSelect, Hash, KeyEqual, Allocator, StoreHash, GrowthPolicy>::robin_iterator<false>, bool> tsl::detail_robin_hash::robin_hash<ValueType, KeySelect, ValueSelect, Hash, KeyEqual, Allocator, StoreHash, GrowthPolicy>::try_emplace(K&&, Args&& ...) [with K = const voxel&; Args = {}; ValueType = std::pair<voxel, point3D>; KeySelect = tsl::robin_map<voxel, point3D>::KeySelect; ValueSelect = tsl::robin_map<voxel, point3D>::ValueSelect; Hash = std::hash<voxel>; KeyEqual = std::equal_to<voxel>; Allocator = std::allocator<std::pair<voxel, point3D> >; bool StoreHash = false; GrowthPolicy = tsl::rh::power_of_two_growth_policy<2>]’ at /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/tessil-src/include/tsl/robin_hash.h:808:27,
+    inlined from ‘typename U::value_type& tsl::detail_robin_hash::robin_hash<ValueType, KeySelect, ValueSelect, Hash, KeyEqual, Allocator, StoreHash, GrowthPolicy>::operator[](K&&) [with K = const voxel&; U = tsl::robin_map<voxel, point3D>::ValueSelect; typename std::enable_if<std::integral_constant<bool, (! std::is_same<U, void>::value)>::value>::type* <anonymous> = 0; ValueType = std::pair<voxel, point3D>; KeySelect = tsl::robin_map<voxel, point3D>::KeySelect; ValueSelect = tsl::robin_map<voxel, point3D>::ValueSelect; Hash = std::hash<voxel>; KeyEqual = std::equal_to<voxel>; Allocator = std::allocator<std::pair<voxel, point3D> >; bool StoreHash = false; GrowthPolicy = tsl::rh::power_of_two_growth_policy<2>]’ at /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/tessil-src/include/tsl/robin_hash.h:976:27,
+    inlined from ‘T& tsl::robin_map<Key, T, Hash, KeyEqual, Allocator, StoreHash, GrowthPolicy>::operator[](const Key&) [with Key = voxel; T = point3D; Hash = std::hash<voxel>; KeyEqual = std::equal_to<voxel>; Allocator = std::allocator<std::pair<voxel, point3D> >; bool StoreHash = false; GrowthPolicy = tsl::rh::power_of_two_growth_policy<2>]’ at /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/tessil-src/include/tsl/robin_map.h:453:48,
+    inlined from ‘void sub_sample_frame(std::vector<point3D>&, double)’ at /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/utility.cpp:57:24:
+/usr/include/eigen3/Eigen/src/Core/PlainObjectBase.h:496:9: warning: ‘value.std::pair<voxel, point3D>::second.point3D::raw_point.Eigen::Matrix<double, 3, 1, 0, 3, 1>::<unnamed>.Eigen::PlainObjectBase<Eigen::Matrix<double, 3, 1> >::m_storage’ may be used uninitialized [-Wmaybe-uninitialized]
+  496 |       : m_storage( std::move(other.m_storage) )
+      |         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/tessil-src/include/tsl/robin_map.h:34,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/cloudMap.hpp:16:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/tessil-src/include/tsl/robin_hash.h: In function ‘void sub_sample_frame(std::vector<point3D>&, double)’:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/tessil-src/include/tsl/robin_hash.h:1258:20: note: ‘value’ declared here
+ 1258 |         value_type value(std::forward<Args>(value_type_args)...);
+      |                    ^~~~~
+In constructor ‘Eigen::PlainObjectBase<Derived>::PlainObjectBase(Eigen::PlainObjectBase<Derived>&&) [with Derived = Eigen::Matrix<double, 3, 1>]’,
+    inlined from ‘Eigen::Matrix<_Scalar, _Rows, _Cols, _Options, _MaxRows, _MaxCols>::Matrix(Eigen::Matrix<_Scalar, _Rows, _Cols, _Options, _MaxRows, _MaxCols>&&) [with _Scalar = double; int _Rows = 3; int _Cols = 1; int _Options = 0; int _MaxRows = 3; int _MaxCols = 1]’ at /usr/include/eigen3/Eigen/src/Core/Matrix.h:274:30,
+    inlined from ‘point3D::point3D(point3D&&)’ at /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/cloudMap.hpp:18:8,
+    inlined from ‘std::_Require<std::__not_<std::__is_tuple_like<_Tp> >, std::is_move_constructible<_Tp>, std::is_move_assignable<_Tp> > std::swap(_Tp&, _Tp&) [with _Tp = point3D]’ at /usr/include/c++/13/bits/move.h:197:11,
+    inlined from ‘void std::pair<_T1, _T2>::swap(std::pair<_T1, _T2>&) [with _T1 = voxel; _T2 = point3D]’ at /usr/include/c++/13/bits/stl_pair.h:212:6,
+    inlined from ‘typename std::enable_if<std::__and_<std::__is_swappable<_T1>, std::__is_swappable<_T2> >::value>::type std::swap(pair<_T1, _T2>&, pair<_T1, _T2>&) [with _T1 = voxel; _T2 = point3D]’ at /usr/include/c++/13/bits/stl_pair.h:881:15,
+    inlined from ‘void tsl::detail_robin_hash::bucket_entry<ValueType, StoreHash>::swap_with_value_in_bucket(distance_type&, tsl::detail_robin_hash::truncated_hash_type&, value_type&) [with ValueType = std::pair<voxel, point3D>; bool StoreHash = true]’ at /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/tessil-src/include/tsl/robin_hash.h:275:13,
+    inlined from ‘void tsl::detail_robin_hash::robin_hash<ValueType, KeySelect, ValueSelect, Hash, KeyEqual, Allocator, StoreHash, GrowthPolicy>::insert_value_impl(std::size_t, distance_type, tsl::detail_robin_hash::truncated_hash_type, value_type&) [with ValueType = std::pair<voxel, point3D>; KeySelect = tsl::robin_map<voxel, point3D>::KeySelect; ValueSelect = tsl::robin_map<voxel, point3D>::ValueSelect; Hash = std::hash<voxel>; KeyEqual = std::equal_to<voxel>; Allocator = std::allocator<std::pair<voxel, point3D> >; bool StoreHash = false; GrowthPolicy = tsl::rh::power_of_two_growth_policy<2>]’ at /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/tessil-src/include/tsl/robin_hash.h:1278:53,
+    inlined from ‘void tsl::detail_robin_hash::robin_hash<ValueType, KeySelect, ValueSelect, Hash, KeyEqual, Allocator, StoreHash, GrowthPolicy>::insert_value(std::size_t, distance_type, tsl::detail_robin_hash::truncated_hash_type, Args&& ...) [with Args = {const std::piecewise_construct_t&, std::tuple<const voxel&>, std::tuple<>}; ValueType = std::pair<voxel, point3D>; KeySelect = tsl::robin_map<voxel, point3D>::KeySelect; ValueSelect = tsl::robin_map<voxel, point3D>::ValueSelect; Hash = std::hash<voxel>; KeyEqual = std::equal_to<voxel>; Allocator = std::allocator<std::pair<voxel, point3D> >; bool StoreHash = false; GrowthPolicy = tsl::rh::power_of_two_growth_policy<2>]’ at /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/tessil-src/include/tsl/robin_hash.h:1259:26,
+    inlined from ‘std::pair<tsl::detail_robin_hash::robin_hash<ValueType, KeySelect, ValueSelect, Hash, KeyEqual, Allocator, StoreHash, GrowthPolicy>::robin_iterator<false>, bool> tsl::detail_robin_hash::robin_hash<ValueType, KeySelect, ValueSelect, Hash, KeyEqual, Allocator, StoreHash, GrowthPolicy>::insert_impl(const K&, Args&& ...) [with K = voxel; Args = {const std::piecewise_construct_t&, std::tuple<const voxel&>, std::tuple<>}; ValueType = std::pair<voxel, point3D>; KeySelect = tsl::robin_map<voxel, point3D>::KeySelect; ValueSelect = tsl::robin_map<voxel, point3D>::ValueSelect; Hash = std::hash<voxel>; KeyEqual = std::equal_to<voxel>; Allocator = std::allocator<std::pair<voxel, point3D> >; bool StoreHash = false; GrowthPolicy = tsl::rh::power_of_two_growth_policy<2>]’ at /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/tessil-src/include/tsl/robin_hash.h:1240:25,
+    inlined from ‘std::pair<tsl::detail_robin_hash::robin_hash<ValueType, KeySelect, ValueSelect, Hash, KeyEqual, Allocator, StoreHash, GrowthPolicy>::robin_iterator<false>, bool> tsl::detail_robin_hash::robin_hash<ValueType, KeySelect, ValueSelect, Hash, KeyEqual, Allocator, StoreHash, GrowthPolicy>::try_emplace(K&&, Args&& ...) [with K = const voxel&; Args = {}; ValueType = std::pair<voxel, point3D>; KeySelect = tsl::robin_map<voxel, point3D>::KeySelect; ValueSelect = tsl::robin_map<voxel, point3D>::ValueSelect; Hash = std::hash<voxel>; KeyEqual = std::equal_to<voxel>; Allocator = std::allocator<std::pair<voxel, point3D> >; bool StoreHash = false; GrowthPolicy = tsl::rh::power_of_two_growth_policy<2>]’ at /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/tessil-src/include/tsl/robin_hash.h:808:27,
+    inlined from ‘typename U::value_type& tsl::detail_robin_hash::robin_hash<ValueType, KeySelect, ValueSelect, Hash, KeyEqual, Allocator, StoreHash, GrowthPolicy>::operator[](K&&) [with K = const voxel&; U = tsl::robin_map<voxel, point3D>::ValueSelect; typename std::enable_if<std::integral_constant<bool, (! std::is_same<U, void>::value)>::value>::type* <anonymous> = 0; ValueType = std::pair<voxel, point3D>; KeySelect = tsl::robin_map<voxel, point3D>::KeySelect; ValueSelect = tsl::robin_map<voxel, point3D>::ValueSelect; Hash = std::hash<voxel>; KeyEqual = std::equal_to<voxel>; Allocator = std::allocator<std::pair<voxel, point3D> >; bool StoreHash = false; GrowthPolicy = tsl::rh::power_of_two_growth_policy<2>]’ at /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/tessil-src/include/tsl/robin_hash.h:976:27,
+    inlined from ‘T& tsl::robin_map<Key, T, Hash, KeyEqual, Allocator, StoreHash, GrowthPolicy>::operator[](const Key&) [with Key = voxel; T = point3D; Hash = std::hash<voxel>; KeyEqual = std::equal_to<voxel>; Allocator = std::allocator<std::pair<voxel, point3D> >; bool StoreHash = false; GrowthPolicy = tsl::rh::power_of_two_growth_policy<2>]’ at /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/tessil-src/include/tsl/robin_map.h:453:48,
+    inlined from ‘void sub_sample_frame(std::vector<point3D>&, double)’ at /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/utility.cpp:57:24:
+/usr/include/eigen3/Eigen/src/Core/PlainObjectBase.h:496:9: warning: ‘value.std::pair<voxel, point3D>::second.point3D::point.Eigen::Matrix<double, 3, 1, 0, 3, 1>::<unnamed>.Eigen::PlainObjectBase<Eigen::Matrix<double, 3, 1> >::m_storage’ may be used uninitialized [-Wmaybe-uninitialized]
+  496 |       : m_storage( std::move(other.m_storage) )
+      |         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/tessil-src/include/tsl/robin_hash.h: In function ‘void sub_sample_frame(std::vector<point3D>&, double)’:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/tessil-src/include/tsl/robin_hash.h:1258:20: note: ‘value’ declared here
+ 1258 |         value_type value(std::forward<Args>(value_type_args)...);
+      |                    ^~~~~
+In file included from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/se2.hpp:7,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/eigen_types.h:9,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/lio/lio_utils.h:4,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/lio/lio_utils.cpp:1:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/so2.hpp:564:43: warning: extra ‘;’ [-Wpedantic]
+  564 |   SOPHUS_INHERIT_ASSIGNMENT_OPERATORS(Map);
+      |                                           ^
+      |                                           -
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/se2.hpp:761:43: warning: extra ‘;’ [-Wpedantic]
+  761 |   SOPHUS_INHERIT_ASSIGNMENT_OPERATORS(Map);
+      |                                           ^
+      |                                           -
+In file included from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/se3.hpp:7,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/eigen_types.h:10:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/so3.hpp:860:49: warning: extra ‘;’ [-Wpedantic]
+  860 |         SOPHUS_INHERIT_ASSIGNMENT_OPERATORS(Map);
+      |                                                 ^
+      |                                                 -
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/se3.hpp:1003:43: warning: extra ‘;’ [-Wpedantic]
+ 1003 |   SOPHUS_INHERIT_ASSIGNMENT_OPERATORS(Map);
+      |                                           ^
+      |                                           -
+In file included from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/lio/lio_utils.h:10:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/cloudMap.hpp: In member function ‘bool voxelBlock::IsFull() const’:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/cloudMap.hpp:71:46: warning: comparison of integer expressions of different signedness: ‘const int’ and ‘std::vector<Eigen::Matrix<double, 3, 1>, Eigen::aligned_allocator<Eigen::Matrix<double, 3, 1> > >::size_type’ {aka ‘long unsigned int’} [-Wsign-compare]
+   71 |      bool IsFull() const { return num_points == points.size(); }
+      |                                   ~~~~~~~~~~~^~~~~~~~~~~~~~~~
+In file included from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/so3.hpp:8,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/tools/nav_state.h:8,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/algo/point_time.h:2,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/lio/lidarodom.h:5,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/lio/lidarodom.cpp:2:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/so2.hpp:564:43: warning: extra ‘;’ [-Wpedantic]
+  564 |   SOPHUS_INHERIT_ASSIGNMENT_OPERATORS(Map);
+      |                                           ^
+      |                                           -
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/so3.hpp:860:49: warning: extra ‘;’ [-Wpedantic]
+  860 |         SOPHUS_INHERIT_ASSIGNMENT_OPERATORS(Map);
+      |                                                 ^
+      |                                                 -
+In file included from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/eigen_types.h:9,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/tools/nav_state.h:9:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/se2.hpp:761:43: warning: extra ‘;’ [-Wpedantic]
+  761 |   SOPHUS_INHERIT_ASSIGNMENT_OPERATORS(Map);
+      |                                           ^
+      |                                           -
+In file included from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/eigen_types.h:10:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/se3.hpp:1003:43: warning: extra ‘;’ [-Wpedantic]
+ 1003 |   SOPHUS_INHERIT_ASSIGNMENT_OPERATORS(Map);
+      |                                           ^
+      |                                           -
+In file included from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/se2.hpp:7,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/eigen_types.h:9,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/preprocess/cloud_convert/cloud_convert_interface.hpp:4,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/preprocess/cloud_convert/cloud_convert2.h:12,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/preprocess/cloud_convert/cloud_convert2.cc:1:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/so2.hpp:564:43: warning: extra ‘;’ [-Wpedantic]
+  564 |   SOPHUS_INHERIT_ASSIGNMENT_OPERATORS(Map);
+      |                                           ^
+      |                                           -
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/se2.hpp:761:43: warning: extra ‘;’ [-Wpedantic]
+  761 |   SOPHUS_INHERIT_ASSIGNMENT_OPERATORS(Map);
+      |                                           ^
+      |                                           -
+In file included from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/se3.hpp:7,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/eigen_types.h:10:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/so3.hpp:860:49: warning: extra ‘;’ [-Wpedantic]
+  860 |         SOPHUS_INHERIT_ASSIGNMENT_OPERATORS(Map);
+      |                                                 ^
+      |                                                 -
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/se3.hpp:1003:43: warning: extra ‘;’ [-Wpedantic]
+ 1003 |   SOPHUS_INHERIT_ASSIGNMENT_OPERATORS(Map);
+      |                                           ^
+      |                                           -
+In file included from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/preprocess/cloud_convert/cloud_convert2.h:17:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/tools/point_types.h:92:26: warning: extra ‘;’ [-Wpedantic]
+   92 |         PCL_ADD_INTENSITY;
+      |                          ^
+      |                          -
+In file included from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/preprocess/cloud_convert/cloud_convert2.h:18:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/cloudMap.hpp: In member function ‘bool voxelBlock::IsFull() const’:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/cloudMap.hpp:71:46: warning: comparison of integer expressions of different signedness: ‘const int’ and ‘std::vector<Eigen::Matrix<double, 3, 1>, Eigen::aligned_allocator<Eigen::Matrix<double, 3, 1> > >::size_type’ {aka ‘long unsigned int’} [-Wsign-compare]
+   71 |      bool IsFull() const { return num_points == points.size(); }
+      |                                   ~~~~~~~~~~~^~~~~~~~~~~~~~~~
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/preprocess/cloud_convert/cloud_convert2.cc: In member function ‘void zjloc::CloudConvert2::Oust64Handler(const sensor_msgs::msg::PointCloud2_<std::allocator<void> >::ConstSharedPtr&)’:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/preprocess/cloud_convert/cloud_convert2.cc:201:27: warning: comparison of integer expressions of different signedness: ‘int’ and ‘std::vector<ouster_ros::Point, Eigen::aligned_allocator<ouster_ros::Point> >::size_type’ {aka ‘long unsigned int’} [-Wsign-compare]
+  201 |         for (int i = 0; i < pl_orig.points.size(); i++)
+      |                         ~~^~~~~~~~~~~~~~~~~~~~~~~
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/preprocess/cloud_convert/cloud_convert2.cc:185:13: warning: unused variable ‘plsize’ [-Wunused-variable]
+  185 |         int plsize = pl_orig.size();
+      |             ^~~~~~
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/preprocess/cloud_convert/cloud_convert2.cc: In member function ‘void zjloc::CloudConvert2::RobosenseHandler(const sensor_msgs::msg::PointCloud2_<std::allocator<void> >::ConstSharedPtr&)’:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/preprocess/cloud_convert/cloud_convert2.cc:272:27: warning: comparison of integer expressions of different signedness: ‘int’ and ‘std::vector<robosense_ros::Point, Eigen::aligned_allocator<robosense_ros::Point> >::size_type’ {aka ‘long unsigned int’} [-Wsign-compare]
+  272 |         for (int i = 0; i < pl_orig.points.size(); i++)
+      |                         ~~^~~~~~~~~~~~~~~~~~~~~~~
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/preprocess/cloud_convert/cloud_convert2.cc:246:16: warning: unused variable ‘headertime’ [-Wunused-variable]
+  246 |         double headertime = msg->header.stamp.sec + msg->header.stamp.nanosec * 1e-9;
+      |                ^~~~~~~~~~
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/preprocess/cloud_convert/cloud_convert2.cc: In member function ‘void zjloc::CloudConvert2::PandarHandler(const sensor_msgs::msg::PointCloud2_<std::allocator<void> >::ConstSharedPtr&)’:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/preprocess/cloud_convert/cloud_convert2.cc:389:23: warning: unused variable ‘tm_scale’ [-Wunused-variable]
+  389 |         static double tm_scale = 1; //   1e6
+      |                       ^~~~~~~~
+In file included from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/lio/lio_utils.h:10,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/lio/lidarodom.h:13:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/cloudMap.hpp: In member function ‘bool voxelBlock::IsFull() const’:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/cloudMap.hpp:71:46: warning: comparison of integer expressions of different signedness: ‘const int’ and ‘std::vector<Eigen::Matrix<double, 3, 1>, Eigen::aligned_allocator<Eigen::Matrix<double, 3, 1> > >::size_type’ {aka ‘long unsigned int’} [-Wsign-compare]
+   71 |      bool IsFull() const { return num_points == points.size(); }
+      |                                   ~~~~~~~~~~~^~~~~~~~~~~~~~~~
+In file included from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/lio/lidarodom.h:23:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/tools/point_types.h: At global scope:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/tools/point_types.h:92:26: warning: extra ‘;’ [-Wpedantic]
+   92 |         PCL_ADD_INTENSITY;
+      |                          ^
+      |                          -
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/lio/lidarodom.cpp: In member function ‘void zjloc::lidarodom_m::addSurfCostFactor(std::vector<ceres::CostFunction*>&, std::vector<Eigen::Matrix<double, 3, 1> >&, std::vector<point3D>&, const zjloc::cloudFrame*)’:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/lio/lidarodom.cpp:766:29: warning: comparison of integer expressions of different signedness: ‘int’ and ‘size_t’ {aka ‘long unsigned int’} [-Wsign-compare]
+  766 |           for (int k = 0; k < num; k++)
+      |                           ~~^~~~~
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/lio/lidarodom.cpp:794:45: warning: comparison of integer expressions of different signedness: ‘std::vector<Eigen::Matrix<double, 3, 1>, Eigen::aligned_allocator<Eigen::Matrix<double, 3, 1> > >::size_type’ {aka ‘long unsigned int’} and ‘const int’ [-Wsign-compare]
+  794 |                 if (vector_neighbors.size() < required_neighbors)
+      |                     ~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/lio/lidarodom.cpp: In member function ‘void zjloc::lidarodom_m::addPointToMap(voxelHashMap&, const Eigen::Vector3d&, const double&, double, int, double, int, zjloc::cloudFrame*)’:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/lio/lidarodom.cpp:959:52: warning: unused parameter ‘intensity’ [-Wunused-parameter]
+  959 |                                      const double &intensity, double voxel_size,
+      |                                      ~~~~~~~~~~~~~~^~~~~~~~~
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/lio/lidarodom.cpp:961:70: warning: unused parameter ‘p_frame’ [-Wunused-parameter]
+  961 |                                      int min_num_points, cloudFrame *p_frame)
+      |                                                          ~~~~~~~~~~~~^~~~~~~
+In file included from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/apps/common_utility.hpp:17,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/apps/common_utility.cpp:1:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/cloudMap.hpp: In member function ‘bool voxelBlock::IsFull() const’:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/cloudMap.hpp:71:46: warning: comparison of integer expressions of different signedness: ‘const int’ and ‘std::vector<Eigen::Matrix<double, 3, 1>, Eigen::aligned_allocator<Eigen::Matrix<double, 3, 1> > >::size_type’ {aka ‘long unsigned int’} [-Wsign-compare]
+   71 |      bool IsFull() const { return num_points == points.size(); }
+      |                                   ~~~~~~~~~~~^~~~~~~~~~~~~~~~
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/apps/common_utility.hpp: At global scope:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/apps/common_utility.hpp:22:23: warning: extra ‘;’ [-Wpedantic]
+   22 |      PCL_ADD_INTENSITY;
+      |                       ^
+      |                       -
+In file included from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/utility.h:8,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/apps/main_ada.cpp:34:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/cloudMap.hpp: In member function ‘bool voxelBlock::IsFull() const’:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/cloudMap.hpp:71:46: warning: comparison of integer expressions of different signedness: ‘const int’ and ‘std::vector<Eigen::Matrix<double, 3, 1>, Eigen::aligned_allocator<Eigen::Matrix<double, 3, 1> > >::size_type’ {aka ‘long unsigned int’} [-Wsign-compare]
+   71 |      bool IsFull() const { return num_points == points.size(); }
+      |                                   ~~~~~~~~~~~^~~~~~~~~~~~~~~~
+In file included from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/so3.hpp:8,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/utility.h:10:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/so2.hpp: At global scope:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/so2.hpp:564:43: warning: extra ‘;’ [-Wpedantic]
+  564 |   SOPHUS_INHERIT_ASSIGNMENT_OPERATORS(Map);
+      |                                           ^
+      |                                           -
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/so3.hpp:860:49: warning: extra ‘;’ [-Wpedantic]
+  860 |         SOPHUS_INHERIT_ASSIGNMENT_OPERATORS(Map);
+      |                                                 ^
+      |                                                 -
+In file included from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/eigen_types.h:9,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/preprocess/cloud_convert/cloud_convert_interface.hpp:4,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/preprocess/cloud_convert/cloud_convert2.h:12,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/apps/main_ada.cpp:35:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/se2.hpp:761:43: warning: extra ‘;’ [-Wpedantic]
+  761 |   SOPHUS_INHERIT_ASSIGNMENT_OPERATORS(Map);
+      |                                           ^
+      |                                           -
+In file included from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/eigen_types.h:10:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/se3.hpp:1003:43: warning: extra ‘;’ [-Wpedantic]
+ 1003 |   SOPHUS_INHERIT_ASSIGNMENT_OPERATORS(Map);
+      |                                           ^
+      |                                           -
+In file included from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/preprocess/cloud_convert/cloud_convert2.h:17:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/tools/point_types.h:92:26: warning: extra ‘;’ [-Wpedantic]
+   92 |         PCL_ADD_INTENSITY;
+      |                          ^
+      |                          -
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/apps/main_ada.cpp: In lambda function:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/apps/main_ada.cpp:470:18: warning: unused variable ‘added’ [-Wunused-variable]
+  470 |             bool added = scantext_mapping->addFrameWithSC(
+      |                  ^~~~~
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/apps/main_ada.cpp: In lambda function:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/apps/main_ada.cpp:591:59: warning: unused parameter ‘time2’ [-Wunused-parameter]
+  591 |         [&](std::string &topic_name, double time1, double time2)
+      |                                                    ~~~~~~~^~~~~
+In file included from /usr/include/eigen3/Eigen/src/Core/util/ConfigureVectorization.h:346,
+                 from /usr/include/eigen3/Eigen/Core:22,
+                 from /usr/include/eigen3/Eigen/StdVector:14,
+                 from /usr/include/pcl-1.14/pcl/point_cloud.h:45,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/apps/common_utility.hpp:4:
+In function ‘__m128d _mm_loadu_pd(const double*)’,
+    inlined from ‘Packet Eigen::internal::ploadu(const typename unpacket_traits<T>::type*) [with Packet = __vector(2) double]’ at /usr/include/eigen3/Eigen/src/Core/arch/SSE/PacketMath.h:746:22,
+    inlined from ‘Packet Eigen::internal::ploadt(const typename unpacket_traits<T>::type*) [with Packet = __vector(2) double; int Alignment = 0]’ at /usr/include/eigen3/Eigen/src/Core/GenericPacketMath.h:969:26,
+    inlined from ‘PacketType Eigen::internal::evaluator<Eigen::PlainObjectBase<Derived> >::packet(Eigen::Index, Eigen::Index) const [with int LoadMode = 0; PacketType = __vector(2) double; Derived = Eigen::Matrix<double, 3, 1>]’ at /usr/include/eigen3/Eigen/src/Core/CoreEvaluators.h:238:42,
+    inlined from ‘void Eigen::internal::generic_dense_assignment_kernel<DstEvaluatorTypeT, SrcEvaluatorTypeT, Functor, Version>::assignPacket(Eigen::Index, Eigen::Index) [with int StoreMode = 0; int LoadMode = 0; PacketType = __vector(2) double; DstEvaluatorTypeT = Eigen::internal::evaluator<Eigen::Matrix<double, 3, 1> >; SrcEvaluatorTypeT = Eigen::internal::evaluator<Eigen::Matrix<double, 3, 1> >; Functor = Eigen::internal::assign_op<double, double>; int Version = 0]’ at /usr/include/eigen3/Eigen/src/Core/AssignEvaluator.h:675:116,
+    inlined from ‘void Eigen::internal::generic_dense_assignment_kernel<DstEvaluatorTypeT, SrcEvaluatorTypeT, Functor, Version>::assignPacketByOuterInner(Eigen::Index, Eigen::Index) [with int StoreMode = 0; int LoadMode = 0; PacketType = __vector(2) double; DstEvaluatorTypeT = Eigen::internal::evaluator<Eigen::Matrix<double, 3, 1> >; SrcEvaluatorTypeT = Eigen::internal::evaluator<Eigen::Matrix<double, 3, 1> >; Functor = Eigen::internal::assign_op<double, double>; int Version = 0]’ at /usr/include/eigen3/Eigen/src/Core/AssignEvaluator.h:689:48,
+    inlined from ‘static void Eigen::internal::copy_using_evaluator_innervec_CompleteUnrolling<Kernel, Index, Stop>::run(Kernel&) [with Kernel = Eigen::internal::generic_dense_assignment_kernel<Eigen::internal::evaluator<Eigen::Matrix<double, 3, 1> >, Eigen::internal::evaluator<Eigen::Matrix<double, 3, 1> >, Eigen::internal::assign_op<double, double>, 0>; int Index = 0; int Stop = 2]’ at /usr/include/eigen3/Eigen/src/Core/AssignEvaluator.h:279:85,
+    inlined from ‘static void Eigen::internal::dense_assignment_loop<Kernel, 3, 2>::run(Kernel&) [with Kernel = Eigen::internal::generic_dense_assignment_kernel<Eigen::internal::evaluator<Eigen::Matrix<double, 3, 1> >, Eigen::internal::evaluator<Eigen::Matrix<double, 3, 1> >, Eigen::internal::assign_op<double, double>, 0>]’ at /usr/include/eigen3/Eigen/src/Core/AssignEvaluator.h:455:81,
+    inlined from ‘void Eigen::internal::call_dense_assignment_loop(DstXprType&, const SrcXprType&, const Functor&) [with DstXprType = Eigen::Matrix<double, 3, 1>; SrcXprType = Eigen::Matrix<double, 3, 1>; Functor = assign_op<double, double>]’ at /usr/include/eigen3/Eigen/src/Core/AssignEvaluator.h:785:37,
+    inlined from ‘static void Eigen::internal::Assignment<DstXprType, SrcXprType, Functor, Eigen::internal::Dense2Dense, Weak>::run(DstXprType&, const SrcXprType&, const Functor&) [with DstXprType = Eigen::Matrix<double, 3, 1>; SrcXprType = Eigen::Matrix<double, 3, 1>; Functor = Eigen::internal::assign_op<double, double>; Weak = void]’ at /usr/include/eigen3/Eigen/src/Core/AssignEvaluator.h:954:31,
+    inlined from ‘void Eigen::internal::call_assignment_no_alias(Dst&, const Src&, const Func&) [with Dst = Eigen::Matrix<double, 3, 1>; Src = Eigen::Matrix<double, 3, 1>; Func = assign_op<double, double>]’ at /usr/include/eigen3/Eigen/src/Core/AssignEvaluator.h:890:49,
+    inlined from ‘void Eigen::internal::call_assignment(Dst&, const Src&, const Func&, typename enable_if<(! evaluator_assume_aliasing<Src>::value), void*>::type) [with Dst = Eigen::Matrix<double, 3, 1>; Src = Eigen::Matrix<double, 3, 1>; Func = assign_op<double, double>]’ at /usr/include/eigen3/Eigen/src/Core/AssignEvaluator.h:858:27,
+    inlined from ‘void Eigen::internal::call_assignment(Dst&, const Src&) [with Dst = Eigen::Matrix<double, 3, 1>; Src = Eigen::Matrix<double, 3, 1>]’ at /usr/include/eigen3/Eigen/src/Core/AssignEvaluator.h:836:18,
+    inlined from ‘Derived& Eigen::PlainObjectBase<Derived>::_set(const Eigen::DenseBase<OtherDerived>&) [with OtherDerived = Eigen::Matrix<double, 3, 1>; Derived = Eigen::Matrix<double, 3, 1>]’ at /usr/include/eigen3/Eigen/src/Core/PlainObjectBase.h:779:32,
+    inlined from ‘Eigen::Matrix<_Scalar, _Rows, _Cols, _Options, _MaxRows, _MaxCols>& Eigen::Matrix<_Scalar, _Rows, _Cols, _Options, _MaxRows, _MaxCols>::operator=(const Eigen::Matrix<_Scalar, _Rows, _Cols, _Options, _MaxRows, _MaxCols>&) [with _Scalar = double; int _Rows = 3; int _Cols = 1; int _Options = 0; int _MaxRows = 3; int _MaxCols = 1]’ at /usr/include/eigen3/Eigen/src/Core/Matrix.h:208:24,
+    inlined from ‘point3D& point3D::operator=(const point3D&)’ at /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/cloudMap.hpp:18:8,
+    inlined from ‘void gridSampling0(const pcl::PointCloud<pcl::PointXYZI>::Ptr&, pcl::PointCloud<pcl::PointXYZI>::Ptr&, double)’ at /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/apps/common_utility.cpp:37:26:
+/usr/lib/gcc/x86_64-linux-gnu/13/include/emmintrin.h:134:24: warning: ‘*(__m128d_u*)((char*)&pt + offsetof(point3D, point3D::point.Eigen::Matrix<double, 3, 1, 0, 3, 1>::<unnamed>.Eigen::PlainObjectBase<Eigen::Matrix<double, 3, 1, 0, 3, 1> >::<unnamed>.Eigen::MatrixBase<Eigen::Matrix<double, 3, 1, 0, 3, 1> >::<unnamed>.Eigen::DenseBase<Eigen::Matrix<double, 3, 1, 0, 3, 1> >::<unnamed>.Eigen::DenseCoeffsBase<Eigen::Matrix<double, 3, 1, 0, 3, 1>, 3>::<unnamed>.Eigen::DenseCoeffsBase<Eigen::Matrix<double, 3, 1, 0, 3, 1>, 1>::<unnamed>.Eigen::DenseCoeffsBase<Eigen::Matrix<double, 3, 1, 0, 3, 1>, 0>::<unnamed>))’ may be used uninitialized [-Wmaybe-uninitialized]
+  134 |   return *(__m128d_u *)__P;
+      |                        ^~~
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/apps/common_utility.cpp: In function ‘void gridSampling0(const pcl::PointCloud<pcl::PointXYZI>::Ptr&, pcl::PointCloud<pcl::PointXYZI>::Ptr&, double)’:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/apps/common_utility.cpp:32:19: note: ‘pt’ declared here
+   32 |           point3D pt;
+      |                   ^~
+In file included from /usr/include/eigen3/Eigen/Core:257:
+In member function ‘void Eigen::internal::assign_op<DstScalar, SrcScalar>::assignCoeff(DstScalar&, const SrcScalar&) const [with DstScalar = double; SrcScalar = double]’,
+    inlined from ‘void Eigen::internal::generic_dense_assignment_kernel<DstEvaluatorTypeT, SrcEvaluatorTypeT, Functor, Version>::assignCoeff(Eigen::Index, Eigen::Index) [with DstEvaluatorTypeT = Eigen::internal::evaluator<Eigen::Matrix<double, 3, 1> >; SrcEvaluatorTypeT = Eigen::internal::evaluator<Eigen::Matrix<double, 3, 1> >; Functor = Eigen::internal::assign_op<double, double>; int Version = 0]’ at /usr/include/eigen3/Eigen/src/Core/AssignEvaluator.h:654:26,
+    inlined from ‘void Eigen::internal::generic_dense_assignment_kernel<DstEvaluatorTypeT, SrcEvaluatorTypeT, Functor, Version>::assignCoeffByOuterInner(Eigen::Index, Eigen::Index) [with DstEvaluatorTypeT = Eigen::internal::evaluator<Eigen::Matrix<double, 3, 1> >; SrcEvaluatorTypeT = Eigen::internal::evaluator<Eigen::Matrix<double, 3, 1> >; Functor = Eigen::internal::assign_op<double, double>; int Version = 0]’ at /usr/include/eigen3/Eigen/src/Core/AssignEvaluator.h:668:16,
+    inlined from ‘static void Eigen::internal::copy_using_evaluator_DefaultTraversal_CompleteUnrolling<Kernel, Index, Stop>::run(Kernel&) [with Kernel = Eigen::internal::generic_dense_assignment_kernel<Eigen::internal::evaluator<Eigen::Matrix<double, 3, 1> >, Eigen::internal::evaluator<Eigen::Matrix<double, 3, 1> >, Eigen::internal::assign_op<double, double>, 0>; int Index = 2; int Stop = 3]’ at /usr/include/eigen3/Eigen/src/Core/AssignEvaluator.h:211:35,
+    inlined from ‘static void Eigen::internal::dense_assignment_loop<Kernel, 3, 2>::run(Kernel&) [with Kernel = Eigen::internal::generic_dense_assignment_kernel<Eigen::internal::evaluator<Eigen::Matrix<double, 3, 1> >, Eigen::internal::evaluator<Eigen::Matrix<double, 3, 1> >, Eigen::internal::assign_op<double, double>, 0>]’ at /usr/include/eigen3/Eigen/src/Core/AssignEvaluator.h:456:92,
+    inlined from ‘void Eigen::internal::call_dense_assignment_loop(DstXprType&, const SrcXprType&, const Functor&) [with DstXprType = Eigen::Matrix<double, 3, 1>; SrcXprType = Eigen::Matrix<double, 3, 1>; Functor = assign_op<double, double>]’ at /usr/include/eigen3/Eigen/src/Core/AssignEvaluator.h:785:37,
+    inlined from ‘static void Eigen::internal::Assignment<DstXprType, SrcXprType, Functor, Eigen::internal::Dense2Dense, Weak>::run(DstXprType&, const SrcXprType&, const Functor&) [with DstXprType = Eigen::Matrix<double, 3, 1>; SrcXprType = Eigen::Matrix<double, 3, 1>; Functor = Eigen::internal::assign_op<double, double>; Weak = void]’ at /usr/include/eigen3/Eigen/src/Core/AssignEvaluator.h:954:31,
+    inlined from ‘void Eigen::internal::call_assignment_no_alias(Dst&, const Src&, const Func&) [with Dst = Eigen::Matrix<double, 3, 1>; Src = Eigen::Matrix<double, 3, 1>; Func = assign_op<double, double>]’ at /usr/include/eigen3/Eigen/src/Core/AssignEvaluator.h:890:49,
+    inlined from ‘void Eigen::internal::call_assignment(Dst&, const Src&, const Func&, typename enable_if<(! evaluator_assume_aliasing<Src>::value), void*>::type) [with Dst = Eigen::Matrix<double, 3, 1>; Src = Eigen::Matrix<double, 3, 1>; Func = assign_op<double, double>]’ at /usr/include/eigen3/Eigen/src/Core/AssignEvaluator.h:858:27,
+    inlined from ‘void Eigen::internal::call_assignment(Dst&, const Src&) [with Dst = Eigen::Matrix<double, 3, 1>; Src = Eigen::Matrix<double, 3, 1>]’ at /usr/include/eigen3/Eigen/src/Core/AssignEvaluator.h:836:18,
+    inlined from ‘Derived& Eigen::PlainObjectBase<Derived>::_set(const Eigen::DenseBase<OtherDerived>&) [with OtherDerived = Eigen::Matrix<double, 3, 1>; Derived = Eigen::Matrix<double, 3, 1>]’ at /usr/include/eigen3/Eigen/src/Core/PlainObjectBase.h:779:32,
+    inlined from ‘Eigen::Matrix<_Scalar, _Rows, _Cols, _Options, _MaxRows, _MaxCols>& Eigen::Matrix<_Scalar, _Rows, _Cols, _Options, _MaxRows, _MaxCols>::operator=(const Eigen::Matrix<_Scalar, _Rows, _Cols, _Options, _MaxRows, _MaxCols>&) [with _Scalar = double; int _Rows = 3; int _Cols = 1; int _Options = 0; int _MaxRows = 3; int _MaxCols = 1]’ at /usr/include/eigen3/Eigen/src/Core/Matrix.h:208:24,
+    inlined from ‘point3D& point3D::operator=(const point3D&)’ at /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/cloudMap.hpp:18:8,
+    inlined from ‘void gridSampling0(const pcl::PointCloud<pcl::PointXYZI>::Ptr&, pcl::PointCloud<pcl::PointXYZI>::Ptr&, double)’ at /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/apps/common_utility.cpp:37:26:
+/usr/include/eigen3/Eigen/src/Core/functors/AssignmentFunctors.h:24:102: warning: ‘pt.point3D::point.Eigen::Matrix<double, 3, 1, 0, 3, 1>::<unnamed>.Eigen::PlainObjectBase<Eigen::Matrix<double, 3, 1, 0, 3, 1> >::m_storage.Eigen::DenseStorage<double, 3, 3, 1, 0>::m_data.Eigen::internal::plain_array<double, 3, 0, 0>::array[2]’ may be used uninitialized [-Wmaybe-uninitialized]
+   24 |   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void assignCoeff(DstScalar& a, const SrcScalar& b) const { a = b; }
+      |                                                                                                    ~~^~~
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/apps/common_utility.cpp: In function ‘void gridSampling0(const pcl::PointCloud<pcl::PointXYZI>::Ptr&, pcl::PointCloud<pcl::PointXYZI>::Ptr&, double)’:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/apps/common_utility.cpp:32:19: note: ‘pt’ declared here
+   32 |           point3D pt;
+      |                   ^~
+In member function ‘point3D& point3D::operator=(const point3D&)’,
+    inlined from ‘void gridSampling0(const pcl::PointCloud<pcl::PointXYZI>::Ptr&, pcl::PointCloud<pcl::PointXYZI>::Ptr&, double)’ at /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/apps/common_utility.cpp:37:26:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/cloudMap.hpp:18:8: warning: ‘pt.point3D::ring’ may be used uninitialized [-Wmaybe-uninitialized]
+   18 | struct point3D
+      |        ^~~~~~~
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/apps/common_utility.cpp: In function ‘void gridSampling0(const pcl::PointCloud<pcl::PointXYZI>::Ptr&, pcl::PointCloud<pcl::PointXYZI>::Ptr&, double)’:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/apps/common_utility.cpp:32:19: note: ‘pt’ declared here
+   32 |           point3D pt;
+      |                   ^~
+---
+[Processing: adaptive_lio]
+[Processing: adaptive_lio]
+Finished <<< adaptive_lio [1min 17s]
+
+Summary: 1 package finished [1min 17s]
+  1 package had stderr output: adaptive_lio

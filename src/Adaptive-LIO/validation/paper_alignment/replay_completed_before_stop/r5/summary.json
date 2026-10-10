@@ -1,0 +1,161 @@
+{
+  "duration_s": 45.0,
+  "domain": 187,
+  "command": [
+    "/tmp/adaptive-lio-r5",
+    "--config_file=/tmp/adaptive-lio-replay/r5/replay.yaml",
+    "--ros-args",
+    "--params-file",
+    "/tmp/adaptive-lio-replay/r5/ros-params.yaml"
+  ],
+  "play_command": [
+    "ros2",
+    "bag",
+    "play",
+    "/home/lyu/real/origin_sentry_nav2026/rosbag2_2026_07_07-16_37_53",
+    "--clock",
+    "100",
+    "--rate",
+    "1.0",
+    "--playback-duration",
+    "45.0",
+    "--disable-keyboard-controls",
+    "--topics",
+    "/livox/lidar_192_168_1_163",
+    "/livox/imu_192_168_1_163"
+  ],
+  "estimator_exit": -11,
+  "player_exit": 0,
+  "odom_count": 8690,
+  "cloud_count": 435,
+  "frames_logged": 435,
+  "seed_frames": 1,
+  "accepted_corrections": 434,
+  "rejected_frames": 0,
+  "match_ms": {
+    "n": 435,
+    "mean": 3.5862664183908044,
+    "p50": 2.968497,
+    "p95": 5.786563,
+    "p99": 7.979368
+  },
+  "candidate_posterior_dp": {
+    "n": 435,
+    "mean": 0.0033221380300322927,
+    "p50": 0.002843923037506373,
+    "p95": 0.007671694297075186,
+    "p99": 0.01009152422163991
+  },
+  "processing_ms": {
+    "build frame": {
+      "n": 435,
+      "mean": 1.9129582068965516,
+      "p50": 1.91241,
+      "p95": 2.18133,
+      "p99": 2.37908
+    },
+    "eskf_obs": {
+      "n": 434,
+      "mean": 0.02980301612903226,
+      "p50": 0.02821,
+      "p95": 0.04022,
+      "p99": 0.050975
+    },
+    "factor_build_knn": {
+      "n": 574,
+      "mean": 1.5939413240418119,
+      "p50": 1.59066,
+      "p95": 1.98948,
+      "p99": 2.20872
+    },
+    "fov segment": {
+      "n": 122,
+      "mean": 0.09211495081967212,
+      "p50": 0.077173,
+      "p95": 0.174563,
+      "p99": 0.224306
+    },
+    "geometry_diagnostic": {
+      "n": 434,
+      "mean": 0.021194472350230417,
+      "p50": 0.019181,
+      "p95": 0.02923,
+      "p99": 0.060368
+    },
+    "laser convert": {
+      "n": 446,
+      "mean": 1.3685101569506728,
+      "p50": 1.34025,
+      "p95": 1.68477,
+      "p99": 1.81204
+    },
+    "laser ds": {
+      "n": 446,
+      "mean": 3.2884694618834085,
+      "p50": 3.14522,
+      "p95": 4.18271,
+      "p99": 4.7337
+    },
+    "map update": {
+      "n": 435,
+      "mean": 0.4374240068965517,
+      "p50": 0.546306,
+      "p95": 0.833929,
+      "p99": 1.23058
+    },
+    "optimize": {
+      "n": 434,
+      "mean": 3.4755615207373274,
+      "p50": 2.84581,
+      "p95": 5.64414,
+      "p99": 7.86865
+    },
+    "poseEstimate": {
+      "n": 435,
+      "mean": 0.46445466896551724,
+      "p50": 0.566484,
+      "p95": 0.931493,
+      "p99": 1.30792
+    },
+    "predict": {
+      "n": 435,
+      "mean": 0.12005791264367816,
+      "p50": 0.11423,
+      "p95": 0.149349,
+      "p99": 0.175062
+    },
+    "processMeasurement": {
+      "n": 446,
+      "mean": 6.803687964125561,
+      "p50": 6.39864,
+      "p95": 9.55326,
+      "p99": 11.5911
+    },
+    "pub scalar data": {
+      "n": 435,
+      "mean": 0.014011420689655172,
+      "p50": 0.012304,
+      "p95": 0.026512,
+      "p99": 0.04648
+    },
+    "state init": {
+      "n": 435,
+      "mean": 0.0002075977011494253,
+      "p50": 0.00015,
+      "p95": 0.000424,
+      "p99": 0.000781
+    }
+  },
+  "odom_hz_sensor_time": 199.99404180254902,
+  "sensor_stamp_step_ms": {
+    "n": 8689,
+    "mean": 5.000148959373921,
+    "p50": 4.915476,
+    "p95": 6.007433,
+    "p99": 6.11496
+  },
+  "errors": [],
+  "fault_lines": [],
+  "ground_truth": false,
+  "note": "Smoke replay; timing is host processing cost, not end-to-end latency or accuracy."
+}

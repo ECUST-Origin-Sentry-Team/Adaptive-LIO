@@ -1,0 +1,19 @@
+# Colcon build and runtime output
+/build/
+/install/
+/log/
+/src/Adaptive-LIO/Log/*
+!/src/Adaptive-LIO/Log/.gitkeep
+/src/Adaptive-LIO/map_db/
+/src/Adaptive-LIO/map_scantext.pcd_db/
+
+# Local test datasets are copied here but never uploaded
+/rosbag*/
+*.mcap
+*.db3
+
+# Editor and Python caches
+.cache/
+__pycache__/
+*.pyc
+.vscode/

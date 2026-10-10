@@ -1,0 +1,61 @@
+In file included from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/se2.hpp:7,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/eigen_types.h:9,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/algo/eskf.hpp:8,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/algo/imu_odom_predictor.h:2,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/test/test_core.cpp:1:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/so2.hpp:564:43: warning: extra ‘;’ [-Wpedantic]
+  564 |   SOPHUS_INHERIT_ASSIGNMENT_OPERATORS(Map);
+      |                                           ^
+      |                                           -
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/se2.hpp:761:43: warning: extra ‘;’ [-Wpedantic]
+  761 |   SOPHUS_INHERIT_ASSIGNMENT_OPERATORS(Map);
+      |                                           ^
+      |                                           -
+In file included from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/se3.hpp:7,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/eigen_types.h:10:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/so3.hpp:860:49: warning: extra ‘;’ [-Wpedantic]
+  860 |         SOPHUS_INHERIT_ASSIGNMENT_OPERATORS(Map);
+      |                                                 ^
+      |                                                 -
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/se3.hpp:1003:43: warning: extra ‘;’ [-Wpedantic]
+ 1003 |   SOPHUS_INHERIT_ASSIGNMENT_OPERATORS(Map);
+      |                                           ^
+      |                                           -
+PASS snapshot, atomic rejection, zero/reverse/gap dt, matrix Joseph update
+PASS stationary 2s, constant velocity, acceleration, compound rotation
+PASS off-grid posterior, 83ms late initialization replay, P equality, ordering
+PASS pending future, gap fail-closed, timeout, rejected-frame age, recovery
+PASS lever arm, frame rotations, finite-difference pose/twist covariance
+PASS bounded history, expired posterior, NaN input
+PASS match support/cost/innovation gates, true fast motion, finite sorted aux, adjacent windows/offset
+PASS shared LiDAR-end interpolation and truncated IMU interval
+PASS posterior state cache and registered point refresh
+PASS yaw branch, near-vertical attitude, late correction of running trajectory
+ALL CORE TESTS PASSED
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/test/test_geometry.cpp: In function ‘int main()’:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/test/test_geometry.cpp:37:9: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+   37 |         if(kind==0)bad(0,0)=-1;if(kind==1)bad(0,1)=.1;if(kind==2)bad(0,0)=NAN;
+      |         ^~
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/test/test_geometry.cpp:37:32: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+   37 |         if(kind==0)bad(0,0)=-1;if(kind==1)bad(0,1)=.1;if(kind==2)bad(0,0)=NAN;
+      |                                ^~
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/test/test_geometry.cpp:38:9: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+   38 |         if(kind==3)bad.setZero();if(kind==4)bad(0,0)=INFINITY;
+      |         ^~
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/test/test_geometry.cpp:38:34: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+   38 |         if(kind==3)bad.setZero();if(kind==4)bad(0,0)=INFINITY;
+      |                                  ^~
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/test/test_geometry.cpp:48:21: warning: loop variable ‘phi’ creates a copy from type ‘const Vec3d’ {aka ‘const Eigen::Matrix<double, 3, 1>’} [-Wrange-loop-construct]
+   48 |     for(const Vec3d phi:{Vec3d(1e-8,2e-8,0),Vec3d(.8,-.7,.9),Vec3d(2.,.3,-.4)}){
+      |                     ^~~
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/test/test_geometry.cpp:48:21: note: use reference type to prevent copying
+   48 |     for(const Vec3d phi:{Vec3d(1e-8,2e-8,0),Vec3d(.8,-.7,.9),Vec3d(2.,.3,-.4)}){
+      |                     ^~~
+      |                     &
+PASS fixed legacy equivalence, full SPD cross terms, same-R NIS, atomic invalid R and hard gate
+PASS non-small-angle covariance transport finite difference error=4.12995e-10
+PASS geometry scene=1 rank=3 spectrum=    0     0     0 31.36    49    49
+PASS geometry scene=2 rank=5 spectrum=    0 31.36    49    49    49 80.36
+PASS geometry scene=3 rank=6 spectrum=   49    49    49 80.36 80.36 80.36
+PASS false-full-rank guard, squared residual weight, Huber IRLS, weak-direction attenuation
+PASS saturation axes, NaN, timing/reset/gap, default stop, bounded hold/recovery, interval quality union, late replay state/P equality, Q restoration

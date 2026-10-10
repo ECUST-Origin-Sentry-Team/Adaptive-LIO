@@ -1,0 +1,97 @@
+Internal ctest changing into directory: /home/lyu/real/origin_sentry_nav2026/build/adaptive_lio
+UpdateCTestConfiguration  from :/home/lyu/real/origin_sentry_nav2026/build/adaptive_lio/CTestConfiguration.ini
+Parse Config file:/home/lyu/real/origin_sentry_nav2026/build/adaptive_lio/CTestConfiguration.ini
+ Add coverage exclude regular expressions.
+UpdateCTestConfiguration  from :/home/lyu/real/origin_sentry_nav2026/build/adaptive_lio/CTestConfiguration.ini
+Parse Config file:/home/lyu/real/origin_sentry_nav2026/build/adaptive_lio/CTestConfiguration.ini
+Test project /home/lyu/real/origin_sentry_nav2026/build/adaptive_lio
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 1
+    Start 1: adaptive_lio_core
+
+1: Test command: /home/lyu/real/origin_sentry_nav2026/build/adaptive_lio/adaptive_lio_core_test
+1: Working Directory: /home/lyu/real/origin_sentry_nav2026/build/adaptive_lio
+1: Test timeout computed to be: 10000000
+1: PASS snapshot, atomic rejection, zero/reverse/gap dt, matrix Joseph update
+1: PASS stationary 2s, constant velocity, acceleration, compound rotation
+1: PASS off-grid posterior, 83ms late initialization replay, P equality, ordering
+1: PASS pending future, gap fail-closed, timeout, rejected-frame age, recovery
+1: PASS lever arm, frame rotations, finite-difference pose/twist covariance
+1: PASS bounded history, expired posterior, NaN input
+1: PASS match support/cost/innovation gates, true fast motion, finite sorted aux, adjacent windows/offset
+1: PASS shared LiDAR-end interpolation and truncated IMU interval
+1: PASS posterior state cache and registered point refresh
+1: PASS yaw branch, near-vertical attitude, late correction of running trajectory
+1: ALL CORE TESTS PASSED
+1/5 Test #1: adaptive_lio_core ................   Passed    0.01 sec
+test 2
+    Start 2: adaptive_lio_geometry
+
+2: Test command: /home/lyu/real/origin_sentry_nav2026/build/adaptive_lio/adaptive_lio_geometry_test
+2: Working Directory: /home/lyu/real/origin_sentry_nav2026/build/adaptive_lio
+2: Test timeout computed to be: 10000000
+2: PASS fixed legacy equivalence, full SPD cross terms, same-R NIS, atomic invalid R and hard gate
+2: PASS non-small-angle covariance transport finite difference error=4.12995e-10
+2: PASS geometry scene=1 rank=3 spectrum=    0     0     0 31.36    49    49
+2: PASS geometry scene=2 rank=5 spectrum=    0 31.36    49    49    49 80.36
+2: PASS geometry scene=3 rank=6 spectrum=   49    49    49 80.36 80.36 80.36
+2: PASS deterministic same-budget stratification ranks=3->6 normals=3 spatial=7
+2: PASS false-full-rank guard, squared residual weight, Huber IRLS, weak-direction attenuation
+2/5 Test #2: adaptive_lio_geometry ............   Passed    0.00 sec
+test 3
+    Start 3: adaptive_lio_registration
+
+3: Test command: /home/lyu/real/origin_sentry_nav2026/build/adaptive_lio/adaptive_lio_registration_test
+3: Working Directory: /home/lyu/real/origin_sentry_nav2026/build/adaptive_lio
+3: Test timeout computed to be: 10000000
+3: PASS static/translation/rotation/combined deskew; nonidentity extrinsics, endpoints, aux; max_error=9.93014e-16
+3: PASS actual Ceres factor right perturbation and EigenQuaternionManifold; error=2.52344e-10
+3/5 Test #3: adaptive_lio_registration ........   Passed    0.00 sec
+test 4
+    Start 4: adaptive_lio_pipeline
+
+4: Test command: /home/lyu/real/origin_sentry_nav2026/build/adaptive_lio/adaptive_lio_pipeline_test "/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/config/mapping_m.yaml"
+4: Working Directory: /home/lyu/real/origin_sentry_nav2026/build/adaptive_lio
+4: Test timeout computed to be: 10000000
+4: [1, 0, 0, 0, 1, 0, 0, 0, 1]
+4: RIL:
+4: 1 0 0
+4: 0 1 0
+4: 0 0 1
+4: tIL:0 0 0
+4: aux bundle fusion: disabled, aux_time_offset=0, aux_sync_margin=0.01
+4: T_main_aux R:
+4:    0.999897  -0.0138471  0.00368666
+4:   0.0139447    0.999514  -0.0278904
+4: -0.00329867   0.0279389    0.999604
+4: t:  0.00547 -0.025557  0.005081
+4: WARNING: Logging before InitGoogleLogging() is written to STDERR
+4: I20261010 20:48:29.498828 19182 lidarodom.cpp:515] lio_quality stamp=1.04 accepted=1 seed=1 support=0 cost_before=0 cost_after=0 reason=seed geometry_rank=0 geometry_spectrum=0 0 0 0 0 0 information_per_point=0 candidate_count=0 kept=0 normal_bins=0 spatial_bins=0 normal_axis_counts=0 0 0 R_mode=fixed R_spectrum=0.01 0.01 0.01 0.01 0.01 0.01 innovation_score=0 match_ms=0.037398 candidate_posterior_dp=0 candidate_posterior_dr=0 sequence=1 last_accepted=1.04 imu_degraded_total_s=0
+4: I20261010 20:48:29.502568 19182 lidarodom.cpp:515] lio_quality stamp=1.12 accepted=0 seed=0 support=0 cost_before=0 cost_after=0 reason=insufficient_support geometry_rank=0 geometry_spectrum=0 0 0 0 0 0 information_per_point=0 candidate_count=0 kept=0 normal_bins=0 spatial_bins=0 normal_axis_counts=0 0 0 R_mode=fixed R_spectrum=0.01 0.01 0.01 0.01 0.01 0.01 innovation_score=0 match_ms=0.016452 candidate_posterior_dp=0 candidate_posterior_dr=0 sequence=3 last_accepted=1.08 imu_degraded_total_s=0
+4: I20261010 20:48:29.513334 19182 lidarodom.cpp:515] lio_quality stamp=1.2 accepted=0 seed=0 support=150 cost_before=0.001021121254748456 cost_after=0.001014536608254473 reason=hard_innovation_limit geometry_rank=6 geometry_spectrum=1.539052042038514 1.935780174540973  2.34349119993303 4.957182481986972 6.603902836726116 11.67846086522593 information_per_point=0.1937191306696769 candidate_count=450 kept=150 normal_bins=5 spatial_bins=7 normal_axis_counts=52 48 50 R_mode=fixed R_spectrum=0.01 0.01 0.01 0.01 0.01 0.01 innovation_score=inf match_ms=5.932173 candidate_posterior_dp=0.1804797636229656 candidate_posterior_dr=0.009650607672876853 sequence=5 last_accepted=1.16 imu_degraded_total_s=0
+4: PASS real ProcessMeasurements seed/accept/support-reject/gate-reject/recover; posterior cloud error=1.19287e-07; map/cache/keyframe consistency; publish-only aux exclusion
+4/5 Test #4: adaptive_lio_pipeline ............   Passed    0.03 sec
+test 5
+    Start 5: adaptive_lio_imu_quality
+
+5: Test command: /home/lyu/real/origin_sentry_nav2026/build/adaptive_lio/adaptive_lio_imu_quality_test
+5: Working Directory: /home/lyu/real/origin_sentry_nav2026/build/adaptive_lio
+5: Test timeout computed to be: 10000000
+5: PASS saturation axes, NaN, timing/reset/gap, default stop, bounded hold/recovery, interval quality union, late replay state/P equality, Q restoration
+5/5 Test #5: adaptive_lio_imu_quality .........   Passed    0.00 sec
+
+The following tests passed:
+	adaptive_lio_core
+	adaptive_lio_geometry
+	adaptive_lio_registration
+	adaptive_lio_pipeline
+	adaptive_lio_imu_quality
+
+100% tests passed, 0 tests failed out of 5
+
+Total Test time (real) =   0.05 sec

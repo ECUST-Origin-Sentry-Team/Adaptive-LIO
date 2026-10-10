@@ -1,0 +1,4 @@
+[WARN] [1791636253.415903915] [rcl]: ROS_LOCALHOST_ONLY is deprecated but still honored if it is enabled. Use ROS_AUTOMATIC_DISCOVERY_RANGE and ROS_STATIC_PEERS instead.
+[WARN] [1791636253.415935170] [rcl]: 'localhost_only' is enabled, 'automatic_discovery_range' and 'static_peers' will be ignored.
+[INFO] [1791636253.437992982] [rosbag2_player]: Set rate to 1
+[INFO] [1791636253.445621733] [rosbag2_player]: Playback until timestamp: 1783413518012499367

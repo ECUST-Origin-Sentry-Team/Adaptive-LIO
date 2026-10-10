@@ -1,0 +1,133 @@
+YAML: 1.0
+preprocess:
+  point_filter_num: 1
+  lidar_type: 1
+  blind: 0.1
+  sweep_cut_num: 1
+  degenerate_window_num: 10
+common:
+  imu_topic: /livox/imu_192_168_1_163
+  lid_topic: /livox/lidar_192_168_1_163
+  gnorm: 9.805
+  fusion_aft_to_base_xyzrpy:
+  - 0.0
+  - 0.257
+  - -0.236
+  - 0
+  - 0
+  - 3.1415
+  fusion_base_link_frame: base_link
+  fusion_max_path_poses: 300
+mapping:
+  extrinsic_est_en: true
+  extrinsic_T:
+  - 0
+  - 0
+  - 0
+  extrinsic_R:
+  - 1
+  - 0
+  - 0
+  - 0
+  - 1
+  - 0
+  - 0
+  - 0
+  - 1
+map_options:
+  map_type: MULTI_RESOLUTION_VOXEL_HASHMAP
+  resolutions:
+  - resolution: 0.2
+    max_num_points: 20
+    min_distance_between_points: 0.05
+  - resolution: 0.5
+    max_num_points: 20
+    min_distance_between_points: 0.15
+  - resolution: 1.2
+    max_num_points: 40
+    min_distance_between_points: 0.2
+  neig_options:
+    distance_max: 80
+    radius_min: 0.21
+    radius_max: 1.2
+    exponent: 1.0
+delay_time: 0.05
+aux_lidar:
+  enable_bundle_fusion: false
+  min_points_per_measurement: 1000
+  time_offset: 0.0
+  sync_margin: 0.01
+  extrinsic_xyz:
+  - 0.00547
+  - -0.025557
+  - 0.005081
+  extrinsic_rpy_deg:
+  - 1.601
+  - 0.189
+  - 0.799
+odometry:
+  match_max_innovation_score: 100.0
+  surf_res: 0.5
+  log_print: false
+  max_num_iteration: 4
+  icpmodel: CT_POINT_TO_PLANE
+  size_voxel_map: 0.5
+  min_distance_points: 0.15
+  max_num_points_in_voxel: 20
+  max_distance: 40.0
+  weight_alpha: 0.9
+  weight_neighborhood: 0.1
+  max_dist_to_plane_icp: 0.3
+  init_num_frames: 20
+  voxel_neighborhood: 1
+  max_number_neighbors: 20
+  threshold_voxel_occupancy: 1
+  estimate_normal_from_neighborhood: true
+  min_number_neighbors: 20
+  power_planarity: 2.0
+  num_closest_neighbors: 1
+  sampling_rate: 0.8
+  max_num_residuals: 500
+  min_num_residuals: 50
+  motion_compensation: CONSTANT_VELOCITY
+  beta_location_consistency: 0.001
+  beta_orientation_consistency: 0.1
+  beta_constant_velocity: 0.001
+  beta_small_velocity: 0.01
+  thres_translation_norm: 0.01
+  thres_orientation_norm: 0.1
+  fov_segment_stride: 2
+  sparse_scene_distance_thresh: 20.0
+  sparse_nearest_neighbor_ratio: 3.0
+  sparse_min_planarity: 0.15
+  map_update_translation_trigger: 0.15
+  map_update_rotation_trigger: 0.03
+  map_update_max_skip_frames: 3
+  diagnostic_stride: 1
+cloud_pub:
+  max_z_filter: 2.0
+  min_z_filter: -1.0
+  space_down_sample: 0.01
+  enable_body_filter: true
+  body_filter_x_min: -0.3
+  body_filter_x_max: 0.3
+  body_filter_y_min: -0.3
+  body_filter_y_max: 0.3
+  body_filter_z_min: -0.2
+  body_filter_z_max: 0.2
+mapping_module:
+  enable_mapping: false
+  keyframe_dist_thresh: 1.0
+  keyframe_angle_thresh: 0.8
+  map_save_path: /tmp/adaptive-lio-replay/r0/unused-map
+  auto_save_interval: 20.0
+  scantext:
+    num_ring: 20
+    num_sector: 60
+    max_radius: 80.0
+    use_scpp: true
+    scpp_search_ratio: 0.1
+    cart_x_unit: 5.0
+    cart_y_unit: 2.0
+    cart_x_max: 100.0
+    cart_y_max: 40.0

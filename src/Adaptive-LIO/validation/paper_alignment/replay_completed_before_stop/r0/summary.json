@@ -1,0 +1,141 @@
+{
+  "duration_s": 45.0,
+  "domain": 187,
+  "command": [
+    "/tmp/adaptive-lio-baseline-build/adaptive_lio/src/apps/adaptive_lio",
+    "--config_file=/tmp/adaptive-lio-replay/r0/replay.yaml",
+    "--ros-args",
+    "--params-file",
+    "/tmp/adaptive-lio-replay/r0/ros-params.yaml"
+  ],
+  "play_command": [
+    "ros2",
+    "bag",
+    "play",
+    "/home/lyu/real/origin_sentry_nav2026/rosbag2_2026_07_07-16_37_53",
+    "--clock",
+    "100",
+    "--rate",
+    "1.0",
+    "--playback-duration",
+    "45.0",
+    "--disable-keyboard-controls",
+    "--topics",
+    "/livox/lidar_192_168_1_163",
+    "/livox/imu_192_168_1_163"
+  ],
+  "estimator_exit": -11,
+  "player_exit": 0,
+  "odom_count": 8690,
+  "cloud_count": 435,
+  "frames_logged": 435,
+  "seed_frames": 1,
+  "accepted_corrections": 434,
+  "rejected_frames": 0,
+  "match_ms": {
+    "n": 435,
+    "mean": 3.514931365517241,
+    "p50": 2.975751,
+    "p95": 5.31123,
+    "p99": 5.964205
+  },
+  "candidate_posterior_dp": null,
+  "processing_ms": {
+    "build frame": {
+      "n": 435,
+      "mean": 1.510751264367816,
+      "p50": 1.51493,
+      "p95": 1.7137,
+      "p99": 1.8032
+    },
+    "eskf_obs": {
+      "n": 434,
+      "mean": 0.0380101866359447,
+      "p50": 0.035924,
+      "p95": 0.048174,
+      "p99": 0.070441
+    },
+    "fov segment": {
+      "n": 170,
+      "mean": 0.08095496470588236,
+      "p50": 0.070021,
+      "p95": 0.162453,
+      "p99": 0.20488
+    },
+    "laser convert": {
+      "n": 446,
+      "mean": 1.1214105448430494,
+      "p50": 1.08055,
+      "p95": 1.40794,
+      "p99": 1.57912
+    },
+    "laser ds": {
+      "n": 446,
+      "mean": 2.692086659192825,
+      "p50": 2.57095,
+      "p95": 3.31438,
+      "p99": 3.71984
+    },
+    "map update": {
+      "n": 435,
+      "mean": 0.5585136827586207,
+      "p50": 0.596879,
+      "p95": 0.918078,
+      "p99": 1.27881
+    },
+    "optimize": {
+      "n": 434,
+      "mean": 3.474910161290323,
+      "p50": 2.92782,
+      "p95": 5.25767,
+      "p99": 5.91778
+    },
+    "poseEstimate": {
+      "n": 435,
+      "mean": 0.5913873172413794,
+      "p50": 0.630951,
+      "p95": 1.00004,
+      "p99": 1.39571
+    },
+    "predict": {
+      "n": 435,
+      "mean": 0.08236054252873563,
+      "p50": 0.078975,
+      "p95": 0.104776,
+      "p99": 0.126031
+    },
+    "processMeasurement": {
+      "n": 446,
+      "mean": 6.344767973094171,
+      "p50": 6.03565,
+      "p95": 8.58671,
+      "p99": 10.2203
+    },
+    "pub scalar data": {
+      "n": 435,
+      "mean": 0.01256836551724138,
+      "p50": 0.011041,
+      "p95": 0.023174,
+      "p99": 0.031323
+    },
+    "state init": {
+      "n": 435,
+      "mean": 0.0005889149425287357,
+      "p50": 0.0005,
+      "p95": 0.001012,
+      "p99": 0.001918
+    }
+  },
+  "odom_hz_sensor_time": 199.99404180254902,
+  "sensor_stamp_step_ms": {
+    "n": 8689,
+    "mean": 5.000148959373921,
+    "p50": 4.915476,
+    "p95": 6.007433,
+    "p99": 6.11496
+  },
+  "errors": [],
+  "fault_lines": [],
+  "ground_truth": false,
+  "note": "Smoke replay; timing is host processing cost, not end-to-end latency or accuracy."
+}

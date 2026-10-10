@@ -1,0 +1,7 @@
+82088da feat(adaptive-lio): R6 balance geometric coverage and complete deterministic validation
+1968223 feat(adaptive-lio): R5 share bounded IMU quality and deterministic replay policy
+8997d49 feat(adaptive-lio): R4 expose bounded adaptive covariance with fixed default and calibration gate
+032da80 feat(adaptive-lio): R3 diagnose final 6-DoF geometry and share matrix observation covariance
+8b6562c fix(adaptive-lio): R2 commit posterior state and refresh all map products
+9640217 fix(adaptive-lio): R1 use a single IMU deskew and end-pose residual path
+91b2f52 chore(adaptive-lio): R0 preserve local attachment baseline and verification

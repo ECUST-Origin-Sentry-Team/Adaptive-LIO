@@ -1,0 +1,149 @@
+diff -ru '--exclude=Log' "/home/lyu/\344\270\213\350\275\275/Adaptive-LIO_\345\256\214\346\225\264\344\274\230\345\214\226\344\270\216\346\270\205\347\220\206\344\273\243\347\240\201\345\214\205_2026-10-10/Adaptive-LIO/config/mapping_m.yaml" src/localization/Adaptive-LIO/config/mapping_m.yaml
+--- "/home/lyu/\344\270\213\350\275\275/Adaptive-LIO_\345\256\214\346\225\264\344\274\230\345\214\226\344\270\216\346\270\205\347\220\206\344\273\243\347\240\201\345\214\205_2026-10-10/Adaptive-LIO/config/mapping_m.yaml"	2026-10-09 23:33:28.000000000 +0800
++++ src/localization/Adaptive-LIO/config/mapping_m.yaml	2026-10-10 17:16:29.468473949 +0800
+@@ -12,8 +12,8 @@
+   # lid_topic: /livox/lidar #/points_raw  /rslidar_points /velodyne_points
+   imu_topic: /livox/imu_192_168_1_163 #/imu_raw   /gps/gtimu
+   lid_topic: /livox/lidar_192_168_1_163 #/points_raw  /rslidar_points /velodyne_points
+-  aux_lidar_topic: /livox/lidar_192_168_1_16
+-  gnorm: 1 # 9.805    # 部分数据，加速度模长为1->9.805gnorm
++  # aux_lidar_topic: /livox/lidar_192_168_1_160 # 副雷达暂不接入；当前仅使用 163 点云和 IMU
++  gnorm: 9.805 # Livox IMU reports acceleration in g; convert to m/s^2 before ESKF integration
+   # Fusion frame alignment
+   # Assume IMU frame == aft_mapped frame.
+   # Relative transform aft_mapped -> base_link: [x, y, z, roll, pitch, yaw] (m, rad)
+diff -ru '--exclude=Log' "/home/lyu/\344\270\213\350\275\275/Adaptive-LIO_\345\256\214\346\225\264\344\274\230\345\214\226\344\270\216\346\270\205\347\220\206\344\273\243\347\240\201\345\214\205_2026-10-10/Adaptive-LIO/config/mapping_m_low_delay.yaml" src/localization/Adaptive-LIO/config/mapping_m_low_delay.yaml
+--- "/home/lyu/\344\270\213\350\275\275/Adaptive-LIO_\345\256\214\346\225\264\344\274\230\345\214\226\344\270\216\346\270\205\347\220\206\344\273\243\347\240\201\345\214\205_2026-10-10/Adaptive-LIO/config/mapping_m_low_delay.yaml"	2026-10-09 23:33:30.000000000 +0800
++++ src/localization/Adaptive-LIO/config/mapping_m_low_delay.yaml	2026-10-10 17:16:29.468473949 +0800
+@@ -12,8 +12,8 @@
+   # lid_topic: /livox/lidar #/points_raw  /rslidar_points /velodyne_points
+   imu_topic: /livox/imu_192_168_1_163 #/imu_raw   /gps/gtimu
+   lid_topic: /livox/lidar_192_168_1_163 #/points_raw  /rslidar_points /velodyne_points
+-  aux_lidar_topic: /livox/lidar_192_168_1_16
+-  gnorm: 1 # 9.805    # 部分数据，加速度模长为1->9.805gnorm
++  # aux_lidar_topic: /livox/lidar_192_168_1_160 # 副雷达暂不接入；当前仅使用 163 点云和 IMU
++  gnorm: 9.805 # Livox IMU reports acceleration in g; convert to m/s^2 before ESKF integration
+   # Fusion frame alignment
+   # Assume IMU frame == aft_mapped frame.
+   # Relative transform aft_mapped -> base_link: [x, y, z, roll, pitch, yaw] (m, rad)
+diff -ru '--exclude=Log' "/home/lyu/\344\270\213\350\275\275/Adaptive-LIO_\345\256\214\346\225\264\344\274\230\345\214\226\344\270\216\346\270\205\347\220\206\344\273\243\347\240\201\345\214\205_2026-10-10/Adaptive-LIO/src/apps/main_ada.cpp" src/localization/Adaptive-LIO/src/apps/main_ada.cpp
+--- "/home/lyu/\344\270\213\350\275\275/Adaptive-LIO_\345\256\214\346\225\264\344\274\230\345\214\226\344\270\216\346\270\205\347\220\206\344\273\243\347\240\201\345\214\205_2026-10-10/Adaptive-LIO/src/apps/main_ada.cpp"	2026-10-09 23:33:28.000000000 +0800
++++ src/localization/Adaptive-LIO/src/apps/main_ada.cpp	2026-10-10 15:44:39.650937811 +0800
+@@ -617,7 +617,8 @@
+     std::cout << ANSI_COLOR_GREEN_BOLD << "init successful" << ANSI_COLOR_RESET << std::endl;
+ 
+     std::string laser_topic = yaml_cfg["common"]["lid_topic"].as<std::string>();
+-    std::string aux_laser_topic = yaml_cfg["common"]["aux_lidar_topic"].as<std::string>();
++    const auto aux_topic_cfg = yaml_cfg["common"]["aux_lidar_topic"];
++    const std::string aux_laser_topic = aux_topic_cfg ? aux_topic_cfg.as<std::string>() : "";
+     std::string imu_topic = yaml_cfg["common"]["imu_topic"].as<std::string>();
+     gnorm = yaml_cfg["common"]["gnorm"].as<double>();
+ 
+@@ -631,7 +632,10 @@
+             ? std::static_pointer_cast<void>(node->create_subscription<livox_ros_driver2::msg::CustomMsg>(laser_topic, 100, livox_pcl_cbk, sensor_sub_options))
+             : std::static_pointer_cast<void>(node->create_subscription<sensor_msgs::msg::PointCloud2>(laser_topic, 100, standard_pcl_cbk, sensor_sub_options));
+ 
+-    auto subAuxLaserCloud = node->create_subscription<livox_ros_driver2::msg::CustomMsg>(aux_laser_topic, 100, aux_livox_pcl_cbk, sensor_sub_options);
++    rclcpp::Subscription<livox_ros_driver2::msg::CustomMsg>::SharedPtr subAuxLaserCloud;
++    if (!aux_laser_topic.empty()) {
++        subAuxLaserCloud = node->create_subscription<livox_ros_driver2::msg::CustomMsg>(aux_laser_topic, 100, aux_livox_pcl_cbk, sensor_sub_options);
++    }
+ 
+     auto imu_callback_group = node->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+     rclcpp::SubscriptionOptions imu_sub_options;
+diff -ru '--exclude=Log' "/home/lyu/\344\270\213\350\275\275/Adaptive-LIO_\345\256\214\346\225\264\344\274\230\345\214\226\344\270\216\346\270\205\347\220\206\344\273\243\347\240\201\345\214\205_2026-10-10/Adaptive-LIO/src/common/timer/timer.cc" src/localization/Adaptive-LIO/src/common/timer/timer.cc
+--- "/home/lyu/\344\270\213\350\275\275/Adaptive-LIO_\345\256\214\346\225\264\344\274\230\345\214\226\344\270\216\346\270\205\347\220\206\344\273\243\347\240\201\345\214\205_2026-10-10/Adaptive-LIO/src/common/timer/timer.cc"	2026-10-09 22:35:08.000000000 +0800
++++ src/localization/Adaptive-LIO/src/common/timer/timer.cc	2026-10-10 16:27:24.735299963 +0800
+@@ -18,7 +18,17 @@
+             std::cout << ANSI_COLOR_GREEN << "> [ " << r.first << " ] average time usage: "
+                       << std::accumulate(r.second.time_usage_in_ms_.begin(), r.second.time_usage_in_ms_.end(), 0.0) /
+                              double(r.second.time_usage_in_ms_.size())
+-                      << " ms , retained samples: " << r.second.time_usage_in_ms_.size() << std::endl;
++                      << " ms , called times: " << r.second.time_usage_in_ms_.size() << std::endl;
++        }
++        std::cout << "[timing note] All recorded calls in this run are included; times are wall-clock ms, not end-to-end odometry latency." << std::endl;
++        std::cout << "[timing note] optimize: optimize(p_frame) only, including rejected candidates; skipped for map seeding. Call selection differs from legacy index_frame > 1." << std::endl;
++        std::cout << "[timing note] eskf_obs: ObserveSE3 only, including failed corrections; called only for non-seed candidates passing match validation, unlike the legacy unconditional observation." << std::endl;
++        std::cout << "[timing note] poseEstimate: accepted-frame poseEstimation only (aux output transform, map maintenance, FOV segmentation). Optimization moved outside this function; NOT directly comparable to legacy poseEstimate, which included optimize." << std::endl;
++        std::cout << "[timing note] match_ms in lio_quality also includes validation, correction and state callback; it excludes poseEstimate and is NOT equivalent to optimize." << std::endl;
++        for (const auto &name : {"optimize", "eskf_obs", "poseEstimate"}) {
++            if (records_.find(name) == records_.end()) {
++                std::cout << "> [ " << name << " ] average time usage: N/A , called times: 0 (execution condition not reached)" << std::endl;
++            }
+         }
+         std::cout << ">>> ===== Printing run time end =====" << ANSI_COLOR_RESET << std::endl;
+     }
+@@ -79,4 +89,4 @@
+                double(r.time_usage_in_ms_.size());
+     }
+ 
+-} // namespace zjloc::utils
+\ No newline at end of file
++} // namespace zjloc::utils
+diff -ru '--exclude=Log' "/home/lyu/\344\270\213\350\275\275/Adaptive-LIO_\345\256\214\346\225\264\344\274\230\345\214\226\344\270\216\346\270\205\347\220\206\344\273\243\347\240\201\345\214\205_2026-10-10/Adaptive-LIO/src/common/timer/timer.h" src/localization/Adaptive-LIO/src/common/timer/timer.h
+--- "/home/lyu/\344\270\213\350\275\275/Adaptive-LIO_\345\256\214\346\225\264\344\274\230\345\214\226\344\270\216\346\270\205\347\220\206\344\273\243\347\240\201\345\214\205_2026-10-10/Adaptive-LIO/src/common/timer/timer.h"	2026-10-09 22:35:08.000000000 +0800
++++ src/localization/Adaptive-LIO/src/common/timer/timer.h	2026-10-10 16:27:24.735299963 +0800
+@@ -8,7 +8,6 @@
+ #include <map>
+ #include <string>
+ #include <vector>
+-#include <deque>
+ #include <mutex>
+ #include <cstdlib>
+ #include "tools/tool_color_printf.hpp"
+@@ -30,7 +29,7 @@
+                 time_usage_in_ms_.emplace_back(time_usage);
+             }
+             std::string func_name_;
+-            std::deque<double> time_usage_in_ms_; // last 10000 samples, bounded
++            std::vector<double> time_usage_in_ms_; // All samples from this run (legacy statistics).
+         };
+ 
+         /**
+@@ -52,7 +51,6 @@
+             {
+                 auto& samples=records_[func_name].time_usage_in_ms_;
+                 samples.emplace_back(time_used);
+-                if(samples.size()>10000)samples.pop_front();
+             }
+             else
+             {
+diff -ru '--exclude=Log' "/home/lyu/\344\270\213\350\275\275/Adaptive-LIO_\345\256\214\346\225\264\344\274\230\345\214\226\344\270\216\346\270\205\347\220\206\344\273\243\347\240\201\345\214\205_2026-10-10/Adaptive-LIO/src/lio/lidarodom.cpp" src/localization/Adaptive-LIO/src/lio/lidarodom.cpp
+--- "/home/lyu/\344\270\213\350\275\275/Adaptive-LIO_\345\256\214\346\225\264\344\274\230\345\214\226\344\270\216\346\270\205\347\220\206\344\273\243\347\240\201\345\214\205_2026-10-10/Adaptive-LIO/src/lio/lidarodom.cpp"	2026-10-09 23:33:10.000000000 +0800
++++ src/localization/Adaptive-LIO/src/lio/lidarodom.cpp	2026-10-10 16:27:24.736299991 +0800
+@@ -550,11 +550,19 @@
+           double innovation_score=0;
+           if(seed) {
+                accepted=p_frame->point_surf.size()>=static_cast<size_t>(options_.min_num_residuals);
+-          } else if(optimize(p_frame)) {
++          } else {
++               bool optimized = false;
++               zjloc::common::Timer::Evaluate([&]() { optimized = optimize(p_frame); }, "optimize");
++               if (optimized) {
+                const SE3 candidate=SafeSE3(current_state->rotation,current_state->translation);
+                accepted=AcceptMatch(match_quality_,options_.min_num_residuals,prior,candidate,
+                                     match_max_innovation_score_,innovation_score);
+-               if(accepted)accepted=eskf_.ObserveSE3(candidate,1e-2,1e-2);
++               if(accepted) {
++                    zjloc::common::Timer::Evaluate([&]() {
++                         accepted=eskf_.ObserveSE3(candidate,1e-2,1e-2);
++                    }, "eskf_obs");
++               }
++               }
+           }
+           if(accepted) {
+                last_accepted_lidar_stamp_=meas.lidar_end_time_;
+@@ -575,7 +583,11 @@
+                    <<" min_normal_sv="<<match_quality_.min_normal_singular_value
+                    <<" innovation_score="<<innovation_score<<" match_ms="<<match_ms
+                    <<" match_posterior_dp="<<(pose_of_lo_.translation()-eskf_.GetNominalState().p_).norm();
+-          if(accepted)poseEstimation(p_frame,p_frame_aux_publish_only);
++          if(accepted) {
++               zjloc::common::Timer::Evaluate([&]() {
++                    poseEstimation(p_frame,p_frame_aux_publish_only);
++               }, "poseEstimate");
++          }
+ 
+           zjloc::common::Timer::Evaluate([&]()
+                                          {
+Only in src/localization/Adaptive-LIO: validation

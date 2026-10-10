@@ -1,0 +1,502 @@
+WARNING: Package name "Sentry_state" does not follow the naming conventions. It should start with a lower case letter and only contain lower case letters, digits, underscores, and dashes.
+Starting >>> adaptive_lio
+--- stderr: adaptive_lio
+CMake Warning (dev) at /usr/lib/x86_64-linux-gnu/cmake/pcl/Modules/FindFLANN.cmake:45 (find_package):
+  Policy CMP0144 is not set: find_package uses upper-case <PACKAGENAME>_ROOT
+  variables.  Run "cmake --help-policy CMP0144" for policy details.  Use the
+  cmake_policy command to set the policy and suppress this warning.
+
+  CMake variable FLANN_ROOT is set to:
+
+    /usr
+
+  For compatibility, find_package is ignoring the variable, but code in a
+  .cmake module might still use it.
+Call Stack (most recent call first):
+  /usr/lib/x86_64-linux-gnu/cmake/pcl/PCLConfig.cmake:261 (find_package)
+  /usr/lib/x86_64-linux-gnu/cmake/pcl/PCLConfig.cmake:306 (find_flann)
+  /usr/lib/x86_64-linux-gnu/cmake/pcl/PCLConfig.cmake:570 (find_external_library)
+  CMakeLists.txt:28 (find_package)
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+** WARNING ** io features related to pcap will be disabled
+Current CPU archtecture: x86_64
+Processer number:  16
+core for MP: 3
+CMake Warning (dev) at /usr/share/cmake-3.28/Modules/FindPackageHandleStandardArgs.cmake:438 (message):
+  The package name passed to `find_package_handle_standard_args` (CSPARSE)
+  does not match the name of the calling package (CSparse).  This can lead to
+  problems in calling code that expects `find_package` result variables
+  (e.g., `_FOUND`) to follow a certain pattern.
+Call Stack (most recent call first):
+  cmake/FindCSparse.cmake:26 (find_package_handle_standard_args)
+  cmake/packages.cmake:44 (find_package)
+  CMakeLists.txt:58 (include)
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+CMake Warning (dev) at /usr/share/cmake-3.28/Modules/FindPackageHandleStandardArgs.cmake:438 (message):
+  The package name passed to `find_package_handle_standard_args` (CHOLMOD)
+  does not match the name of the calling package (Cholmod).  This can lead to
+  problems in calling code that expects `find_package` result variables
+  (e.g., `_FOUND`) to follow a certain pattern.
+Call Stack (most recent call first):
+  cmake/FindCholmod.cmake:91 (find_package_handle_standard_args)
+  cmake/packages.cmake:48 (find_package)
+  CMakeLists.txt:58 (include)
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+CMake Warning (dev) at cmake/packages.cmake:52 (find_package):
+  Policy CMP0074 is not set: find_package uses <PackageName>_ROOT variables.
+  Run "cmake --help-policy CMP0074" for policy details.  Use the cmake_policy
+  command to set the policy and suppress this warning.
+
+  CMake variable PCL_ROOT is set to:
+
+    /usr
+
+  For compatibility, CMake is ignoring the variable.
+Call Stack (most recent call first):
+  CMakeLists.txt:58 (include)
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+CMake Warning (dev) at src/scantext_module/CMakeLists.txt:4 (find_package):
+  Policy CMP0074 is not set: find_package uses <PackageName>_ROOT variables.
+  Run "cmake --help-policy CMP0074" for policy details.  Use the cmake_policy
+  command to set the policy and suppress this warning.
+
+  CMake variable PCL_ROOT is set to:
+
+    /usr
+
+  For compatibility, CMake is ignoring the variable.
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+In file included from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/se2.hpp:7,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/eigen_types.h:9,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/algo/eskf.hpp:8,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/algo/imu_odom_predictor.h:2,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/test/test_core.cpp:1:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/so2.hpp:564:43: warning: extra ‘;’ [-Wpedantic]
+  564 |   SOPHUS_INHERIT_ASSIGNMENT_OPERATORS(Map);
+      |                                           ^
+      |                                           -
+In file included from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/se2.hpp:7,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/eigen_types.h:9,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/algo/lidar_observation.h:2,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/algo/lidar_geometry_quality.h:2,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/test/test_geometry.cpp:1:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/so2.hpp:564:43: warning: extra ‘;’ [-Wpedantic]
+  564 |   SOPHUS_INHERIT_ASSIGNMENT_OPERATORS(Map);
+      |                                           ^
+      |                                           -
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/se2.hpp:761:43: warning: extra ‘;’ [-Wpedantic]
+  761 |   SOPHUS_INHERIT_ASSIGNMENT_OPERATORS(Map);
+      |                                           ^
+      |                                           -
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/se2.hpp:761:43: warning: extra ‘;’ [-Wpedantic]
+  761 |   SOPHUS_INHERIT_ASSIGNMENT_OPERATORS(Map);
+      |                                           ^
+      |                                           -
+In file included from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/se3.hpp:7,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/eigen_types.h:10:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/so3.hpp:860:49: warning: extra ‘;’ [-Wpedantic]
+  860 |         SOPHUS_INHERIT_ASSIGNMENT_OPERATORS(Map);
+      |                                                 ^
+      |                                                 -
+In file included from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/se3.hpp:7,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/eigen_types.h:10:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/so3.hpp:860:49: warning: extra ‘;’ [-Wpedantic]
+  860 |         SOPHUS_INHERIT_ASSIGNMENT_OPERATORS(Map);
+      |                                                 ^
+      |                                                 -
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/se3.hpp:1003:43: warning: extra ‘;’ [-Wpedantic]
+ 1003 |   SOPHUS_INHERIT_ASSIGNMENT_OPERATORS(Map);
+      |                                           ^
+      |                                           -
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/se3.hpp:1003:43: warning: extra ‘;’ [-Wpedantic]
+ 1003 |   SOPHUS_INHERIT_ASSIGNMENT_OPERATORS(Map);
+      |                                           ^
+      |                                           -
+In file included from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/se2.hpp:7,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/eigen_types.h:9,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/algo/eskf.hpp:8,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/algo/imu_odom_predictor.h:2,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/test/test_imu_quality.cpp:1:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/so2.hpp:564:43: warning: extra ‘;’ [-Wpedantic]
+  564 |   SOPHUS_INHERIT_ASSIGNMENT_OPERATORS(Map);
+      |                                           ^
+      |                                           -
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/se2.hpp:761:43: warning: extra ‘;’ [-Wpedantic]
+  761 |   SOPHUS_INHERIT_ASSIGNMENT_OPERATORS(Map);
+      |                                           ^
+      |                                           -
+In file included from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/se3.hpp:7,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/eigen_types.h:10:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/so3.hpp:860:49: warning: extra ‘;’ [-Wpedantic]
+  860 |         SOPHUS_INHERIT_ASSIGNMENT_OPERATORS(Map);
+      |                                                 ^
+      |                                                 -
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/se3.hpp:1003:43: warning: extra ‘;’ [-Wpedantic]
+ 1003 |   SOPHUS_INHERIT_ASSIGNMENT_OPERATORS(Map);
+      |                                           ^
+      |                                           -
+In file included from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/se2.hpp:7,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/eigen_types.h:9,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/algo/static_imu_init.h:8,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/algo/static_imu_init.cc:5:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/so2.hpp:564:43: warning: extra ‘;’ [-Wpedantic]
+  564 |   SOPHUS_INHERIT_ASSIGNMENT_OPERATORS(Map);
+      |                                           ^
+      |                                           -
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/se2.hpp:761:43: warning: extra ‘;’ [-Wpedantic]
+  761 |   SOPHUS_INHERIT_ASSIGNMENT_OPERATORS(Map);
+      |                                           ^
+      |                                           -
+In file included from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/se3.hpp:7,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/eigen_types.h:10:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/so3.hpp:860:49: warning: extra ‘;’ [-Wpedantic]
+  860 |         SOPHUS_INHERIT_ASSIGNMENT_OPERATORS(Map);
+      |                                                 ^
+      |                                                 -
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/se3.hpp:1003:43: warning: extra ‘;’ [-Wpedantic]
+ 1003 |   SOPHUS_INHERIT_ASSIGNMENT_OPERATORS(Map);
+      |                                           ^
+      |                                           -
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/test/test_geometry.cpp: In function ‘int main()’:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/test/test_geometry.cpp:37:9: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+   37 |         if(kind==0)bad(0,0)=-1;if(kind==1)bad(0,1)=.1;if(kind==2)bad(0,0)=NAN;
+      |         ^~
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/test/test_geometry.cpp:37:32: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+   37 |         if(kind==0)bad(0,0)=-1;if(kind==1)bad(0,1)=.1;if(kind==2)bad(0,0)=NAN;
+      |                                ^~
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/test/test_geometry.cpp:38:9: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+   38 |         if(kind==3)bad.setZero();if(kind==4)bad(0,0)=INFINITY;
+      |         ^~
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/test/test_geometry.cpp:38:34: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+   38 |         if(kind==3)bad.setZero();if(kind==4)bad(0,0)=INFINITY;
+      |                                  ^~
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/test/test_geometry.cpp:48:21: warning: loop variable ‘phi’ creates a copy from type ‘const Vec3d’ {aka ‘const Eigen::Matrix<double, 3, 1>’} [-Wrange-loop-construct]
+   48 |     for(const Vec3d phi:{Vec3d(1e-8,2e-8,0),Vec3d(.8,-.7,.9),Vec3d(2.,.3,-.4)}){
+      |                     ^~~
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/test/test_geometry.cpp:48:21: note: use reference type to prevent copying
+   48 |     for(const Vec3d phi:{Vec3d(1e-8,2e-8,0),Vec3d(.8,-.7,.9),Vec3d(2.,.3,-.4)}){
+      |                     ^~~
+      |                     &
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/algo/static_imu_init.cc: In member function ‘bool zjloc::StaticIMUInit::AddIMU(const zjloc::IMU&)’:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/algo/static_imu_init.cc:44:39: warning: comparison of integer expressions of different signedness: ‘std::deque<zjloc::IMU>::size_type’ {aka ‘long unsigned int’} and ‘int’ [-Wsign-compare]
+   44 |         while (init_imu_deque_.size() > options_.init_imu_queue_max_size_)
+      |                ~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/se2.hpp:7,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/eigen_types.h:9,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/lio/lio_utils.h:4,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/lio/lio_utils.cpp:1:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/so2.hpp:564:43: warning: extra ‘;’ [-Wpedantic]
+  564 |   SOPHUS_INHERIT_ASSIGNMENT_OPERATORS(Map);
+      |                                           ^
+      |                                           -
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/se2.hpp:761:43: warning: extra ‘;’ [-Wpedantic]
+  761 |   SOPHUS_INHERIT_ASSIGNMENT_OPERATORS(Map);
+      |                                           ^
+      |                                           -
+In file included from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/se3.hpp:7,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/eigen_types.h:10:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/so3.hpp:860:49: warning: extra ‘;’ [-Wpedantic]
+  860 |         SOPHUS_INHERIT_ASSIGNMENT_OPERATORS(Map);
+      |                                                 ^
+      |                                                 -
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/se3.hpp:1003:43: warning: extra ‘;’ [-Wpedantic]
+ 1003 |   SOPHUS_INHERIT_ASSIGNMENT_OPERATORS(Map);
+      |                                           ^
+      |                                           -
+In file included from /usr/include/eigen3/Eigen/Core:337,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/eigen_types.h:5:
+/usr/include/eigen3/Eigen/src/Core/products/SelfadjointMatrixVector.h: In function ‘static void Eigen::internal::selfadjoint_product_impl<Lhs, LhsMode, false, Rhs, 0, true>::run(Dest&, const Lhs&, const Rhs&, const Scalar&) [with Dest = Eigen::Block<Eigen::Matrix<double, 17, 1, 0, 17, 1>, -1, 1, false>; Lhs = Eigen::Block<Eigen::Matrix<double, 18, 18>, -1, -1, false>; int LhsMode = 17; Rhs = Eigen::CwiseBinaryOp<Eigen::internal::scalar_product_op<double, double>, const Eigen::CwiseNullaryOp<Eigen::internal::scalar_constant_op<double>, const Eigen::Matrix<double, -1, 1, 0, 18, 1> >, const Eigen::Block<Eigen::Block<Eigen::Matrix<double, 18, 18>, 18, 1, true>, -1, 1, false> >]’:
+/usr/include/eigen3/Eigen/src/Core/products/SelfadjointMatrixVector.h:229:7: warning: ‘result’ may be used uninitialized [-Wmaybe-uninitialized]
+  227 |     internal::selfadjoint_matrix_vector_product<Scalar, Index, (internal::traits<ActualLhsTypeCleaned>::Flags&RowMajorBit) ? RowMajor : ColMajor,
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  228 |                                                 int(LhsUpLo), bool(LhsBlasTraits::NeedToConjugate), bool(RhsBlasTraits::NeedToConjugate)>::run
+      |                                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  229 |       (
+      |       ^
+  230 |         lhs.rows(),                             // size
+      |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  231 |         &lhs.coeffRef(0,0),  lhs.outerStride(), // lhs info
+      |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  232 |         actualRhsPtr,                           // rhs info
+      |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  233 |         actualDestPtr,                          // result info
+      |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  234 |         actualAlpha                             // scale factor
+      |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  235 |       );
+      |       ~
+/usr/include/eigen3/Eigen/src/Core/products/SelfadjointMatrixVector.h:41:6: note: by argument 3 of type ‘const double*’ to ‘static void Eigen::internal::selfadjoint_matrix_vector_product<Scalar, Index, StorageOrder, UpLo, ConjugateLhs, ConjugateRhs, Version>::run(Index, const Scalar*, Index, const Scalar*, Scalar*, Scalar) [with Scalar = double; Index = long int; int StorageOrder = 0; int UpLo = 1; bool ConjugateLhs = false; bool ConjugateRhs = false; int Version = 0]’ declared here
+   41 | void selfadjoint_matrix_vector_product<Scalar,Index,StorageOrder,UpLo,ConjugateLhs,ConjugateRhs,Version>::run(
+      |      ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/lio/lio_utils.h:10:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/cloudMap.hpp: In member function ‘bool voxelBlock::IsFull() const’:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/cloudMap.hpp:71:46: warning: comparison of integer expressions of different signedness: ‘const int’ and ‘std::vector<Eigen::Matrix<double, 3, 1>, Eigen::aligned_allocator<Eigen::Matrix<double, 3, 1> > >::size_type’ {aka ‘long unsigned int’} [-Wsign-compare]
+   71 |      bool IsFull() const { return num_points == points.size(); }
+      |                                   ~~~~~~~~~~~^~~~~~~~~~~~~~~~
+In file included from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/so3.hpp:8,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/tools/nav_state.h:8,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/algo/point_time.h:2,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/lio/lidarodom.h:5,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/lio/lidarodom.cpp:2:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/so2.hpp:564:43: warning: extra ‘;’ [-Wpedantic]
+  564 |   SOPHUS_INHERIT_ASSIGNMENT_OPERATORS(Map);
+      |                                           ^
+      |                                           -
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/so3.hpp:860:49: warning: extra ‘;’ [-Wpedantic]
+  860 |         SOPHUS_INHERIT_ASSIGNMENT_OPERATORS(Map);
+      |                                                 ^
+      |                                                 -
+In file included from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/eigen_types.h:9,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/tools/nav_state.h:9:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/se2.hpp:761:43: warning: extra ‘;’ [-Wpedantic]
+  761 |   SOPHUS_INHERIT_ASSIGNMENT_OPERATORS(Map);
+      |                                           ^
+      |                                           -
+In file included from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/eigen_types.h:10:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/se3.hpp:1003:43: warning: extra ‘;’ [-Wpedantic]
+ 1003 |   SOPHUS_INHERIT_ASSIGNMENT_OPERATORS(Map);
+      |                                           ^
+      |                                           -
+In file included from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/lio/lio_utils.h:10,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/lio/lidarodom.h:15:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/cloudMap.hpp: In member function ‘bool voxelBlock::IsFull() const’:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/cloudMap.hpp:71:46: warning: comparison of integer expressions of different signedness: ‘const int’ and ‘std::vector<Eigen::Matrix<double, 3, 1>, Eigen::aligned_allocator<Eigen::Matrix<double, 3, 1> > >::size_type’ {aka ‘long unsigned int’} [-Wsign-compare]
+   71 |      bool IsFull() const { return num_points == points.size(); }
+      |                                   ~~~~~~~~~~~^~~~~~~~~~~~~~~~
+In file included from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/lio/lidarodom.h:25:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/tools/point_types.h: At global scope:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/tools/point_types.h:92:26: warning: extra ‘;’ [-Wpedantic]
+   92 |         PCL_ADD_INTENSITY;
+      |                          ^
+      |                          -
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/lio/lidarodom.cpp: In member function ‘void zjloc::lidarodom_m::addSurfCostFactor(std::vector<ceres::CostFunction*>&, std::vector<point3D>&, const zjloc::cloudFrame*)’:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/lio/lidarodom.cpp:762:29: warning: comparison of integer expressions of different signedness: ‘int’ and ‘size_t’ {aka ‘long unsigned int’} [-Wsign-compare]
+  762 |           for (int k = 0; k < num; k++)
+      |                           ~~^~~~~
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/lio/lidarodom.cpp:790:45: warning: comparison of integer expressions of different signedness: ‘std::vector<Eigen::Matrix<double, 3, 1>, Eigen::aligned_allocator<Eigen::Matrix<double, 3, 1> > >::size_type’ {aka ‘long unsigned int’} and ‘const int’ [-Wsign-compare]
+  790 |                 if (vector_neighbors.size() < required_neighbors)
+      |                     ~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/lio/lidarodom.cpp: In member function ‘void zjloc::lidarodom_m::addPointToMap(voxelHashMap&, const Eigen::Vector3d&, const double&, double, int, double, int, zjloc::cloudFrame*)’:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/lio/lidarodom.cpp:955:52: warning: unused parameter ‘intensity’ [-Wunused-parameter]
+  955 |                                      const double &intensity, double voxel_size,
+      |                                      ~~~~~~~~~~~~~~^~~~~~~~~
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/lio/lidarodom.cpp:957:70: warning: unused parameter ‘p_frame’ [-Wunused-parameter]
+  957 |                                      int min_num_points, cloudFrame *p_frame)
+      |                                                          ~~~~~~~~~~~~^~~~~~~
+In file included from /usr/include/eigen3/Eigen/Core:337,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/eigen_types.h:5:
+/usr/include/eigen3/Eigen/src/Core/products/SelfadjointMatrixVector.h: In function ‘static void Eigen::internal::selfadjoint_product_impl<Lhs, LhsMode, false, Rhs, 0, true>::run(Dest&, const Lhs&, const Rhs&, const Scalar&) [with Dest = Eigen::Block<Eigen::Matrix<double, 17, 1, 0, 17, 1>, -1, 1, false>; Lhs = Eigen::Block<Eigen::Matrix<double, 18, 18>, -1, -1, false>; int LhsMode = 17; Rhs = Eigen::CwiseBinaryOp<Eigen::internal::scalar_product_op<double, double>, const Eigen::CwiseNullaryOp<Eigen::internal::scalar_constant_op<double>, const Eigen::Matrix<double, -1, 1, 0, 18, 1> >, const Eigen::Block<Eigen::Block<Eigen::Matrix<double, 18, 18>, 18, 1, true>, -1, 1, false> >]’:
+/usr/include/eigen3/Eigen/src/Core/products/SelfadjointMatrixVector.h:229:7: warning: ‘result’ may be used uninitialized [-Wmaybe-uninitialized]
+  227 |     internal::selfadjoint_matrix_vector_product<Scalar, Index, (internal::traits<ActualLhsTypeCleaned>::Flags&RowMajorBit) ? RowMajor : ColMajor,
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  228 |                                                 int(LhsUpLo), bool(LhsBlasTraits::NeedToConjugate), bool(RhsBlasTraits::NeedToConjugate)>::run
+      |                                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  229 |       (
+      |       ^
+  230 |         lhs.rows(),                             // size
+      |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  231 |         &lhs.coeffRef(0,0),  lhs.outerStride(), // lhs info
+      |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  232 |         actualRhsPtr,                           // rhs info
+      |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  233 |         actualDestPtr,                          // result info
+      |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  234 |         actualAlpha                             // scale factor
+      |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  235 |       );
+      |       ~
+/usr/include/eigen3/Eigen/src/Core/products/SelfadjointMatrixVector.h:41:6: note: by argument 3 of type ‘const double*’ to ‘static void Eigen::internal::selfadjoint_matrix_vector_product<Scalar, Index, StorageOrder, UpLo, ConjugateLhs, ConjugateRhs, Version>::run(Index, const Scalar*, Index, const Scalar*, Scalar*, Scalar) [with Scalar = double; Index = long int; int StorageOrder = 0; int UpLo = 1; bool ConjugateLhs = false; bool ConjugateRhs = false; int Version = 0]’ declared here
+   41 | void selfadjoint_matrix_vector_product<Scalar,Index,StorageOrder,UpLo,ConjugateLhs,ConjugateRhs,Version>::run(
+      |      ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from /usr/include/eigen3/Eigen/Core:337,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/eigen_types.h:5:
+/usr/include/eigen3/Eigen/src/Core/products/SelfadjointMatrixVector.h: In function ‘static void Eigen::internal::selfadjoint_product_impl<Lhs, LhsMode, false, Rhs, 0, true>::run(Dest&, const Lhs&, const Rhs&, const Scalar&) [with Dest = Eigen::Block<Eigen::Matrix<double, 17, 1, 0, 17, 1>, -1, 1, false>; Lhs = Eigen::Block<Eigen::Matrix<double, 18, 18>, -1, -1, false>; int LhsMode = 17; Rhs = Eigen::CwiseBinaryOp<Eigen::internal::scalar_product_op<double, double>, const Eigen::CwiseNullaryOp<Eigen::internal::scalar_constant_op<double>, const Eigen::Matrix<double, -1, 1, 0, 18, 1> >, const Eigen::Block<Eigen::Block<Eigen::Matrix<double, 18, 18>, 18, 1, true>, -1, 1, false> >]’:
+/usr/include/eigen3/Eigen/src/Core/products/SelfadjointMatrixVector.h:229:7: warning: ‘result’ may be used uninitialized [-Wmaybe-uninitialized]
+  227 |     internal::selfadjoint_matrix_vector_product<Scalar, Index, (internal::traits<ActualLhsTypeCleaned>::Flags&RowMajorBit) ? RowMajor : ColMajor,
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  228 |                                                 int(LhsUpLo), bool(LhsBlasTraits::NeedToConjugate), bool(RhsBlasTraits::NeedToConjugate)>::run
+      |                                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  229 |       (
+      |       ^
+  230 |         lhs.rows(),                             // size
+      |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  231 |         &lhs.coeffRef(0,0),  lhs.outerStride(), // lhs info
+      |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  232 |         actualRhsPtr,                           // rhs info
+      |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  233 |         actualDestPtr,                          // result info
+      |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  234 |         actualAlpha                             // scale factor
+      |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  235 |       );
+      |       ~
+/usr/include/eigen3/Eigen/src/Core/products/SelfadjointMatrixVector.h:41:6: note: by argument 4 of type ‘const double*’ to ‘static void Eigen::internal::selfadjoint_matrix_vector_product<Scalar, Index, StorageOrder, UpLo, ConjugateLhs, ConjugateRhs, Version>::run(Index, const Scalar*, Index, const Scalar*, Scalar*, Scalar) [with Scalar = double; Index = long int; int StorageOrder = 0; int UpLo = 1; bool ConjugateLhs = false; bool ConjugateRhs = false; int Version = 0]’ declared here
+   41 | void selfadjoint_matrix_vector_product<Scalar,Index,StorageOrder,UpLo,ConjugateLhs,ConjugateRhs,Version>::run(
+      |      ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/eigen3/Eigen/src/Core/products/SelfadjointMatrixVector.h: In function ‘static void Eigen::internal::selfadjoint_product_impl<Lhs, LhsMode, false, Rhs, 0, true>::run(Dest&, const Lhs&, const Rhs&, const Scalar&) [with Dest = Eigen::Block<Eigen::Matrix<double, 5, 1>, -1, 1, false>; Lhs = Eigen::Block<Eigen::Matrix<double, 6, 6, 0, 6, 6>, -1, -1, false>; int LhsMode = 17; Rhs = Eigen::CwiseBinaryOp<Eigen::internal::scalar_product_op<double, double>, const Eigen::CwiseNullaryOp<Eigen::internal::scalar_constant_op<double>, const Eigen::Matrix<double, -1, 1, 0, 6, 1> >, const Eigen::Block<Eigen::Block<Eigen::Matrix<double, 6, 6, 0, 6, 6>, 6, 1, true>, -1, 1, false> >]’:
+/usr/include/eigen3/Eigen/src/Core/products/SelfadjointMatrixVector.h:229:7: warning: ‘result’ may be used uninitialized [-Wmaybe-uninitialized]
+  227 |     internal::selfadjoint_matrix_vector_product<Scalar, Index, (internal::traits<ActualLhsTypeCleaned>::Flags&RowMajorBit) ? RowMajor : ColMajor,
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  228 |                                                 int(LhsUpLo), bool(LhsBlasTraits::NeedToConjugate), bool(RhsBlasTraits::NeedToConjugate)>::run
+      |                                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  229 |       (
+      |       ^
+  230 |         lhs.rows(),                             // size
+      |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  231 |         &lhs.coeffRef(0,0),  lhs.outerStride(), // lhs info
+      |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  232 |         actualRhsPtr,                           // rhs info
+      |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  233 |         actualDestPtr,                          // result info
+      |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  234 |         actualAlpha                             // scale factor
+      |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  235 |       );
+      |       ~
+/usr/include/eigen3/Eigen/src/Core/products/SelfadjointMatrixVector.h:41:6: note: by argument 4 of type ‘const double*’ to ‘static void Eigen::internal::selfadjoint_matrix_vector_product<Scalar, Index, StorageOrder, UpLo, ConjugateLhs, ConjugateRhs, Version>::run(Index, const Scalar*, Index, const Scalar*, Scalar*, Scalar) [with Scalar = double; Index = long int; int StorageOrder = 0; int UpLo = 1; bool ConjugateLhs = false; bool ConjugateRhs = false; int Version = 0]’ declared here
+   41 | void selfadjoint_matrix_vector_product<Scalar,Index,StorageOrder,UpLo,ConjugateLhs,ConjugateRhs,Version>::run(
+      |      ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/so3.hpp:8,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/tools/nav_state.h:8,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/algo/point_time.h:2,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/lio/lidarodom.h:5,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/test/test_pipeline.cpp:1:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/so2.hpp:564:43: warning: extra ‘;’ [-Wpedantic]
+  564 |   SOPHUS_INHERIT_ASSIGNMENT_OPERATORS(Map);
+      |                                           ^
+      |                                           -
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/so3.hpp:860:49: warning: extra ‘;’ [-Wpedantic]
+  860 |         SOPHUS_INHERIT_ASSIGNMENT_OPERATORS(Map);
+      |                                                 ^
+      |                                                 -
+In file included from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/eigen_types.h:9,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/tools/nav_state.h:9:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/se2.hpp:761:43: warning: extra ‘;’ [-Wpedantic]
+  761 |   SOPHUS_INHERIT_ASSIGNMENT_OPERATORS(Map);
+      |                                           ^
+      |                                           -
+In file included from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/eigen_types.h:10:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/se3.hpp:1003:43: warning: extra ‘;’ [-Wpedantic]
+ 1003 |   SOPHUS_INHERIT_ASSIGNMENT_OPERATORS(Map);
+      |                                           ^
+      |                                           -
+In file included from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/lio/lio_utils.h:10,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/lio/lidarodom.h:15:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/cloudMap.hpp: In member function ‘bool voxelBlock::IsFull() const’:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/cloudMap.hpp:71:46: warning: comparison of integer expressions of different signedness: ‘const int’ and ‘std::vector<Eigen::Matrix<double, 3, 1>, Eigen::aligned_allocator<Eigen::Matrix<double, 3, 1> > >::size_type’ {aka ‘long unsigned int’} [-Wsign-compare]
+   71 |      bool IsFull() const { return num_points == points.size(); }
+      |                                   ~~~~~~~~~~~^~~~~~~~~~~~~~~~
+In file included from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/lio/lidarodom.h:25:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/tools/point_types.h: At global scope:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/tools/point_types.h:92:26: warning: extra ‘;’ [-Wpedantic]
+   92 |         PCL_ADD_INTENSITY;
+      |                          ^
+      |                          -
+In file included from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/utility.h:8,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/apps/main_ada.cpp:34:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/cloudMap.hpp: In member function ‘bool voxelBlock::IsFull() const’:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/cloudMap.hpp:71:46: warning: comparison of integer expressions of different signedness: ‘const int’ and ‘std::vector<Eigen::Matrix<double, 3, 1>, Eigen::aligned_allocator<Eigen::Matrix<double, 3, 1> > >::size_type’ {aka ‘long unsigned int’} [-Wsign-compare]
+   71 |      bool IsFull() const { return num_points == points.size(); }
+      |                                   ~~~~~~~~~~~^~~~~~~~~~~~~~~~
+In file included from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/so3.hpp:8,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/utility.h:10:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/so2.hpp: At global scope:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/so2.hpp:564:43: warning: extra ‘;’ [-Wpedantic]
+  564 |   SOPHUS_INHERIT_ASSIGNMENT_OPERATORS(Map);
+      |                                           ^
+      |                                           -
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/so3.hpp:860:49: warning: extra ‘;’ [-Wpedantic]
+  860 |         SOPHUS_INHERIT_ASSIGNMENT_OPERATORS(Map);
+      |                                                 ^
+      |                                                 -
+In file included from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/eigen_types.h:9,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/tools/point_types.h:12,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/preprocess/cloud_convert/cloud_convert2.h:16,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/apps/main_ada.cpp:35:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/se2.hpp:761:43: warning: extra ‘;’ [-Wpedantic]
+  761 |   SOPHUS_INHERIT_ASSIGNMENT_OPERATORS(Map);
+      |                                           ^
+      |                                           -
+In file included from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/eigen_types.h:10:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/thirdparty/sophus/se3.hpp:1003:43: warning: extra ‘;’ [-Wpedantic]
+ 1003 |   SOPHUS_INHERIT_ASSIGNMENT_OPERATORS(Map);
+      |                                           ^
+      |                                           -
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/tools/point_types.h:92:26: warning: extra ‘;’ [-Wpedantic]
+   92 |         PCL_ADD_INTENSITY;
+      |                          ^
+      |                          -
+In file included from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/apps/main_ada.cpp:29:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/apps/main_ada.cpp: In function ‘void imuHandler(sensor_msgs::msg::Imu_<std::allocator<void> >::SharedPtr)’:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/apps/main_ada.cpp:172:32: error: ‘occurrences_172’ was not declared in this scope
+  172 |     if(imu->quality_.degraded) LOG_EVERY_N(WARNING,20)<<"IMU degraded held_mask="<<int(imu->quality_.held_mask)
+      |                                ^~~~~~~~~~~
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/apps/main_ada.cpp:172:32: error: ‘occurrences_mod_n_172’ was not declared in this scope
+  172 |     if(imu->quality_.degraded) LOG_EVERY_N(WARNING,20)<<"IMU degraded held_mask="<<int(imu->quality_.held_mask)
+      |                                ^~~~~~~~~~~
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/apps/main_ada.cpp:172:32: error: ‘occurrences_mod_n_172’ was not declared in this scope
+  172 |     if(imu->quality_.degraded) LOG_EVERY_N(WARNING,20)<<"IMU degraded held_mask="<<int(imu->quality_.held_mask)
+      |                                ^~~~~~~~~~~
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/apps/main_ada.cpp: In lambda function:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/apps/main_ada.cpp:469:18: warning: unused variable ‘added’ [-Wunused-variable]
+  469 |             bool added = scantext_mapping->addFrameWithSC(
+      |                  ^~~~~
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/apps/main_ada.cpp: In lambda function:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/apps/main_ada.cpp:590:59: warning: unused parameter ‘time2’ [-Wunused-parameter]
+  590 |         [&](std::string &topic_name, double time1, double time2)
+      |                                                    ~~~~~~~^~~~~
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/apps/main_ada.cpp: In lambda function:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/apps/main_ada.cpp:627:13: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+  627 |             if(!iq[key])return;const auto values=iq[key].as<std::vector<double>>();
+      |             ^~
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/apps/main_ada.cpp:627:32: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+  627 |             if(!iq[key])return;const auto values=iq[key].as<std::vector<double>>();
+      |                                ^~~~~
+In file included from /usr/include/eigen3/Eigen/Core:294,
+                 from /usr/include/eigen3/Eigen/Geometry:11,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/lio/lidarFactor.h:2,
+                 from /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/lio/lidarodom.h:4:
+In copy constructor ‘Eigen::PlainObjectBase<Derived>::PlainObjectBase(const Eigen::PlainObjectBase<Derived>&) [with Derived = Eigen::Matrix<double, 3, 1>]’,
+    inlined from ‘Eigen::Matrix<_Scalar, _Rows, _Cols, _Options, _MaxRows, _MaxCols>::Matrix(const Eigen::Matrix<_Scalar, _Rows, _Cols, _Options, _MaxRows, _MaxCols>&) [with _Scalar = double; int _Rows = 3; int _Cols = 1; int _Options = 0; int _MaxRows = 3; int _MaxCols = 1]’ at /usr/include/eigen3/Eigen/src/Core/Matrix.h:414:65,
+    inlined from ‘point3D::point3D(const point3D&)’ at /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/cloudMap.hpp:18:8,
+    inlined from ‘void std::__new_allocator<_Tp>::construct(_Up*, _Args&& ...) [with _Up = point3D; _Args = {const point3D&}; _Tp = point3D]’ at /usr/include/c++/13/bits/new_allocator.h:191:4,
+    inlined from ‘static void std::allocator_traits<std::allocator<_CharT> >::construct(allocator_type&, _Up*, _Args&& ...) [with _Up = point3D; _Args = {const point3D&}; _Tp = point3D]’ at /usr/include/c++/13/bits/alloc_traits.h:538:17,
+    inlined from ‘void std::vector<_Tp, _Alloc>::push_back(const value_type&) [with _Tp = point3D; _Alloc = std::allocator<point3D>]’ at /usr/include/c++/13/bits/stl_vector.h:1286:30,
+    inlined from ‘zjloc::LidarOdomTestAccess::Run(const std::string&)::<lambda(double, const Vec3d&, bool)>’ at /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/test/test_pipeline.cpp:35:110:
+/usr/include/eigen3/Eigen/src/Core/PlainObjectBase.h:512:17: warning: ‘pt.point3D::point.Eigen::Matrix<double, 3, 1, 0, 3, 1>::<unnamed>.Eigen::PlainObjectBase<Eigen::Matrix<double, 3, 1> >::m_storage’ may be used uninitialized [-Wmaybe-uninitialized]
+  512 |       : Base(), m_storage(other.m_storage) { }
+      |                 ^~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/test/test_pipeline.cpp: In lambda function:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/test/test_pipeline.cpp:34:57: note: ‘pt’ declared here
+   34 |             if(!empty) for(const auto& w:world){point3D pt;pt.raw_point=l.TIL_.inverse()*(w-displacement);
+      |                                                         ^~
+In copy constructor ‘Eigen::PlainObjectBase<Derived>::PlainObjectBase(const Eigen::PlainObjectBase<Derived>&) [with Derived = Eigen::Matrix<double, 3, 1>]’,
+    inlined from ‘Eigen::Matrix<_Scalar, _Rows, _Cols, _Options, _MaxRows, _MaxCols>::Matrix(const Eigen::Matrix<_Scalar, _Rows, _Cols, _Options, _MaxRows, _MaxCols>&) [with _Scalar = double; int _Rows = 3; int _Cols = 1; int _Options = 0; int _MaxRows = 3; int _MaxCols = 1]’ at /usr/include/eigen3/Eigen/src/Core/Matrix.h:414:65,
+    inlined from ‘point3D::point3D(const point3D&)’ at /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/src/common/cloudMap.hpp:18:8,
+    inlined from ‘void std::__new_allocator<_Tp>::construct(_Up*, _Args&& ...) [with _Up = point3D; _Args = {const point3D&}; _Tp = point3D]’ at /usr/include/c++/13/bits/new_allocator.h:191:4,
+    inlined from ‘static void std::allocator_traits<std::allocator<_CharT> >::construct(allocator_type&, _Up*, _Args&& ...) [with _Up = point3D; _Args = {const point3D&}; _Tp = point3D]’ at /usr/include/c++/13/bits/alloc_traits.h:538:17,
+    inlined from ‘void std::vector<_Tp, _Alloc>::push_back(const value_type&) [with _Tp = point3D; _Alloc = std::allocator<point3D>]’ at /usr/include/c++/13/bits/stl_vector.h:1286:30,
+    inlined from ‘zjloc::LidarOdomTestAccess::Run(const std::string&)::<lambda(double, const Vec3d&, bool)>’ at /home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/test/test_pipeline.cpp:37:35:
+/usr/include/eigen3/Eigen/src/Core/PlainObjectBase.h:512:17: warning: ‘aux.point3D::point.Eigen::Matrix<double, 3, 1, 0, 3, 1>::<unnamed>.Eigen::PlainObjectBase<Eigen::Matrix<double, 3, 1> >::m_storage’ may be used uninitialized [-Wmaybe-uninitialized]
+  512 |       : Base(), m_storage(other.m_storage) { }
+      |                 ^~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/test/test_pipeline.cpp: In lambda function:
+/home/lyu/real/origin_sentry_nav2026/src/localization/Adaptive-LIO/test/test_pipeline.cpp:36:21: note: ‘aux’ declared here
+   36 |             point3D aux;aux.raw_point=Vec3d(20,20,20);aux.timestamp=m.lidar_end_time_;aux.ring=0;
+      |                     ^~~
+gmake[2]: *** [src/apps/CMakeFiles/adaptive_lio.dir/build.make:76: src/apps/CMakeFiles/adaptive_lio.dir/main_ada.cpp.o] Error 1
+gmake[1]: *** [CMakeFiles/Makefile2:591: src/apps/CMakeFiles/adaptive_lio.dir/all] Error 2
+gmake: *** [Makefile:146: all] Error 2
+---
+Failed   <<< adaptive_lio [1min 27s, exited with code 2]
+[Processing: adaptive_lio]
+[Processing: adaptive_lio]
+
+Summary: 0 packages finished [1min 27s]
+  1 package failed: adaptive_lio
+  1 package had stderr output: adaptive_lio
