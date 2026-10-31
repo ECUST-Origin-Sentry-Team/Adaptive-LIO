@@ -2,6 +2,7 @@
 """Host-side paired runner. Build/tests must be idle during formal runs."""
 import argparse
 import json
+import os
 from pathlib import Path
 import subprocess
 
@@ -34,7 +35,7 @@ def main():
                 if (run / 'run.json').exists():
                     raise RuntimeError(f'refusing to overwrite {run}')
                 binary = f'/workspace/install-{version}/adaptive_lio/lib/adaptive_lio/adaptive_lio'
-                command = ['docker', 'exec', args.container, 'bash', '-lc',
+                command = ['docker', 'exec', '--user', f'{os.getuid()}:{os.getgid()}', args.container, 'bash', '-lc',
                            'source /opt/ros/jazzy/setup.bash && '
                            'source /workspace/install-deps/setup.bash && '
                            'exec python3 "$@"', 'runner', str(ROOT / 'run_one.py'),

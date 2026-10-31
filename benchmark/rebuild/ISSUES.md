@@ -16,6 +16,8 @@ This is a reconstruction, not the lost binary or patch. Previous numerical resul
 9. Verify delayed replay state AND covariance against timely application; test pending correction ordering. Do not infer accuracy improvement from continuity alone.
 10. Lost workspace artifacts: preserve source, scripts, source manifest and small measured result summaries in GitHub branch. Generated data/logs can be reconstructed; no claim local path alone is durable backup.
 
+11. Reconstructed full-node smoke found a shutdown abort after successful processing. GDB placed the abort in Fast DDS/rclcpp PublisherBase destruction through the global ImuOdomOutput at static teardown. Explicitly release output/TF/mapping owners and clear callbacks while main-local ROS owners still exist, after all workers join. Apply identical lifecycle fix to controlled baseline. Retain failed smoke and pre-fix backtrace; validate rebuilt binaries before formal runs.
+
 ## Acceptance
 
 - Independent core tests: posterior delays0.75/1.5/2.5s, beyond-window rejection/recovery, off-grid timestamp replay equivalence, >history-duration burst, covariance growth, reorder rejection, NaN and real-gap fault.

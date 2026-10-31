@@ -755,7 +755,17 @@ int main(int argc, char **argv)
 
     std::cout << ANSI_COLOR_GREEN_BOLD << " out done. " << ANSI_COLOR_RESET << std::endl;
 
-    delete lio;
-    delete convert;
+    // Global ROS owners must be released while the local node/context and
+    // middleware bookkeeping are still alive, not during static teardown.
+    // All producers/consumers have already joined above.
+    lio->SetStateCallback({});
+    lio->SetFaultCallback({});
+    imu_odom_output->SetFaultCallback({});
+    imu_odom_output.reset();
+    g_tf_broadcaster.reset();
+    scantext_mapping.reset();
+    delete lio;lio=nullptr;
+    delete convert;convert=nullptr;
+    LOG(INFO)<<"All estimator and global ROS owners released";
     return 0;
 }

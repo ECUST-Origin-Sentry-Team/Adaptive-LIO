@@ -1,0 +1,154 @@
+
+This GDB supports auto-downloading debuginfo from the following URLs:
+  <https://debuginfod.ubuntu.com>
+Enable debuginfod for this session? (y or [n]) [answered N; input not from terminal]
+Debuginfod has been disabled.
+To make this setting permanent, add 'set debuginfod enabled off' to .gdbinit.
+SIGINT is used by the debugger.
+Are you sure you want to change it? (y or n) [answered Y; input not from terminal]
+warning: Error disabling address space randomization: Operation not permitted
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib/x86_64-linux-gnu/libthread_db.so.1".
+[New Thread 0x7f3aad6fe6c0 (LWP 11588)]
+[New Thread 0x7f3aacefd6c0 (LWP 11589)]
+[adaptive_lio] argv before init: '/workspace/install-fixed/adaptive_lio/lib/adaptive_lio/adaptive_lio' '--config_file' '/workspace/Adaptive-LIO/benchmark/rebuild/flatwall.yaml'
+[New Thread 0x7f3aab6886c0 (LWP 11590)]
+[New Thread 0x7f3aaae876c0 (LWP 11591)]
+[New Thread 0x7f3aaa6866c0 (LWP 11592)]
+[New Thread 0x7f3aa9dfe6c0 (LWP 11593)]
+[New Thread 0x7f3aa95fd6c0 (LWP 11594)]
+[New Thread 0x7f3aa8dfc6c0 (LWP 11595)]
+[New Thread 0x7f3aa85fb6c0 (LWP 11596)]
+[New Thread 0x7f3aa7dfa6c0 (LWP 11597)]
+[New Thread 0x7f3aa75396c0 (LWP 11598)]
+[New Thread 0x7f3aa6d236c0 (LWP 11599)]
+[New Thread 0x7f3aa65226c0 (LWP 11600)]
+[New Thread 0x7f3aa5d216c0 (LWP 11601)]
+[0;32mconfig_file:/workspace/Adaptive-LIO/benchmark/rebuild/flatwall.yaml[0m
+- 1.0
+- 0.0
+- 0.0
+- 0.0
+- 1.0
+- 0.0
+- 0.0
+- 0.0
+- 1.0
+RIL:
+1 0 0
+0 1 0
+0 0 1
+tIL:0 0 0
+aux bundle fusion: disabled, aux_time_offset=0, aux_sync_margin=0.01
+T_main_aux R:
+   0.999897  -0.0138471  0.00368666
+  0.0139447    0.999514  -0.0278904
+-0.00329867   0.0279389    0.999604
+t:  0.00547 -0.025557  0.005081
+[New Thread 0x7f3aa52166c0 (LWP 11602)]
+[New Thread 0x7f3aa4a156c0 (LWP 11603)]
+I20261031 04:47:32.445897 11585 cloud_convert2.cc:492] Using AVIA Lidar
+[1;32minit successful[0m
+W20261031 04:47:32.446183 11585 main_ada.cpp:683] IMU saturation limits unspecified for at least one sensor; configure actual SI ranges
+[New Thread 0x7f3a97fff6c0 (LWP 11604)]
+[New Thread 0x7f3a977fe6c0 (LWP 11605)]
+[New Thread 0x7f3a96ffd6c0 (LWP 11606)]
+[New Thread 0x7f3a967fc6c0 (LWP 11607)]
+[New Thread 0x7f3a95ffb6c0 (LWP 11608)]
+I20261031 04:47:37.449029 11602 imu_odom_output.h:183] imu_output valid=0 history=0 applied=0 stale_state=0 history_miss=0 stale_checks=0 degraded=0 correction_age_s=inf batch=0
+I20261031 04:47:42.456346 11602 imu_odom_output.h:183] imu_output valid=0 history=0 applied=0 stale_state=0 history_miss=0 stale_checks=0 degraded=0 correction_age_s=inf batch=0
+I20261031 04:47:47.467526 11602 imu_odom_output.h:183] imu_output valid=0 history=0 applied=0 stale_state=0 history_miss=0 stale_checks=0 degraded=0 correction_age_s=inf batch=0
+[INFO] [1793422067.972121197] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[Thread 0x7f3a967fc6c0 (LWP 11607) exited]
+[Thread 0x7f3a96ffd6c0 (LWP 11606) exited]
+[Thread 0x7f3a977fe6c0 (LWP 11605) exited]
+[Thread 0x7f3a95ffb6c0 (LWP 11608) exited]
+[Thread 0x7f3a97fff6c0 (LWP 11604) exited]
+[Thread 0x7f3aa52166c0 (LWP 11602) exited]
+[Thread 0x7f3aa4a156c0 (LWP 11603) exited]
+[1;32m>>> ===== Printing run time =====
+> [main LiDAR frame: callback entry to LIO processing done] N/A, processed frames: 0
+[timing note] frame_callback_to_done is one wall-clock sample per completed main LiDAR frame: callback entry through conversion, queue/IMU wait and LIO processing. It excludes ROS message delivery before the callback and asynchronous publication after processing.
+[timing note] processMeasurement measures only LIO processing. Other rows count stage calls and need not have one sample per frame.
+[timing note] optimize: optimize(p_frame) only, including rejected candidates; skipped for map seeding. Call selection differs from legacy index_frame > 1.
+[timing note] eskf_obs: ObserveSE3 only, including failed corrections; called only for non-seed candidates passing match validation, unlike the legacy unconditional observation.
+[timing note] poseEstimate: accepted-frame poseEstimation only (aux output transform, map maintenance, FOV segmentation). Optimization moved outside this function; NOT directly comparable to legacy poseEstimate, which included optimize.
+[timing note] match_ms in lio_quality also includes validation, correction and state callback; it excludes poseEstimate and is NOT equivalent to optimize.
+> [ optimize ] average time usage: N/A , called times: 0 (execution condition not reached)
+> [ eskf_obs ] average time usage: N/A , called times: 0 (execution condition not reached)
+> [ poseEstimate ] average time usage: N/A , called times: 0 (execution condition not reached)
+>>> ===== Printing run time end =====[0m
+[1;32mDump Time Records into file: /workspace/Adaptive-LIO/src/Adaptive-LIO/Log/log_time.txt[0m
+[1;32m out done. [0m
+[Thread 0x7f3aa9dfe6c0 (LWP 11593) exited]
+[Thread 0x7f3aa95fd6c0 (LWP 11594) exited]
+[Thread 0x7f3aa8dfc6c0 (LWP 11595) exited]
+[Thread 0x7f3aa85fb6c0 (LWP 11596) exited]
+[Thread 0x7f3aa7dfa6c0 (LWP 11597) exited]
+[Thread 0x7f3aa6d236c0 (LWP 11599) exited]
+[Thread 0x7f3aa65226c0 (LWP 11600) exited]
+[Thread 0x7f3aa75396c0 (LWP 11598) exited]
+[Thread 0x7f3aaa6866c0 (LWP 11592) exited]
+[Thread 0x7f3aab6886c0 (LWP 11590) exited]
+terminate called after throwing an instance of 'std::system_error'
+  what():  Invalid argument
+
+Thread 1 "adaptive_lio" received signal SIGABRT, Aborted.
+0x00007f3ab3049c0c in pthread_kill () from /lib/x86_64-linux-gnu/libc.so.6
+
+Thread 15 (Thread 0x7f3aa5d216c0 (LWP 11601) "adaptive_lio"):
+#0  0x00007f3ab3043e51 in ?? () from /lib/x86_64-linux-gnu/libc.so.6
+#1  0x00007f3ab30468cd in pthread_cond_wait () from /lib/x86_64-linux-gnu/libc.so.6
+#2  0x00007f3aac14619a in eprosima::fastdds::dds::detail::WaitSetImpl::wait(std::vector<eprosima::fastdds::dds::Condition*, std::allocator<eprosima::fastdds::dds::Condition*> >&, eprosima::fastrtps::Time_t const&) () from /opt/ros/jazzy/lib/libfastrtps.so.2.14
+#3  0x00007f3aac14624c in eprosima::fastdds::dds::WaitSet::wait(std::vector<eprosima::fastdds::dds::Condition*, std::allocator<eprosima::fastdds::dds::Condition*> >&, eprosima::fastrtps::Time_t) const () from /opt/ros/jazzy/lib/libfastrtps.so.2.14
+#4  0x00007f3aac682a9e in rmw_fastrtps_shared_cpp::__rmw_wait(char const*, rmw_subscriptions_s*, rmw_guard_conditions_s*, rmw_services_s*, rmw_clients_s*, rmw_events_s*, rmw_wait_set_s*, rmw_time_s const*) () from /opt/ros/jazzy/lib/librmw_fastrtps_shared_cpp.so
+#5  0x00007f3aac66a31b in ?? () from /opt/ros/jazzy/lib/librmw_fastrtps_shared_cpp.so
+#6  0x00007f3ab33c1db4 in ?? () from /lib/x86_64-linux-gnu/libstdc++.so.6
+#7  0x00007f3ab3047b84 in ?? () from /lib/x86_64-linux-gnu/libc.so.6
+#8  0x00007f3ab30d4cc4 in clone () from /lib/x86_64-linux-gnu/libc.so.6
+
+Thread 5 (Thread 0x7f3aaae876c0 (LWP 11591) "adaptive_lio"):
+#0  0x00007f3ab3043e51 in ?? () from /lib/x86_64-linux-gnu/libc.so.6
+#1  0x00007f3ab3050098 in ?? () from /lib/x86_64-linux-gnu/libc.so.6
+#2  0x00007f3ab483dd8a in rclcpp::SignalHandler::wait_for_signal() () from /opt/ros/jazzy/lib/librclcpp.so
+#3  0x00007f3ab483eb8a in rclcpp::SignalHandler::deferred_signal_handler() () from /opt/ros/jazzy/lib/librclcpp.so
+#4  0x00007f3ab33c1db4 in ?? () from /lib/x86_64-linux-gnu/libstdc++.so.6
+#5  0x00007f3ab3047b84 in ?? () from /lib/x86_64-linux-gnu/libc.so.6
+#6  0x00007f3ab30d4cc4 in clone () from /lib/x86_64-linux-gnu/libc.so.6
+
+Thread 3 (Thread 0x7f3aacefd6c0 (LWP 11589) "adaptive_li-ust"):
+#0  0x00007f3ab30d252d in syscall () from /lib/x86_64-linux-gnu/libc.so.6
+#1  0x00007f3ab2cc32fe in ?? () from /lib/x86_64-linux-gnu/liblttng-ust.so.1
+#2  0x00007f3ab3047b84 in ?? () from /lib/x86_64-linux-gnu/libc.so.6
+#3  0x00007f3ab30d4cc4 in clone () from /lib/x86_64-linux-gnu/libc.so.6
+
+Thread 2 (Thread 0x7f3aad6fe6c0 (LWP 11588) "adaptive_li-ust"):
+#0  0x00007f3ab30d252d in syscall () from /lib/x86_64-linux-gnu/libc.so.6
+#1  0x00007f3ab2cc32fe in ?? () from /lib/x86_64-linux-gnu/liblttng-ust.so.1
+#2  0x00007f3ab3047b84 in ?? () from /lib/x86_64-linux-gnu/libc.so.6
+#3  0x00007f3ab30d4cc4 in clone () from /lib/x86_64-linux-gnu/libc.so.6
+
+Thread 1 (Thread 0x7f3aad715880 (LWP 11585) "adaptive_lio"):
+#0  0x00007f3ab3049c0c in pthread_kill () from /lib/x86_64-linux-gnu/libc.so.6
+#1  0x00007f3ab2ff027e in raise () from /lib/x86_64-linux-gnu/libc.so.6
+#2  0x00007f3ab2fd38ff in abort () from /lib/x86_64-linux-gnu/libc.so.6
+#3  0x00007f3ab337aff5 in ?? () from /lib/x86_64-linux-gnu/libstdc++.so.6
+#4  0x00007f3ab33900da in ?? () from /lib/x86_64-linux-gnu/libstdc++.so.6
+#5  0x00007f3ab337a8e6 in __cxa_call_terminate () from /lib/x86_64-linux-gnu/libstdc++.so.6
+#6  0x00007f3ab338f8ba in __gxx_personality_v0 () from /lib/x86_64-linux-gnu/libstdc++.so.6
+#7  0x00007f3ab31e0b06 in ?? () from /lib/x86_64-linux-gnu/libgcc_s.so.1
+#8  0x00007f3ab31e15cd in _Unwind_Resume () from /lib/x86_64-linux-gnu/libgcc_s.so.1
+#9  0x00007f3aac649d96 in ?? () from /opt/ros/jazzy/lib/librmw_fastrtps_shared_cpp.so
+#10 0x00007f3ab44f0ded in ?? () from /opt/ros/jazzy/lib/librcl.so
+#11 0x00007f3ab48323b8 in ?? () from /opt/ros/jazzy/lib/librclcpp.so
+#12 0x00007f3ab4833125 in ?? () from /opt/ros/jazzy/lib/librclcpp.so
+#13 0x00007f3ab4775afa in ?? () from /opt/ros/jazzy/lib/librclcpp.so
+#14 0x00007f3ab4837a79 in rclcpp::PublisherBase::~PublisherBase() () from /opt/ros/jazzy/lib/librclcpp.so
+#15 0x000055a94c5e688e in std::_Sp_counted_base<(__gnu_cxx::_Lock_policy)2>::_M_release_last_use_cold() ()
+#16 0x000055a94c5e6e13 in std::_Sp_counted_ptr_inplace<ImuOdomOutput, std::allocator<void>, (__gnu_cxx::_Lock_policy)2>::_M_dispose() ()
+#17 0x000055a94c5f8569 in std::shared_ptr<ImuOdomOutput>::~shared_ptr() ()
+#18 0x00007f3ab2ff2a76 in ?? () from /lib/x86_64-linux-gnu/libc.so.6
+#19 0x00007f3ab2ff2bbe in exit () from /lib/x86_64-linux-gnu/libc.so.6
+#20 0x00007f3ab2fd51d1 in ?? () from /lib/x86_64-linux-gnu/libc.so.6
+#21 0x00007f3ab2fd528b in __libc_start_main () from /lib/x86_64-linux-gnu/libc.so.6
+#22 0x000055a94c5bf525 in _start ()

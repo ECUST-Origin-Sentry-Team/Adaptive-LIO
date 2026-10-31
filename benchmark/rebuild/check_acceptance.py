@@ -21,6 +21,7 @@ def main():
             'complete_recorded_imu': row.get('recorded_imu_matches_source') is True,
             'finite_odometry': row.get('odom_all_finite') is True,
             'nonempty_odometry': row.get('odom_count', 0) > 0,
+            'prediction_reaches_input_tail': -1e-6 <= row.get('odom_tail_to_last_imu_s', 999) <= .025 + 1e-6,
             'no_sensor_holes_over_half_second': interval.get('over_0_5') == 0,
             'no_duplicate_or_backward_stamp': interval.get('negative') == 0 and interval.get('zero') == 0,
             'all_publications_received': row.get('published_vs_received_count_equal') is True and row.get('published_vs_received_stamp_max_abs_s', 1) < 1e-6,

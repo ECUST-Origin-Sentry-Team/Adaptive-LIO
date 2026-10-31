@@ -1,0 +1,20 @@
+Internal ctest changing into directory: /workspace/build-fixed/adaptive_lio
+Test project /workspace/build-fixed/adaptive_lio
+    Start 1: adaptive_lio_continuity
+1/7 Test #1: adaptive_lio_continuity ..........   Passed    0.15 sec
+    Start 2: adaptive_lio_output_ros
+2/7 Test #2: adaptive_lio_output_ros ..........   Passed    1.30 sec
+    Start 3: adaptive_lio_core
+3/7 Test #3: adaptive_lio_core ................   Passed    0.02 sec
+    Start 4: adaptive_lio_geometry
+4/7 Test #4: adaptive_lio_geometry ............   Passed    0.00 sec
+    Start 5: adaptive_lio_registration
+5/7 Test #5: adaptive_lio_registration ........   Passed    0.01 sec
+    Start 6: adaptive_lio_pipeline
+6/7 Test #6: adaptive_lio_pipeline ............   Passed    0.06 sec
+    Start 7: adaptive_lio_imu_quality
+7/7 Test #7: adaptive_lio_imu_quality .........   Passed    0.00 sec
+
+100% tests passed, 0 tests failed out of 7
+
+Total Test time (real) =   1.54 sec

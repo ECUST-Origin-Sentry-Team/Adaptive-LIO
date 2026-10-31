@@ -45,7 +45,9 @@ def bag_data(path):
                 p = msg.pose.pose.position
                 q = msg.pose.pose.orientation
                 row = [stamp(msg), p.x, p.y, p.z, q.x, q.y, q.z, q.w,
-                       receipt * 1e-9, *msg.pose.covariance, *msg.twist.covariance]
+                       receipt * 1e-9, *msg.pose.covariance, *msg.twist.covariance,
+                       msg.twist.twist.linear.x, msg.twist.twist.linear.y, msg.twist.twist.linear.z,
+                       msg.twist.twist.angular.x, msg.twist.twist.angular.y, msg.twist.twist.angular.z]
                 data['odom' if conn.topic == '/odom' else 'lidar'].append(row)
     return data
 
@@ -101,6 +103,10 @@ def analyze(run, source):
         result[key + '_sensor_intervals_s'] = stats(np.diff(values[:, 0]))
         result[key + '_receipt_intervals_s'] = stats(np.diff(values[:, 8]))
         result[key + '_sensor_span_s'] = float(values[-1, 0] - values[0, 0])
+        result[key + '_first_stamp'] = float(values[0, 0])
+        result[key + '_last_stamp'] = float(values[-1, 0])
+        result[key + '_startup_from_first_imu_s'] = float(values[0, 0] - expected[0])
+        result[key + '_tail_to_last_imu_s'] = float(expected[-1] - values[-1, 0])
         result[key + '_pose_cov_trace_range'] = [float(np.min(np.sum(values[:, 9:45:7], axis=1))),
                                                 float(np.max(np.sum(values[:, 9:45:7], axis=1)))]
         np.savetxt(run / (key + '.tum'), values[:, :8], fmt='%.17g')

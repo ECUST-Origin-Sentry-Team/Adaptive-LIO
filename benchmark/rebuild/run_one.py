@@ -31,7 +31,7 @@ def main():
     args = ap.parse_args()
     out = Path(args.output)
     out.mkdir(parents=True, exist_ok=False)
-    env = dict(os.environ, ROS_DOMAIN_ID=str(args.domain),
+    env = dict(os.environ, ROS_DOMAIN_ID=str(args.domain), ROS_LOG_DIR=str(out / 'ros_logs'),
                ADAPTIVE_LIO_OUTPUT_TRACE=str(out / 'output_trace.tsv'),
                ADAPTIVE_LIO_IMU_TRACE=str(out / 'imu_trace.tsv'))
     handles = []

@@ -1,0 +1,9 @@
+libceres-dev:amd64	2.2.0+dfsg-4.1ubuntu2
+libeigen3-dev	3.4.0-4build0.1
+libpcl-dev	1.14.0+dfsg-1
+ros-jazzy-rclcpp	28.1.22-1noble.20260911.105434
+ros-jazzy-rmw-fastrtps-cpp	8.4.4-1noble.20260911.100940
+g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+host_cpu_max=400000 100000
+host_memory_max=17179869184
+docker_image=ros:jazzy-ros-base@sha256:8eed0a4669bbf43ee331878a4c39bd8ebddea8e3312a58b4fae8edb14526b617

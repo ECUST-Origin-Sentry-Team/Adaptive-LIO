@@ -1,0 +1,41 @@
+-- The C compiler identification is GNU 13.3.0
+-- The CXX compiler identification is GNU 13.3.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Found ament_cmake: 2.5.6 (/opt/ros/jazzy/share/ament_cmake/cmake)
+-- Found Python3: /usr/bin/python3 (found version "3.12.3") found components: Interpreter 
+-- Found rclcpp: 28.1.22 (/opt/ros/jazzy/share/rclcpp/cmake)
+-- Found rosidl_generator_c: 4.6.9 (/opt/ros/jazzy/share/rosidl_generator_c/cmake)
+-- Found rosidl_generator_cpp: 4.6.9 (/opt/ros/jazzy/share/rosidl_generator_cpp/cmake)
+-- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c
+-- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp
+-- Found rmw_implementation_cmake: 7.3.4 (/opt/ros/jazzy/share/rmw_implementation_cmake/cmake)
+-- Found rmw_fastrtps_cpp: 8.4.4 (/opt/ros/jazzy/share/rmw_fastrtps_cpp/cmake)
+-- Found OpenSSL: /usr/lib/x86_64-linux-gnu/libcrypto.so (found version "3.0.13")  
+-- Found FastRTPS: /opt/ros/jazzy/include (Required is at least version "2.13") 
+-- Using RMW implementation 'rmw_fastrtps_cpp' as default
+-- Found nav_msgs: 5.3.8 (/opt/ros/jazzy/share/nav_msgs/cmake)
+-- Found tf2_ros: 0.36.23 (/opt/ros/jazzy/share/tf2_ros/cmake)
+-- Found Unwind: /usr/include/x86_64-linux-gnu (found suitable version "1.6.2", minimum required is "1.6.2") 
+-- Configuring done (1.2s)
+-- Generating done (0.0s)
+-- Build files have been written to: /workspace/bench/ros_adapter_test_build
+[ 50%] Building CXX object CMakeFiles/output_adapter_probe.dir/workspace/Adaptive-LIO/src/Adaptive-LIO/test/test_output_ros.cpp.o
+[100%] Linking CXX executable output_adapter_probe
+[100%] Built target output_adapter_probe
+PASS delay075 received=252 max_sensor_gap_s=0.02 finite=1 duplicates=0 backwards=0
+PASS delay150 received=252 max_sensor_gap_s=0.02 finite=1 duplicates=0 backwards=0
+PASS delay250 received=252 max_sensor_gap_s=0.02 finite=1 duplicates=0 backwards=0
+PASS burst_4_sensor_seconds received=201 max_sensor_gap_s=0.02 finite=1 duplicates=0 backwards=0
+PASS silence_input_stale=1 synthetic_odom=0
+PASS 80ms_gap fault_status=1 post_fault_odom=0
+PASS nonfinite fault_status=1 post_fault_odom=0
+ALL ROS OUTPUT ADAPTER TESTS PASSED

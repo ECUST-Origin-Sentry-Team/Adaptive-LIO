@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -eo pipefail
 # Run inside ros:jazzy-ros-base with /workspace mounted and dependencies installed.
 source /opt/ros/jazzy/setup.bash
 export CMAKE_BUILD_PARALLEL_LEVEL=2

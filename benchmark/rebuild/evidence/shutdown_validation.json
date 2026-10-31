@@ -1,0 +1,30 @@
+[
+  {
+    "version": "fixed",
+    "repeat": 0,
+    "exit_code": 0,
+    "sha256": "0362c6ef5c78635cb3d2355a8042ff1bc97736d180856064fe05d72a410bed0a",
+    "log": "/workspace/bench/shutdown_idle_fixed_0.log"
+  },
+  {
+    "version": "fixed",
+    "repeat": 1,
+    "exit_code": 0,
+    "sha256": "0362c6ef5c78635cb3d2355a8042ff1bc97736d180856064fe05d72a410bed0a",
+    "log": "/workspace/bench/shutdown_idle_fixed_1.log"
+  },
+  {
+    "version": "baseline",
+    "repeat": 0,
+    "exit_code": 0,
+    "sha256": "beb844e2ad5005e916008ff28c2834fd8b31213b0a989aa990921b6cf8efbe84",
+    "log": "/workspace/bench/shutdown_idle_baseline_0.log"
+  },
+  {
+    "version": "baseline",
+    "repeat": 1,
+    "exit_code": 0,
+    "sha256": "beb844e2ad5005e916008ff28c2834fd8b31213b0a989aa990921b6cf8efbe84",
+    "log": "/workspace/bench/shutdown_idle_baseline_1.log"
+  }
+]
