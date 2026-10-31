@@ -1,0 +1,50 @@
+{
+  "date": "2026-10-31",
+  "upstream_base": "97a3b0edd27dbf03b9577f27c0e1ae2eff08b581",
+  "fixed_runtime_source_commit": "16185f2576ed70d3d5b7fa7f98e8e423a5cb8c51",
+  "branch": "fix/continuous-odom-rebuild",
+  "baseline": "upstream predictor/worker0.5s gate plus versioned baseline_observer.patch",
+  "cases": [
+    "flatwall05",
+    "glim_original",
+    "glim_retimed"
+  ],
+  "repeat_orders": {
+    "a": [
+      "fixed",
+      "baseline"
+    ],
+    "b": [
+      "baseline",
+      "fixed"
+    ]
+  },
+  "playback_rate": 1,
+  "player_delay_s": 3,
+  "drain_s": 15,
+  "target_output_sensor_hz": 50,
+  "history_s": 2,
+  "correction_stale_s": 0.5,
+  "numerical_invariance_predeclared": {
+    "equal_frame_counts": true,
+    "timestamp_abs_s": 1e-09,
+    "position_euclidean_m": 1e-06,
+    "quaternion_relative_angle_rad": 1e-06
+  },
+  "ape": {
+    "association_s": 0.03,
+    "alignment": "rigidSE3 no scale",
+    "support": "intersection of all4runs percondition"
+  },
+  "exclusions": [
+    "rebuild_smoke: shutdown failure retained for diagnosis",
+    "rebuild_smoke2: successful setup smoke not a formal repeat"
+  ],
+  "limitations": [
+    "Accelerated ROS adapter delay injections validate semantics, not live deadlines",
+    "Only two short public sequences and three storage schedules; no SOTA or accuracy improvement claim",
+    "Retimed derivative newly constructed, cannot prove identity to lost earlier derivative",
+    "Trace enabled during formal fixed runs; instrumentation overhead included",
+    "No concurrent compile/tests/analysis during formal playback"
+  ]
+}

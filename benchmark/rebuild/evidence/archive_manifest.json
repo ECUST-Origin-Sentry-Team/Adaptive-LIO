@@ -1,0 +1,212 @@
+[
+  {
+    "archive": "evidence/runs/flatwall05_baseline_a.tar.gz",
+    "bytes": 632790,
+    "sha256": "fd755cf6fa89938ac7afa849362e96d52f070683c033145f286728f9a2323ae6",
+    "source": "/workspace/bench/rebuild_runs/flatwall05_baseline_a",
+    "includes": [
+      "ROS2 recording",
+      "node/player/recorder logs",
+      "traces",
+      "trajectories",
+      "run metadata",
+      "metrics when available"
+    ]
+  },
+  {
+    "archive": "evidence/runs/flatwall05_baseline_b.tar.gz",
+    "bytes": 525536,
+    "sha256": "7cc911a8424fb8b6e0973f6ac2e4995e5d5d584787b5ea16dcce7c554ef891a6",
+    "source": "/workspace/bench/rebuild_runs/flatwall05_baseline_b",
+    "includes": [
+      "ROS2 recording",
+      "node/player/recorder logs",
+      "traces",
+      "trajectories",
+      "run metadata",
+      "metrics when available"
+    ]
+  },
+  {
+    "archive": "evidence/runs/flatwall05_fixed_a.tar.gz",
+    "bytes": 669846,
+    "sha256": "e1fa8429fabd30e09013374a29c3ed5d8c822854e6e72944d519ea3828c528c2",
+    "source": "/workspace/bench/rebuild_runs/flatwall05_fixed_a",
+    "includes": [
+      "ROS2 recording",
+      "node/player/recorder logs",
+      "traces",
+      "trajectories",
+      "run metadata",
+      "metrics when available"
+    ]
+  },
+  {
+    "archive": "evidence/runs/flatwall05_fixed_b.tar.gz",
+    "bytes": 669216,
+    "sha256": "4e14d59fd548760f2eeeccc94e8c2ced5677ae306a82409d2f74b4e113ebe678",
+    "source": "/workspace/bench/rebuild_runs/flatwall05_fixed_b",
+    "includes": [
+      "ROS2 recording",
+      "node/player/recorder logs",
+      "traces",
+      "trajectories",
+      "run metadata",
+      "metrics when available"
+    ]
+  },
+  {
+    "archive": "evidence/runs/glim_original_baseline_a.tar.gz",
+    "bytes": 2772728,
+    "sha256": "84ea20ec56c8e27445a4f7847cd264a3714136151833a210b15c7806797b952c",
+    "source": "/workspace/bench/rebuild_runs/glim_original_baseline_a",
+    "includes": [
+      "ROS2 recording",
+      "node/player/recorder logs",
+      "traces",
+      "trajectories",
+      "run metadata",
+      "metrics when available"
+    ]
+  },
+  {
+    "archive": "evidence/runs/glim_original_baseline_b.tar.gz",
+    "bytes": 2578093,
+    "sha256": "83f1ec2c5dd9ea614f4af8227ac530b89f9051f3635fb9e4f7eec4715425d732",
+    "source": "/workspace/bench/rebuild_runs/glim_original_baseline_b",
+    "includes": [
+      "ROS2 recording",
+      "node/player/recorder logs",
+      "traces",
+      "trajectories",
+      "run metadata",
+      "metrics when available"
+    ]
+  },
+  {
+    "archive": "evidence/runs/glim_original_fixed_a.tar.gz",
+    "bytes": 3054096,
+    "sha256": "3dd5e4a0438d39a8e39948b3724d702e4a4523b0687bc5573643ba403889bd5b",
+    "source": "/workspace/bench/rebuild_runs/glim_original_fixed_a",
+    "includes": [
+      "ROS2 recording",
+      "node/player/recorder logs",
+      "traces",
+      "trajectories",
+      "run metadata",
+      "metrics when available"
+    ]
+  },
+  {
+    "archive": "evidence/runs/glim_original_fixed_b.tar.gz",
+    "bytes": 3053999,
+    "sha256": "026a1d60ebad2df963a6b10e2afbfb039834b6619d857302d2dc031416d1111f",
+    "source": "/workspace/bench/rebuild_runs/glim_original_fixed_b",
+    "includes": [
+      "ROS2 recording",
+      "node/player/recorder logs",
+      "traces",
+      "trajectories",
+      "run metadata",
+      "metrics when available"
+    ]
+  },
+  {
+    "archive": "evidence/runs/glim_retimed_baseline_a.tar.gz",
+    "bytes": 8048122,
+    "sha256": "f711afc356ab9ee9b06f76cd66f0668c208af5c9d36c16be5502d3ce7734fd3c",
+    "source": "/workspace/bench/rebuild_runs/glim_retimed_baseline_a",
+    "includes": [
+      "ROS2 recording",
+      "node/player/recorder logs",
+      "traces",
+      "trajectories",
+      "run metadata",
+      "metrics when available"
+    ]
+  },
+  {
+    "archive": "evidence/runs/glim_retimed_baseline_b.tar.gz",
+    "bytes": 7385182,
+    "sha256": "6b6242c2d9627687920de77efa4d947da5790c3a569618b485d2489a73785caa",
+    "source": "/workspace/bench/rebuild_runs/glim_retimed_baseline_b",
+    "includes": [
+      "ROS2 recording",
+      "node/player/recorder logs",
+      "traces",
+      "trajectories",
+      "run metadata",
+      "metrics when available"
+    ]
+  },
+  {
+    "archive": "evidence/runs/glim_retimed_fixed_a.tar.gz",
+    "bytes": 3105046,
+    "sha256": "a15dd60577b2306fc43444ee9be793791a418e1ea88e609c05df70f81a2de2dc",
+    "source": "/workspace/bench/rebuild_runs/glim_retimed_fixed_a",
+    "includes": [
+      "ROS2 recording",
+      "node/player/recorder logs",
+      "traces",
+      "trajectories",
+      "run metadata",
+      "metrics when available"
+    ]
+  },
+  {
+    "archive": "evidence/runs/glim_retimed_fixed_b.tar.gz",
+    "bytes": 3116164,
+    "sha256": "7a8709b2cb39a273f7ad0ef922005feb23f5fbfa53e06dd5616c9db0dcf0c6a4",
+    "source": "/workspace/bench/rebuild_runs/glim_retimed_fixed_b",
+    "includes": [
+      "ROS2 recording",
+      "node/player/recorder logs",
+      "traces",
+      "trajectories",
+      "run metadata",
+      "metrics when available"
+    ]
+  },
+  {
+    "archive": "evidence/runs/rebuild_smoke.tar.gz",
+    "bytes": 668822,
+    "sha256": "c86f372b79b3ad4e5a8b376f16c53d58b800384501e53cae91f60e1673efc73e",
+    "source": "/workspace/bench/rebuild_smoke",
+    "includes": [
+      "ROS2 recording",
+      "node/player/recorder logs",
+      "traces",
+      "trajectories",
+      "run metadata",
+      "metrics when available"
+    ]
+  },
+  {
+    "archive": "evidence/runs/rebuild_smoke2.tar.gz",
+    "bytes": 668673,
+    "sha256": "c4731aab346bc55a28b773f0bec9e6d266dc39af6a85d959814c8cbd26c3a2fa",
+    "source": "/workspace/bench/rebuild_smoke2",
+    "includes": [
+      "ROS2 recording",
+      "node/player/recorder logs",
+      "traces",
+      "trajectories",
+      "run metadata",
+      "metrics when available"
+    ]
+  },
+  {
+    "archive": "evidence/runs/rebuild_fault.tar.gz",
+    "bytes": 293566,
+    "sha256": "0ffa4a11a6a3d6bbcbf93840e16bcbbe9f24c2c6265531f00a2210aa1785659c",
+    "source": "/workspace/bench/rebuild_fault",
+    "includes": [
+      "ROS2 recording",
+      "node/player/recorder logs",
+      "traces",
+      "trajectories",
+      "run metadata",
+      "metrics when available"
+    ]
+  }
+]

@@ -1,0 +1,38 @@
+{
+  "source_imu_count": 2846,
+  "source_sensor_intervals_s": {
+    "count": 2845,
+    "max": 0.07999587059020996,
+    "p99": 0.005054473876953125,
+    "over_0_5": 0,
+    "negative": 0,
+    "zero": 0
+  },
+  "received_fault_status": true,
+  "first_fault_receipt_time": 1793423224.373673,
+  "odom_count": 123,
+  "odom_received_after_first_fault_status": 0,
+  "processes": {
+    "binary": "/workspace/install-fixed/adaptive_lio/lib/adaptive_lio/adaptive_lio",
+    "bag": "/workspace/datasets/flatwall/flatwall_05_fault_gap",
+    "config": "/workspace/Adaptive-LIO/benchmark/rebuild/flatwall.yaml",
+    "output": "/workspace/bench/rebuild_fault",
+    "domain": 81,
+    "drain": 15,
+    "started_unix": 1793423213.9426262,
+    "binary_sha256": "0362c6ef5c78635cb3d2355a8042ff1bc97736d180856064fe05d72a410bed0a",
+    "config_sha256": "7de0ca0e6599c4974e95f04cbce908f1b8f31c2fc24665da4ccd6152bb8fbf68",
+    "playback_rate": 1,
+    "player_delay_s": 3,
+    "recorder_storage": "sqlite3",
+    "qos_overrides_sha256": "57466208f8572cb8d17aa5f5d6793a1d90d39617bea12da3858c50c465f0a932",
+    "player_exit": 0,
+    "node_exit": 0,
+    "recorder_exit": 0,
+    "finished_unix": 1793423250.962462
+  },
+  "first_fault_imu_stamp": 1656505495.2837975,
+  "published_stamps_at_or_after_fault_imu": 0,
+  "publish_calls_after_first_fault_callback_trace": 0,
+  "pass": true
+}

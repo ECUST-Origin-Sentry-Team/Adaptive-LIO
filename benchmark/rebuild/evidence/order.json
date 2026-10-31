@@ -1,0 +1,74 @@
+[
+  {
+    "case": "flatwall05",
+    "version": "fixed",
+    "repeat": "a",
+    "path": "/workspace/bench/rebuild_runs/flatwall05_fixed_a"
+  },
+  {
+    "case": "flatwall05",
+    "version": "baseline",
+    "repeat": "a",
+    "path": "/workspace/bench/rebuild_runs/flatwall05_baseline_a"
+  },
+  {
+    "case": "flatwall05",
+    "version": "baseline",
+    "repeat": "b",
+    "path": "/workspace/bench/rebuild_runs/flatwall05_baseline_b"
+  },
+  {
+    "case": "flatwall05",
+    "version": "fixed",
+    "repeat": "b",
+    "path": "/workspace/bench/rebuild_runs/flatwall05_fixed_b"
+  },
+  {
+    "case": "glim_original",
+    "version": "fixed",
+    "repeat": "a",
+    "path": "/workspace/bench/rebuild_runs/glim_original_fixed_a"
+  },
+  {
+    "case": "glim_original",
+    "version": "baseline",
+    "repeat": "a",
+    "path": "/workspace/bench/rebuild_runs/glim_original_baseline_a"
+  },
+  {
+    "case": "glim_original",
+    "version": "baseline",
+    "repeat": "b",
+    "path": "/workspace/bench/rebuild_runs/glim_original_baseline_b"
+  },
+  {
+    "case": "glim_original",
+    "version": "fixed",
+    "repeat": "b",
+    "path": "/workspace/bench/rebuild_runs/glim_original_fixed_b"
+  },
+  {
+    "case": "glim_retimed",
+    "version": "fixed",
+    "repeat": "a",
+    "path": "/workspace/bench/rebuild_runs/glim_retimed_fixed_a"
+  },
+  {
+    "case": "glim_retimed",
+    "version": "baseline",
+    "repeat": "a",
+    "path": "/workspace/bench/rebuild_runs/glim_retimed_baseline_a"
+  },
+  {
+    "case": "glim_retimed",
+    "version": "baseline",
+    "repeat": "b",
+    "path": "/workspace/bench/rebuild_runs/glim_retimed_baseline_b"
+  },
+  {
+    "case": "glim_retimed",
+    "version": "fixed",
+    "repeat": "b",
+    "path": "/workspace/bench/rebuild_runs/glim_retimed_fixed_b"
+  }
+]

@@ -42,3 +42,9 @@ Formal runs: three input conditions (FlatWall05, GLIM original storage times, GL
 - GLIM retimed payloads and per-topic order are verified identical to original; only storage schedule changes. This newly generated derivative cannot be asserted byte-identical to the lost earlier derivative.
 - `/odom/lidar` includes committed prediction-only frames if registration is rejected. Review `lio_quality` logs before interpreting every pose as an accepted LiDAR match.
 - Pure frontend operation is supported. Without fresh LiDAR constraints, IMU drift grows; DEGRADED is a meaningful warning, not a promise of unchanged accuracy.
+
+### Numerical invariance criterion (declared before formal suite)
+
+Ceres uses3threads and smoke repetitions showed tiny floating-summation differences. Preserve exact-equality and maximum absolute differences as diagnostics; acceptance requires equal committed frame counts, timestamp differences<=1ns, maximum Euclidean position difference<=1e-6m and sign-invariant quaternion relative angle<=1e-6rad. This is a numerical equivalence threshold far below measurement noise, not a permission to alter the estimator. Do not loosen the threshold after seeing formal results. Compare all four runs within each input condition, including same-version repeats.
+
+Status message counts include the15s playback drain; they are not an estimate of in-data degraded duration. That duration is integrated from output trace correction ages over sensor time.

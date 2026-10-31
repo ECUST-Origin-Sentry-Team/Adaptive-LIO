@@ -1,0 +1,95 @@
+{
+  "checks": {
+    "fixed_run_count_six": true,
+    "all_fixed_run_checks": true,
+    "all_inner_posteriors_numerically_invariant": true
+  },
+  "by_run": {
+    "flatwall05_fixed_a": {
+      "complete_imu_callbacks": true,
+      "complete_recorded_imu": true,
+      "finite_odometry": true,
+      "nonempty_odometry": true,
+      "prediction_reaches_input_tail": true,
+      "no_sensor_holes_over_half_second": true,
+      "no_duplicate_or_backward_stamp": true,
+      "all_publications_received": true,
+      "no_fault_status": true,
+      "status_received": true,
+      "lidar_posterior_complete": true,
+      "clean_process_exit": true
+    },
+    "flatwall05_fixed_b": {
+      "complete_imu_callbacks": true,
+      "complete_recorded_imu": true,
+      "finite_odometry": true,
+      "nonempty_odometry": true,
+      "prediction_reaches_input_tail": true,
+      "no_sensor_holes_over_half_second": true,
+      "no_duplicate_or_backward_stamp": true,
+      "all_publications_received": true,
+      "no_fault_status": true,
+      "status_received": true,
+      "lidar_posterior_complete": true,
+      "clean_process_exit": true
+    },
+    "glim_original_fixed_a": {
+      "complete_imu_callbacks": true,
+      "complete_recorded_imu": true,
+      "finite_odometry": true,
+      "nonempty_odometry": true,
+      "prediction_reaches_input_tail": true,
+      "no_sensor_holes_over_half_second": true,
+      "no_duplicate_or_backward_stamp": true,
+      "all_publications_received": true,
+      "no_fault_status": true,
+      "status_received": true,
+      "lidar_posterior_complete": true,
+      "clean_process_exit": true
+    },
+    "glim_original_fixed_b": {
+      "complete_imu_callbacks": true,
+      "complete_recorded_imu": true,
+      "finite_odometry": true,
+      "nonempty_odometry": true,
+      "prediction_reaches_input_tail": true,
+      "no_sensor_holes_over_half_second": true,
+      "no_duplicate_or_backward_stamp": true,
+      "all_publications_received": true,
+      "no_fault_status": true,
+      "status_received": true,
+      "lidar_posterior_complete": true,
+      "clean_process_exit": true
+    },
+    "glim_retimed_fixed_a": {
+      "complete_imu_callbacks": true,
+      "complete_recorded_imu": true,
+      "finite_odometry": true,
+      "nonempty_odometry": true,
+      "prediction_reaches_input_tail": true,
+      "no_sensor_holes_over_half_second": true,
+      "no_duplicate_or_backward_stamp": true,
+      "all_publications_received": true,
+      "no_fault_status": true,
+      "status_received": true,
+      "lidar_posterior_complete": true,
+      "clean_process_exit": true
+    },
+    "glim_retimed_fixed_b": {
+      "complete_imu_callbacks": true,
+      "complete_recorded_imu": true,
+      "finite_odometry": true,
+      "nonempty_odometry": true,
+      "prediction_reaches_input_tail": true,
+      "no_sensor_holes_over_half_second": true,
+      "no_duplicate_or_backward_stamp": true,
+      "all_publications_received": true,
+      "no_fault_status": true,
+      "status_received": true,
+      "lidar_posterior_complete": true,
+      "clean_process_exit": true
+    }
+  },
+  "pass": true,
+  "scope": "Sensor-time continuity, input/output integrity, inner posterior invariance. Wall-time delivery stalls reported separately; no claim of hard real time or improved accuracy."
+}

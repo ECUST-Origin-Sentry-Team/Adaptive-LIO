@@ -32,8 +32,8 @@ def main():
         }
         by_run[row['run']] = tests
     checks['all_fixed_run_checks'] = bool(by_run) and all(all(tests.values()) for tests in by_run.values())
-    checks['all_inner_posteriors_exactly_equal'] = bool(report['posterior_comparison']) and all(
-        row['exactly_equal'] for case in report['posterior_comparison'].values() for row in case.values())
+    checks['all_inner_posteriors_numerically_invariant'] = bool(report['posterior_comparison']) and all(
+        row['numerically_invariant'] for case in report['posterior_comparison'].values() for row in case.values())
     result = {'checks': checks, 'by_run': by_run,
               'pass': all(checks.values()),
               'scope': 'Sensor-time continuity, input/output integrity, inner posterior invariance. Wall-time delivery stalls reported separately; no claim of hard real time or improved accuracy.'}

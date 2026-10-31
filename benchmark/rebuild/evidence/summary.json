@@ -1,0 +1,2138 @@
+{
+  "metrics": [
+    {
+      "run": "flatwall05_baseline_a",
+      "processes": {
+        "binary": "/workspace/install-baseline/adaptive_lio/lib/adaptive_lio/adaptive_lio",
+        "bag": "/workspace/datasets/flatwall/flatwall_05_ros2",
+        "config": "/workspace/Adaptive-LIO/benchmark/rebuild/flatwall.yaml",
+        "output": "/workspace/bench/rebuild_runs/flatwall05_baseline_a",
+        "domain": 81,
+        "drain": 15,
+        "started_unix": 1793422363.1893241,
+        "binary_sha256": "beb844e2ad5005e916008ff28c2834fd8b31213b0a989aa990921b6cf8efbe84",
+        "config_sha256": "7de0ca0e6599c4974e95f04cbce908f1b8f31c2fc24665da4ccd6152bb8fbf68",
+        "playback_rate": 1,
+        "player_delay_s": 3,
+        "recorder_storage": "sqlite3",
+        "qos_overrides_sha256": "57466208f8572cb8d17aa5f5d6793a1d90d39617bea12da3858c50c465f0a932",
+        "player_exit": 0,
+        "node_exit": 0,
+        "recorder_exit": 0,
+        "finished_unix": 1793422400.0898452
+      },
+      "source_imu_count": 2861,
+      "recorded_imu_count": 2861,
+      "recorded_imu_matches_source": true,
+      "source_imu_intervals_s": {
+        "count": 2860,
+        "max": 0.0051310062408447266,
+        "p99": 0.005054473876953125,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "imu_callback_count": 2861,
+      "imu_callback_matches_source": true,
+      "imu_callback_decisions": {
+        "0": 2861
+      },
+      "imu_callback_delivery_intervals_s": {
+        "count": 2860,
+        "max": 0.1132603639998706,
+        "p99": 0.10153203533993746,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "recorded_imu_delivery_intervals_s": {
+        "count": 2860,
+        "max": 0.11310577392578125,
+        "p99": 0.10277074337005612,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "odom_count": 677,
+      "odom_all_finite": true,
+      "odom_sensor_intervals_s": {
+        "count": 676,
+        "max": 0.10002851486206055,
+        "p99": 0.09630239009857178,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "odom_receipt_intervals_s": {
+        "count": 676,
+        "max": 0.11341738700866699,
+        "p99": 0.1040734052658081,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "odom_sensor_span_s": 12.79882025718689,
+      "odom_first_stamp": 1656505492.4978325,
+      "odom_last_stamp": 1656505505.2966528,
+      "odom_startup_from_first_imu_s": 1.293945550918579,
+      "odom_tail_to_last_imu_s": 0.0,
+      "odom_pose_cov_trace_range": [
+        0.008349154680082498,
+        0.08334842871535723
+      ],
+      "lidar_count": 129,
+      "lidar_all_finite": true,
+      "lidar_sensor_intervals_s": {
+        "count": 128,
+        "max": 0.10070681571960449,
+        "p99": 0.10065111637115479,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "lidar_receipt_intervals_s": {
+        "count": 128,
+        "max": 0.15029525756835938,
+        "p99": 0.1154818654060364,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "lidar_sensor_span_s": 12.800161123275757,
+      "lidar_first_stamp": 1656505492.399296,
+      "lidar_last_stamp": 1656505505.1994572,
+      "lidar_startup_from_first_imu_s": 1.1954090595245361,
+      "lidar_tail_to_last_imu_s": 0.09719562530517578,
+      "lidar_pose_cov_trace_range": [
+        0.0017234164851749134,
+        0.020195302495585675
+      ],
+      "posterior_count": 129,
+      "lidar_vs_posterior_max_abs": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "status_counts": {},
+      "status_input_stale_count": 0,
+      "history_miss_max": 0,
+      "trace_counts": {}
+    },
+    {
+      "run": "flatwall05_baseline_b",
+      "processes": {
+        "binary": "/workspace/install-baseline/adaptive_lio/lib/adaptive_lio/adaptive_lio",
+        "bag": "/workspace/datasets/flatwall/flatwall_05_ros2",
+        "config": "/workspace/Adaptive-LIO/benchmark/rebuild/flatwall.yaml",
+        "output": "/workspace/bench/rebuild_runs/flatwall05_baseline_b",
+        "domain": 81,
+        "drain": 15,
+        "started_unix": 1793422400.5440238,
+        "binary_sha256": "beb844e2ad5005e916008ff28c2834fd8b31213b0a989aa990921b6cf8efbe84",
+        "config_sha256": "7de0ca0e6599c4974e95f04cbce908f1b8f31c2fc24665da4ccd6152bb8fbf68",
+        "playback_rate": 1,
+        "player_delay_s": 3,
+        "recorder_storage": "sqlite3",
+        "qos_overrides_sha256": "57466208f8572cb8d17aa5f5d6793a1d90d39617bea12da3858c50c465f0a932",
+        "player_exit": 0,
+        "node_exit": 0,
+        "recorder_exit": 0,
+        "finished_unix": 1793422437.4460745
+      },
+      "source_imu_count": 2861,
+      "recorded_imu_count": 2861,
+      "recorded_imu_matches_source": true,
+      "source_imu_intervals_s": {
+        "count": 2860,
+        "max": 0.0051310062408447266,
+        "p99": 0.005054473876953125,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "imu_callback_count": 2861,
+      "imu_callback_matches_source": true,
+      "imu_callback_decisions": {
+        "0": 2861
+      },
+      "imu_callback_delivery_intervals_s": {
+        "count": 2860,
+        "max": 0.1136965370001235,
+        "p99": 0.10189199385999927,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "recorded_imu_delivery_intervals_s": {
+        "count": 2860,
+        "max": 0.11341381072998047,
+        "p99": 0.10204194784164426,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "odom_count": 488,
+      "odom_all_finite": true,
+      "odom_sensor_intervals_s": {
+        "count": 487,
+        "max": 0.1050119400024414,
+        "p99": 0.10002251148223877,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "odom_receipt_intervals_s": {
+        "count": 487,
+        "max": 0.1143648624420166,
+        "p99": 0.10475609302520751,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "odom_sensor_span_s": 12.79882025718689,
+      "odom_first_stamp": 1656505492.4978325,
+      "odom_last_stamp": 1656505505.2966528,
+      "odom_startup_from_first_imu_s": 1.293945550918579,
+      "odom_tail_to_last_imu_s": 0.0,
+      "odom_pose_cov_trace_range": [
+        0.008349154680082498,
+        0.08334842871535723
+      ],
+      "lidar_count": 129,
+      "lidar_all_finite": true,
+      "lidar_sensor_intervals_s": {
+        "count": 128,
+        "max": 0.10070681571960449,
+        "p99": 0.10065111637115479,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "lidar_receipt_intervals_s": {
+        "count": 128,
+        "max": 0.14944028854370117,
+        "p99": 0.11282851934432984,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "lidar_sensor_span_s": 12.800161123275757,
+      "lidar_first_stamp": 1656505492.399296,
+      "lidar_last_stamp": 1656505505.1994572,
+      "lidar_startup_from_first_imu_s": 1.1954090595245361,
+      "lidar_tail_to_last_imu_s": 0.09719562530517578,
+      "lidar_pose_cov_trace_range": [
+        0.0017234164851749134,
+        0.020195302495585675
+      ],
+      "posterior_count": 129,
+      "lidar_vs_posterior_max_abs": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "status_counts": {},
+      "status_input_stale_count": 0,
+      "history_miss_max": 0,
+      "trace_counts": {}
+    },
+    {
+      "run": "flatwall05_fixed_a",
+      "processes": {
+        "binary": "/workspace/install-fixed/adaptive_lio/lib/adaptive_lio/adaptive_lio",
+        "bag": "/workspace/datasets/flatwall/flatwall_05_ros2",
+        "config": "/workspace/Adaptive-LIO/benchmark/rebuild/flatwall.yaml",
+        "output": "/workspace/bench/rebuild_runs/flatwall05_fixed_a",
+        "domain": 81,
+        "drain": 15,
+        "started_unix": 1793422325.8248572,
+        "binary_sha256": "0362c6ef5c78635cb3d2355a8042ff1bc97736d180856064fe05d72a410bed0a",
+        "config_sha256": "7de0ca0e6599c4974e95f04cbce908f1b8f31c2fc24665da4ccd6152bb8fbf68",
+        "playback_rate": 1,
+        "player_delay_s": 3,
+        "recorder_storage": "sqlite3",
+        "qos_overrides_sha256": "57466208f8572cb8d17aa5f5d6793a1d90d39617bea12da3858c50c465f0a932",
+        "player_exit": 0,
+        "node_exit": 0,
+        "recorder_exit": 0,
+        "finished_unix": 1793422362.7337573
+      },
+      "source_imu_count": 2861,
+      "recorded_imu_count": 2861,
+      "recorded_imu_matches_source": true,
+      "source_imu_intervals_s": {
+        "count": 2860,
+        "max": 0.0051310062408447266,
+        "p99": 0.005054473876953125,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "imu_callback_count": 2861,
+      "imu_callback_matches_source": true,
+      "imu_callback_decisions": {
+        "0": 2861
+      },
+      "imu_callback_delivery_intervals_s": {
+        "count": 2860,
+        "max": 0.11295783900004608,
+        "p99": 0.10223326821988846,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "recorded_imu_delivery_intervals_s": {
+        "count": 2860,
+        "max": 0.11261606216430664,
+        "p99": 0.10263953447341917,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "odom_count": 579,
+      "odom_all_finite": true,
+      "odom_sensor_intervals_s": {
+        "count": 578,
+        "max": 0.025053977966308594,
+        "p99": 0.02504706382751465,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "odom_receipt_intervals_s": {
+        "count": 578,
+        "max": 0.13677120208740234,
+        "p99": 0.10618990182876588,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "odom_sensor_span_s": 12.773785591125488,
+      "odom_first_stamp": 1656505492.5028715,
+      "odom_last_stamp": 1656505505.276657,
+      "odom_startup_from_first_imu_s": 1.2989845275878906,
+      "odom_tail_to_last_imu_s": 0.019995689392089844,
+      "odom_pose_cov_trace_range": [
+        0.008941560430296487,
+        0.08299505941854349
+      ],
+      "lidar_count": 129,
+      "lidar_all_finite": true,
+      "lidar_sensor_intervals_s": {
+        "count": 128,
+        "max": 0.10070681571960449,
+        "p99": 0.10065111637115479,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "lidar_receipt_intervals_s": {
+        "count": 128,
+        "max": 0.1538102626800537,
+        "p99": 0.13642699480056772,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "lidar_sensor_span_s": 12.800161123275757,
+      "lidar_first_stamp": 1656505492.399296,
+      "lidar_last_stamp": 1656505505.1994572,
+      "lidar_startup_from_first_imu_s": 1.1954090595245361,
+      "lidar_tail_to_last_imu_s": 0.09719562530517578,
+      "lidar_pose_cov_trace_range": [
+        0.0017234164851749134,
+        0.020195302495585675
+      ],
+      "posterior_count": 129,
+      "lidar_vs_posterior_max_abs": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "status_counts": {
+        "UNINITIALIZED": 70,
+        "FRESH": 116,
+        "DEGRADED": 147
+      },
+      "status_input_stale_count": 205,
+      "history_miss_max": 0,
+      "trace_counts": {
+        "C": 2861,
+        "I": 2861,
+        "U": 129,
+        "R": 129,
+        "E": 129,
+        "P": 579,
+        "D": 579
+      },
+      "posterior_arrival_sensor_lag_s": {
+        "count": 129,
+        "max": 0.1031794548034668,
+        "p99": 0.10281450271606445,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "posterior_arrival_sensor_lag_definition": "Newest IMU received before posterior enqueue minus posterior measurement timestamp; not absolute wall latency.",
+      "posterior_enqueue_to_replay_start_s": {
+        "count": 129,
+        "max": 0.0027059659996666596,
+        "p99": 0.0021477372797926346,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "posterior_enqueued_count": 129,
+      "posterior_replay_started_count": 129,
+      "publish_wall_intervals_s": {
+        "count": 578,
+        "max": 0.11351185100011207,
+        "p99": 0.1048825686300097,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "publish_sensor_intervals_s": {
+        "count": 578,
+        "max": 0.025053977966308594,
+        "p99": 0.02504706382751465,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "max_correction_age_s": 0.20220017433166504,
+      "stale_prediction_sensor_duration_s": 0.0,
+      "published_vs_received_count_equal": true,
+      "published_vs_received_stamp_max_abs_s": 0.0,
+      "publish_call_duration_s": {
+        "count": 579,
+        "max": 0.004762969999774214,
+        "p99": 0.0011796982599935292,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "replay_duration_s": {
+        "count": 129,
+        "max": 0.0014204719996087078,
+        "p99": 0.00041775447993131816,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "published_imu_enqueue_to_publish_s": {
+        "count": 579,
+        "max": 0.00577476199987359,
+        "p99": 0.004152484659816768,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "wall_gap_audit": []
+    },
+    {
+      "run": "flatwall05_fixed_b",
+      "processes": {
+        "binary": "/workspace/install-fixed/adaptive_lio/lib/adaptive_lio/adaptive_lio",
+        "bag": "/workspace/datasets/flatwall/flatwall_05_ros2",
+        "config": "/workspace/Adaptive-LIO/benchmark/rebuild/flatwall.yaml",
+        "output": "/workspace/bench/rebuild_runs/flatwall05_fixed_b",
+        "domain": 81,
+        "drain": 15,
+        "started_unix": 1793422437.9365938,
+        "binary_sha256": "0362c6ef5c78635cb3d2355a8042ff1bc97736d180856064fe05d72a410bed0a",
+        "config_sha256": "7de0ca0e6599c4974e95f04cbce908f1b8f31c2fc24665da4ccd6152bb8fbf68",
+        "playback_rate": 1,
+        "player_delay_s": 3,
+        "recorder_storage": "sqlite3",
+        "qos_overrides_sha256": "57466208f8572cb8d17aa5f5d6793a1d90d39617bea12da3858c50c465f0a932",
+        "player_exit": 0,
+        "node_exit": 0,
+        "recorder_exit": 0,
+        "finished_unix": 1793422474.8399649
+      },
+      "source_imu_count": 2861,
+      "recorded_imu_count": 2861,
+      "recorded_imu_matches_source": true,
+      "source_imu_intervals_s": {
+        "count": 2860,
+        "max": 0.0051310062408447266,
+        "p99": 0.005054473876953125,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "imu_callback_count": 2861,
+      "imu_callback_matches_source": true,
+      "imu_callback_decisions": {
+        "0": 2861
+      },
+      "imu_callback_delivery_intervals_s": {
+        "count": 2860,
+        "max": 0.11321791399996073,
+        "p99": 0.10198251674002677,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "recorded_imu_delivery_intervals_s": {
+        "count": 2860,
+        "max": 0.11401748657226562,
+        "p99": 0.10267781019210816,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "odom_count": 579,
+      "odom_all_finite": true,
+      "odom_sensor_intervals_s": {
+        "count": 578,
+        "max": 0.025053977966308594,
+        "p99": 0.02504706382751465,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "odom_receipt_intervals_s": {
+        "count": 578,
+        "max": 0.11342430114746094,
+        "p99": 0.10439386129379273,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "odom_sensor_span_s": 12.773785591125488,
+      "odom_first_stamp": 1656505492.5028715,
+      "odom_last_stamp": 1656505505.276657,
+      "odom_startup_from_first_imu_s": 1.2989845275878906,
+      "odom_tail_to_last_imu_s": 0.019995689392089844,
+      "odom_pose_cov_trace_range": [
+        0.008941560430296487,
+        0.08299505941854349
+      ],
+      "lidar_count": 129,
+      "lidar_all_finite": true,
+      "lidar_sensor_intervals_s": {
+        "count": 128,
+        "max": 0.10070681571960449,
+        "p99": 0.10065111637115479,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "lidar_receipt_intervals_s": {
+        "count": 128,
+        "max": 0.15237855911254883,
+        "p99": 0.1160013747215271,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "lidar_sensor_span_s": 12.800161123275757,
+      "lidar_first_stamp": 1656505492.399296,
+      "lidar_last_stamp": 1656505505.1994572,
+      "lidar_startup_from_first_imu_s": 1.1954090595245361,
+      "lidar_tail_to_last_imu_s": 0.09719562530517578,
+      "lidar_pose_cov_trace_range": [
+        0.0017234164851749134,
+        0.020195302495585675
+      ],
+      "posterior_count": 129,
+      "lidar_vs_posterior_max_abs": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "status_counts": {
+        "UNINITIALIZED": 70,
+        "FRESH": 114,
+        "DEGRADED": 147
+      },
+      "status_input_stale_count": 205,
+      "history_miss_max": 0,
+      "trace_counts": {
+        "C": 2861,
+        "I": 2861,
+        "U": 129,
+        "R": 129,
+        "E": 129,
+        "P": 579,
+        "D": 579
+      },
+      "posterior_arrival_sensor_lag_s": {
+        "count": 129,
+        "max": 0.1031794548034668,
+        "p99": 0.10281450271606445,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "posterior_arrival_sensor_lag_definition": "Newest IMU received before posterior enqueue minus posterior measurement timestamp; not absolute wall latency.",
+      "posterior_enqueue_to_replay_start_s": {
+        "count": 129,
+        "max": 0.002931174000423198,
+        "p99": 0.0027749887600475626,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "posterior_enqueued_count": 129,
+      "posterior_replay_started_count": 129,
+      "publish_wall_intervals_s": {
+        "count": 578,
+        "max": 0.11338976100023501,
+        "p99": 0.10455776790018263,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "publish_sensor_intervals_s": {
+        "count": 578,
+        "max": 0.025053977966308594,
+        "p99": 0.02504706382751465,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "max_correction_age_s": 0.20220017433166504,
+      "stale_prediction_sensor_duration_s": 0.0,
+      "published_vs_received_count_equal": true,
+      "published_vs_received_stamp_max_abs_s": 0.0,
+      "publish_call_duration_s": {
+        "count": 579,
+        "max": 0.0054441540000880195,
+        "p99": 0.0024880773000950287,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "replay_duration_s": {
+        "count": 129,
+        "max": 0.000699625999914133,
+        "p99": 0.0005258606801908171,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "published_imu_enqueue_to_publish_s": {
+        "count": 579,
+        "max": 0.005984541000088939,
+        "p99": 0.005376083959781684,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "wall_gap_audit": []
+    },
+    {
+      "run": "glim_original_baseline_a",
+      "processes": {
+        "binary": "/workspace/install-baseline/adaptive_lio/lib/adaptive_lio/adaptive_lio",
+        "bag": "/workspace/datasets/glim_cross_sensor/livox_ros2",
+        "config": "/workspace/Adaptive-LIO/benchmark/rebuild/glim.yaml",
+        "output": "/workspace/bench/rebuild_runs/glim_original_baseline_a",
+        "domain": 81,
+        "drain": 15,
+        "started_unix": 1793422560.7086492,
+        "binary_sha256": "beb844e2ad5005e916008ff28c2834fd8b31213b0a989aa990921b6cf8efbe84",
+        "config_sha256": "7de0ca0e6599c4974e95f04cbce908f1b8f31c2fc24665da4ccd6152bb8fbf68",
+        "playback_rate": 1,
+        "player_delay_s": 3,
+        "recorder_storage": "sqlite3",
+        "qos_overrides_sha256": "57466208f8572cb8d17aa5f5d6793a1d90d39617bea12da3858c50c465f0a932",
+        "player_exit": 0,
+        "node_exit": 0,
+        "recorder_exit": 0,
+        "finished_unix": 1793422645.552399
+      },
+      "source_imu_count": 12611,
+      "recorded_imu_count": 12611,
+      "recorded_imu_matches_source": true,
+      "source_imu_intervals_s": {
+        "count": 12610,
+        "max": 0.005098050000015064,
+        "p99": 0.005059219999992592,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "imu_callback_count": 12611,
+      "imu_callback_matches_source": true,
+      "imu_callback_decisions": {
+        "0": 12611
+      },
+      "imu_callback_delivery_intervals_s": {
+        "count": 12610,
+        "max": 0.11385042799975054,
+        "p99": 0.10037990300985257,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "recorded_imu_delivery_intervals_s": {
+        "count": 12610,
+        "max": 0.1135401725769043,
+        "p99": 0.1005354380607605,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "odom_count": 2934,
+      "odom_all_finite": true,
+      "odom_sensor_intervals_s": {
+        "count": 2933,
+        "max": 0.10501149100001328,
+        "p99": 0.09501589307999211,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "odom_receipt_intervals_s": {
+        "count": 2933,
+        "max": 0.1139369010925293,
+        "p99": 0.10269264221191403,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "odom_sensor_span_s": 60.535045178999994,
+      "odom_first_stamp": 111.78685649,
+      "odom_last_stamp": 172.321901669,
+      "odom_startup_from_first_imu_s": 1.2690121300000072,
+      "odom_tail_to_last_imu_s": 9.999894245993346e-10,
+      "odom_pose_cov_trace_range": [
+        0.007373378526079485,
+        0.08634225910961182
+      ],
+      "lidar_count": 606,
+      "lidar_all_finite": true,
+      "lidar_sensor_intervals_s": {
+        "count": 605,
+        "max": 0.10066295999999397,
+        "p99": 0.10065288240000314,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "lidar_receipt_intervals_s": {
+        "count": 605,
+        "max": 0.1520857810974121,
+        "p99": 0.14177229881286624,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "lidar_sensor_span_s": 60.50052904,
+      "lidar_first_stamp": 111.699292944,
+      "lidar_last_stamp": 172.199821984,
+      "lidar_startup_from_first_imu_s": 1.1814485840000089,
+      "lidar_tail_to_last_imu_s": 0.12207968599997798,
+      "lidar_pose_cov_trace_range": [
+        0.0017862879860478182,
+        0.020229811870781968
+      ],
+      "posterior_count": 606,
+      "lidar_vs_posterior_max_abs": [
+        1.0000036354540498e-09,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "status_counts": {},
+      "status_input_stale_count": 0,
+      "history_miss_max": 0,
+      "trace_counts": {}
+    },
+    {
+      "run": "glim_original_baseline_b",
+      "processes": {
+        "binary": "/workspace/install-baseline/adaptive_lio/lib/adaptive_lio/adaptive_lio",
+        "bag": "/workspace/datasets/glim_cross_sensor/livox_ros2",
+        "config": "/workspace/Adaptive-LIO/benchmark/rebuild/glim.yaml",
+        "output": "/workspace/bench/rebuild_runs/glim_original_baseline_b",
+        "domain": 81,
+        "drain": 15,
+        "started_unix": 1793422646.0764885,
+        "binary_sha256": "beb844e2ad5005e916008ff28c2834fd8b31213b0a989aa990921b6cf8efbe84",
+        "config_sha256": "7de0ca0e6599c4974e95f04cbce908f1b8f31c2fc24665da4ccd6152bb8fbf68",
+        "playback_rate": 1,
+        "player_delay_s": 3,
+        "recorder_storage": "sqlite3",
+        "qos_overrides_sha256": "57466208f8572cb8d17aa5f5d6793a1d90d39617bea12da3858c50c465f0a932",
+        "player_exit": 0,
+        "node_exit": 0,
+        "recorder_exit": 0,
+        "finished_unix": 1793422730.821508
+      },
+      "source_imu_count": 12611,
+      "recorded_imu_count": 12611,
+      "recorded_imu_matches_source": true,
+      "source_imu_intervals_s": {
+        "count": 12610,
+        "max": 0.005098050000015064,
+        "p99": 0.005059219999992592,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "imu_callback_count": 12611,
+      "imu_callback_matches_source": true,
+      "imu_callback_decisions": {
+        "0": 12611
+      },
+      "imu_callback_delivery_intervals_s": {
+        "count": 12610,
+        "max": 0.1109902860002876,
+        "p99": 0.1004231712097362,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "recorded_imu_delivery_intervals_s": {
+        "count": 12610,
+        "max": 0.11101412773132324,
+        "p99": 0.10060449123382569,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "odom_count": 2595,
+      "odom_all_finite": true,
+      "odom_sensor_intervals_s": {
+        "count": 2594,
+        "max": 0.10500736000000188,
+        "p99": 0.0999684360700013,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "odom_receipt_intervals_s": {
+        "count": 2594,
+        "max": 0.11301732063293457,
+        "p99": 0.10285093069076538,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "odom_sensor_span_s": 60.535045178999994,
+      "odom_first_stamp": 111.78685649,
+      "odom_last_stamp": 172.321901669,
+      "odom_startup_from_first_imu_s": 1.2690121300000072,
+      "odom_tail_to_last_imu_s": 9.999894245993346e-10,
+      "odom_pose_cov_trace_range": [
+        0.007373378526079485,
+        0.08634225910961182
+      ],
+      "lidar_count": 606,
+      "lidar_all_finite": true,
+      "lidar_sensor_intervals_s": {
+        "count": 605,
+        "max": 0.10066295999999397,
+        "p99": 0.10065288240000314,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "lidar_receipt_intervals_s": {
+        "count": 605,
+        "max": 0.15283632278442383,
+        "p99": 0.1415455341339112,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "lidar_sensor_span_s": 60.50052904,
+      "lidar_first_stamp": 111.699292944,
+      "lidar_last_stamp": 172.199821984,
+      "lidar_startup_from_first_imu_s": 1.1814485840000089,
+      "lidar_tail_to_last_imu_s": 0.12207968599997798,
+      "lidar_pose_cov_trace_range": [
+        0.0017862879860478182,
+        0.020229811870781968
+      ],
+      "posterior_count": 606,
+      "lidar_vs_posterior_max_abs": [
+        1.0000036354540498e-09,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "status_counts": {},
+      "status_input_stale_count": 0,
+      "history_miss_max": 0,
+      "trace_counts": {}
+    },
+    {
+      "run": "glim_original_fixed_a",
+      "processes": {
+        "binary": "/workspace/install-fixed/adaptive_lio/lib/adaptive_lio/adaptive_lio",
+        "bag": "/workspace/datasets/glim_cross_sensor/livox_ros2",
+        "config": "/workspace/Adaptive-LIO/benchmark/rebuild/glim.yaml",
+        "output": "/workspace/bench/rebuild_runs/glim_original_fixed_a",
+        "domain": 81,
+        "drain": 15,
+        "started_unix": 1793422475.318602,
+        "binary_sha256": "0362c6ef5c78635cb3d2355a8042ff1bc97736d180856064fe05d72a410bed0a",
+        "config_sha256": "7de0ca0e6599c4974e95f04cbce908f1b8f31c2fc24665da4ccd6152bb8fbf68",
+        "playback_rate": 1,
+        "player_delay_s": 3,
+        "recorder_storage": "sqlite3",
+        "qos_overrides_sha256": "57466208f8572cb8d17aa5f5d6793a1d90d39617bea12da3858c50c465f0a932",
+        "player_exit": 0,
+        "node_exit": 0,
+        "recorder_exit": 0,
+        "finished_unix": 1793422560.1350725
+      },
+      "source_imu_count": 12611,
+      "recorded_imu_count": 12611,
+      "recorded_imu_matches_source": true,
+      "source_imu_intervals_s": {
+        "count": 12610,
+        "max": 0.005098050000015064,
+        "p99": 0.005059219999992592,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "imu_callback_count": 12611,
+      "imu_callback_matches_source": true,
+      "imu_callback_decisions": {
+        "0": 12611
+      },
+      "imu_callback_delivery_intervals_s": {
+        "count": 12610,
+        "max": 0.11066200400000525,
+        "p99": 0.10026539713024249,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "recorded_imu_delivery_intervals_s": {
+        "count": 12610,
+        "max": 0.1113135814666748,
+        "p99": 0.10062681674957276,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "odom_count": 2722,
+      "odom_all_finite": true,
+      "odom_sensor_intervals_s": {
+        "count": 2721,
+        "max": 0.025086659999999483,
+        "p99": 0.025052073000000518,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "odom_receipt_intervals_s": {
+        "count": 2721,
+        "max": 0.11347699165344238,
+        "p99": 0.10401983261108401,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "odom_sensor_span_s": 60.515076711000006,
+      "odom_first_stamp": 111.791840809,
+      "odom_last_stamp": 172.30691752,
+      "odom_startup_from_first_imu_s": 1.273996449000009,
+      "odom_tail_to_last_imu_s": 0.014984149999975216,
+      "odom_pose_cov_trace_range": [
+        0.007908098533546752,
+        0.08467266077926235
+      ],
+      "lidar_count": 606,
+      "lidar_all_finite": true,
+      "lidar_sensor_intervals_s": {
+        "count": 605,
+        "max": 0.10066295999999397,
+        "p99": 0.10065288240000314,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "lidar_receipt_intervals_s": {
+        "count": 605,
+        "max": 0.1513957977294922,
+        "p99": 0.14347643852233888,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "lidar_sensor_span_s": 60.50052904,
+      "lidar_first_stamp": 111.699292944,
+      "lidar_last_stamp": 172.199821984,
+      "lidar_startup_from_first_imu_s": 1.1814485840000089,
+      "lidar_tail_to_last_imu_s": 0.12207968599997798,
+      "lidar_pose_cov_trace_range": [
+        0.0017862879860478182,
+        0.020229811870781968
+      ],
+      "posterior_count": 606,
+      "lidar_vs_posterior_max_abs": [
+        1.0000036354540498e-09,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "status_counts": {
+        "UNINITIALIZED": 71,
+        "FRESH": 543,
+        "DEGRADED": 147
+      },
+      "status_input_stale_count": 206,
+      "history_miss_max": 0,
+      "trace_counts": {
+        "C": 12611,
+        "I": 12611,
+        "U": 606,
+        "R": 606,
+        "E": 606,
+        "P": 2722,
+        "D": 2722
+      },
+      "posterior_arrival_sensor_lag_s": {
+        "count": 606,
+        "max": 0.10966457499999649,
+        "p99": 0.10362381300001147,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "posterior_arrival_sensor_lag_definition": "Newest IMU received before posterior enqueue minus posterior measurement timestamp; not absolute wall latency.",
+      "posterior_enqueue_to_replay_start_s": {
+        "count": 606,
+        "max": 0.0033902479999596835,
+        "p99": 0.0014496401500764488,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "posterior_enqueued_count": 606,
+      "posterior_replay_started_count": 606,
+      "publish_wall_intervals_s": {
+        "count": 2721,
+        "max": 0.11398703699978796,
+        "p99": 0.10313857120008833,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "publish_sensor_intervals_s": {
+        "count": 2721,
+        "max": 0.025086659999999483,
+        "p99": 0.025052072000011093,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "max_correction_age_s": 0.20457932499999743,
+      "stale_prediction_sensor_duration_s": 0.0,
+      "published_vs_received_count_equal": true,
+      "published_vs_received_stamp_max_abs_s": 1.0000036354540498e-09,
+      "publish_call_duration_s": {
+        "count": 2722,
+        "max": 0.0058730849996209145,
+        "p99": 0.0011749491298905911,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "replay_duration_s": {
+        "count": 606,
+        "max": 0.0007204969997474109,
+        "p99": 0.0005267016998232066,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "published_imu_enqueue_to_publish_s": {
+        "count": 2722,
+        "max": 0.006528069000069081,
+        "p99": 0.004797114409993809,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "wall_gap_audit": []
+    },
+    {
+      "run": "glim_original_fixed_b",
+      "processes": {
+        "binary": "/workspace/install-fixed/adaptive_lio/lib/adaptive_lio/adaptive_lio",
+        "bag": "/workspace/datasets/glim_cross_sensor/livox_ros2",
+        "config": "/workspace/Adaptive-LIO/benchmark/rebuild/glim.yaml",
+        "output": "/workspace/bench/rebuild_runs/glim_original_fixed_b",
+        "domain": 81,
+        "drain": 15,
+        "started_unix": 1793422731.3189354,
+        "binary_sha256": "0362c6ef5c78635cb3d2355a8042ff1bc97736d180856064fe05d72a410bed0a",
+        "config_sha256": "7de0ca0e6599c4974e95f04cbce908f1b8f31c2fc24665da4ccd6152bb8fbf68",
+        "playback_rate": 1,
+        "player_delay_s": 3,
+        "recorder_storage": "sqlite3",
+        "qos_overrides_sha256": "57466208f8572cb8d17aa5f5d6793a1d90d39617bea12da3858c50c465f0a932",
+        "player_exit": 0,
+        "node_exit": 0,
+        "recorder_exit": 0,
+        "finished_unix": 1793422816.029776
+      },
+      "source_imu_count": 12611,
+      "recorded_imu_count": 12611,
+      "recorded_imu_matches_source": true,
+      "source_imu_intervals_s": {
+        "count": 12610,
+        "max": 0.005098050000015064,
+        "p99": 0.005059219999992592,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "imu_callback_count": 12611,
+      "imu_callback_matches_source": true,
+      "imu_callback_decisions": {
+        "0": 12611
+      },
+      "imu_callback_delivery_intervals_s": {
+        "count": 12610,
+        "max": 0.11153790800017305,
+        "p99": 0.10029698419033593,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "recorded_imu_delivery_intervals_s": {
+        "count": 12610,
+        "max": 0.11137652397155762,
+        "p99": 0.10058752059936524,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "odom_count": 2722,
+      "odom_all_finite": true,
+      "odom_sensor_intervals_s": {
+        "count": 2721,
+        "max": 0.025086659999999483,
+        "p99": 0.025052073000000518,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "odom_receipt_intervals_s": {
+        "count": 2721,
+        "max": 0.11501884460449219,
+        "p99": 0.10434951782226565,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "odom_sensor_span_s": 60.515076711000006,
+      "odom_first_stamp": 111.791840809,
+      "odom_last_stamp": 172.30691752,
+      "odom_startup_from_first_imu_s": 1.273996449000009,
+      "odom_tail_to_last_imu_s": 0.014984149999975216,
+      "odom_pose_cov_trace_range": [
+        0.007908098533546752,
+        0.08467266077926235
+      ],
+      "lidar_count": 606,
+      "lidar_all_finite": true,
+      "lidar_sensor_intervals_s": {
+        "count": 605,
+        "max": 0.10066295999999397,
+        "p99": 0.10065288240000314,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "lidar_receipt_intervals_s": {
+        "count": 605,
+        "max": 0.15064668655395508,
+        "p99": 0.14049153327941896,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "lidar_sensor_span_s": 60.50052904,
+      "lidar_first_stamp": 111.699292944,
+      "lidar_last_stamp": 172.199821984,
+      "lidar_startup_from_first_imu_s": 1.1814485840000089,
+      "lidar_tail_to_last_imu_s": 0.12207968599997798,
+      "lidar_pose_cov_trace_range": [
+        0.0017862879860478182,
+        0.020229811870781968
+      ],
+      "posterior_count": 606,
+      "lidar_vs_posterior_max_abs": [
+        1.0000036354540498e-09,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "status_counts": {
+        "UNINITIALIZED": 70,
+        "FRESH": 542,
+        "DEGRADED": 147
+      },
+      "status_input_stale_count": 204,
+      "history_miss_max": 0,
+      "trace_counts": {
+        "C": 12611,
+        "I": 12611,
+        "U": 606,
+        "R": 606,
+        "E": 606,
+        "P": 2722,
+        "D": 2722
+      },
+      "posterior_arrival_sensor_lag_s": {
+        "count": 606,
+        "max": 0.10966457499999649,
+        "p99": 0.10362381300001147,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "posterior_arrival_sensor_lag_definition": "Newest IMU received before posterior enqueue minus posterior measurement timestamp; not absolute wall latency.",
+      "posterior_enqueue_to_replay_start_s": {
+        "count": 606,
+        "max": 0.0030831489998490724,
+        "p99": 0.0011687366499472836,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "posterior_enqueued_count": 606,
+      "posterior_replay_started_count": 606,
+      "publish_wall_intervals_s": {
+        "count": 2721,
+        "max": 0.11369086100012282,
+        "p99": 0.10263082560031762,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "publish_sensor_intervals_s": {
+        "count": 2721,
+        "max": 0.025086659999999483,
+        "p99": 0.025052072000011093,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "max_correction_age_s": 0.20457932499999743,
+      "stale_prediction_sensor_duration_s": 0.0,
+      "published_vs_received_count_equal": true,
+      "published_vs_received_stamp_max_abs_s": 1.0000036354540498e-09,
+      "publish_call_duration_s": {
+        "count": 2722,
+        "max": 0.00512988199989195,
+        "p99": 0.0010821848198520438,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "replay_duration_s": {
+        "count": 606,
+        "max": 0.0018979060000674508,
+        "p99": 0.0005492747499147305,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "published_imu_enqueue_to_publish_s": {
+        "count": 2722,
+        "max": 0.006149823000214383,
+        "p99": 0.004296412489966314,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "wall_gap_audit": []
+    },
+    {
+      "run": "glim_retimed_baseline_a",
+      "processes": {
+        "binary": "/workspace/install-baseline/adaptive_lio/lib/adaptive_lio/adaptive_lio",
+        "bag": "/workspace/datasets/glim_cross_sensor/livox_retimed",
+        "config": "/workspace/Adaptive-LIO/benchmark/rebuild/glim.yaml",
+        "output": "/workspace/bench/rebuild_runs/glim_retimed_baseline_a",
+        "domain": 81,
+        "drain": 15,
+        "started_unix": 1793422901.8436925,
+        "binary_sha256": "beb844e2ad5005e916008ff28c2834fd8b31213b0a989aa990921b6cf8efbe84",
+        "config_sha256": "7de0ca0e6599c4974e95f04cbce908f1b8f31c2fc24665da4ccd6152bb8fbf68",
+        "playback_rate": 1,
+        "player_delay_s": 3,
+        "recorder_storage": "sqlite3",
+        "qos_overrides_sha256": "57466208f8572cb8d17aa5f5d6793a1d90d39617bea12da3858c50c465f0a932",
+        "player_exit": 0,
+        "node_exit": 0,
+        "recorder_exit": 0,
+        "finished_unix": 1793422986.7541618
+      },
+      "source_imu_count": 12611,
+      "recorded_imu_count": 12611,
+      "recorded_imu_matches_source": true,
+      "source_imu_intervals_s": {
+        "count": 12610,
+        "max": 0.005098050000015064,
+        "p99": 0.005059219999992592,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "imu_callback_count": 12611,
+      "imu_callback_matches_source": true,
+      "imu_callback_decisions": {
+        "0": 12611
+      },
+      "imu_callback_delivery_intervals_s": {
+        "count": 12610,
+        "max": 0.013823464999859425,
+        "p99": 0.0074004484801798755,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "recorded_imu_delivery_intervals_s": {
+        "count": 12610,
+        "max": 0.017108917236328125,
+        "p99": 0.006449439525604248,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "odom_count": 12344,
+      "odom_all_finite": true,
+      "odom_sensor_intervals_s": {
+        "count": 12343,
+        "max": 0.014962910000008378,
+        "p99": 0.005059485640009882,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "odom_receipt_intervals_s": {
+        "count": 12343,
+        "max": 0.026988506317138672,
+        "p99": 0.008305211067199707,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "odom_sensor_span_s": 60.57005474,
+      "odom_first_stamp": 111.751846929,
+      "odom_last_stamp": 172.321901669,
+      "odom_startup_from_first_imu_s": 1.2340025689999976,
+      "odom_tail_to_last_imu_s": 9.999894245993346e-10,
+      "odom_pose_cov_trace_range": [
+        0.004349279831931911,
+        0.1003994229353108
+      ],
+      "lidar_count": 606,
+      "lidar_all_finite": true,
+      "lidar_sensor_intervals_s": {
+        "count": 605,
+        "max": 0.10066295999999397,
+        "p99": 0.10065288240000314,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "lidar_receipt_intervals_s": {
+        "count": 605,
+        "max": 0.14050745964050293,
+        "p99": 0.11514839172363282,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "lidar_sensor_span_s": 60.50052904,
+      "lidar_first_stamp": 111.699292944,
+      "lidar_last_stamp": 172.199821984,
+      "lidar_startup_from_first_imu_s": 1.1814485840000089,
+      "lidar_tail_to_last_imu_s": 0.12207968599997798,
+      "lidar_pose_cov_trace_range": [
+        0.0017862879860478182,
+        0.020229811870781968
+      ],
+      "posterior_count": 606,
+      "lidar_vs_posterior_max_abs": [
+        1.0000036354540498e-09,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "status_counts": {},
+      "status_input_stale_count": 0,
+      "history_miss_max": 0,
+      "trace_counts": {}
+    },
+    {
+      "run": "glim_retimed_baseline_b",
+      "processes": {
+        "binary": "/workspace/install-baseline/adaptive_lio/lib/adaptive_lio/adaptive_lio",
+        "bag": "/workspace/datasets/glim_cross_sensor/livox_retimed",
+        "config": "/workspace/Adaptive-LIO/benchmark/rebuild/glim.yaml",
+        "output": "/workspace/bench/rebuild_runs/glim_retimed_baseline_b",
+        "domain": 81,
+        "drain": 15,
+        "started_unix": 1793422987.3223863,
+        "binary_sha256": "beb844e2ad5005e916008ff28c2834fd8b31213b0a989aa990921b6cf8efbe84",
+        "config_sha256": "7de0ca0e6599c4974e95f04cbce908f1b8f31c2fc24665da4ccd6152bb8fbf68",
+        "playback_rate": 1,
+        "player_delay_s": 3,
+        "recorder_storage": "sqlite3",
+        "qos_overrides_sha256": "57466208f8572cb8d17aa5f5d6793a1d90d39617bea12da3858c50c465f0a932",
+        "player_exit": 0,
+        "node_exit": 0,
+        "recorder_exit": 0,
+        "finished_unix": 1793423072.1780264
+      },
+      "source_imu_count": 12611,
+      "recorded_imu_count": 12611,
+      "recorded_imu_matches_source": true,
+      "source_imu_intervals_s": {
+        "count": 12610,
+        "max": 0.005098050000015064,
+        "p99": 0.005059219999992592,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "imu_callback_count": 12611,
+      "imu_callback_matches_source": true,
+      "imu_callback_decisions": {
+        "0": 12611
+      },
+      "imu_callback_delivery_intervals_s": {
+        "count": 12610,
+        "max": 0.9749225719997412,
+        "p99": 0.009710330169928033,
+        "over_0_5": 1,
+        "negative": 0,
+        "zero": 0
+      },
+      "recorded_imu_delivery_intervals_s": {
+        "count": 12610,
+        "max": 0.4313046932220459,
+        "p99": 0.008536682128906244,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "odom_count": 11154,
+      "odom_all_finite": true,
+      "odom_sensor_intervals_s": {
+        "count": 11153,
+        "max": 2.511997498999989,
+        "p99": 0.010002443879999988,
+        "over_0_5": 1,
+        "negative": 0,
+        "zero": 0
+      },
+      "odom_receipt_intervals_s": {
+        "count": 11153,
+        "max": 1.4374268054962158,
+        "p99": 0.011062717437744132,
+        "over_0_5": 2,
+        "negative": 0,
+        "zero": 0
+      },
+      "odom_sensor_span_s": 60.56504287999999,
+      "odom_first_stamp": 111.756858789,
+      "odom_last_stamp": 172.321901669,
+      "odom_startup_from_first_imu_s": 1.239014429000008,
+      "odom_tail_to_last_imu_s": 9.999894245993346e-10,
+      "odom_pose_cov_trace_range": [
+        0.004708924103315454,
+        0.38884973272077833
+      ],
+      "lidar_count": 606,
+      "lidar_all_finite": true,
+      "lidar_sensor_intervals_s": {
+        "count": 605,
+        "max": 0.10066295999999397,
+        "p99": 0.10065288240000314,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "lidar_receipt_intervals_s": {
+        "count": 605,
+        "max": 0.9891471862792969,
+        "p99": 0.23400086402893128,
+        "over_0_5": 2,
+        "negative": 0,
+        "zero": 0
+      },
+      "lidar_sensor_span_s": 60.50052904,
+      "lidar_first_stamp": 111.699292944,
+      "lidar_last_stamp": 172.199821984,
+      "lidar_startup_from_first_imu_s": 1.1814485840000089,
+      "lidar_tail_to_last_imu_s": 0.12207968599997798,
+      "lidar_pose_cov_trace_range": [
+        0.0017862879860478182,
+        0.020229811870781968
+      ],
+      "posterior_count": 606,
+      "lidar_vs_posterior_max_abs": [
+        1.0000036354540498e-09,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "status_counts": {},
+      "status_input_stale_count": 0,
+      "history_miss_max": 0,
+      "trace_counts": {}
+    },
+    {
+      "run": "glim_retimed_fixed_a",
+      "processes": {
+        "binary": "/workspace/install-fixed/adaptive_lio/lib/adaptive_lio/adaptive_lio",
+        "bag": "/workspace/datasets/glim_cross_sensor/livox_retimed",
+        "config": "/workspace/Adaptive-LIO/benchmark/rebuild/glim.yaml",
+        "output": "/workspace/bench/rebuild_runs/glim_retimed_fixed_a",
+        "domain": 81,
+        "drain": 15,
+        "started_unix": 1793422816.4961283,
+        "binary_sha256": "0362c6ef5c78635cb3d2355a8042ff1bc97736d180856064fe05d72a410bed0a",
+        "config_sha256": "7de0ca0e6599c4974e95f04cbce908f1b8f31c2fc24665da4ccd6152bb8fbf68",
+        "playback_rate": 1,
+        "player_delay_s": 3,
+        "recorder_storage": "sqlite3",
+        "qos_overrides_sha256": "57466208f8572cb8d17aa5f5d6793a1d90d39617bea12da3858c50c465f0a932",
+        "player_exit": 0,
+        "node_exit": 0,
+        "recorder_exit": 0,
+        "finished_unix": 1793422901.2835956
+      },
+      "source_imu_count": 12611,
+      "recorded_imu_count": 12611,
+      "recorded_imu_matches_source": true,
+      "source_imu_intervals_s": {
+        "count": 12610,
+        "max": 0.005098050000015064,
+        "p99": 0.005059219999992592,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "imu_callback_count": 12611,
+      "imu_callback_matches_source": true,
+      "imu_callback_decisions": {
+        "0": 12611
+      },
+      "imu_callback_delivery_intervals_s": {
+        "count": 12610,
+        "max": 0.01835841000001892,
+        "p99": 0.0074199805903208465,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "recorded_imu_delivery_intervals_s": {
+        "count": 12610,
+        "max": 0.018390417098999023,
+        "p99": 0.007004034519195555,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "odom_count": 2724,
+      "odom_all_finite": true,
+      "odom_sensor_intervals_s": {
+        "count": 2723,
+        "max": 0.025086659999999483,
+        "p99": 0.02505207020000057,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "odom_receipt_intervals_s": {
+        "count": 2723,
+        "max": 0.033126115798950195,
+        "p99": 0.02729487419128422,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "odom_sensor_span_s": 60.54507519100001,
+      "odom_first_stamp": 111.761842329,
+      "odom_last_stamp": 172.30691752,
+      "odom_startup_from_first_imu_s": 1.2439979690000058,
+      "odom_tail_to_last_imu_s": 0.014984149999975216,
+      "odom_pose_cov_trace_range": [
+        0.005089559700688293,
+        0.10057230919820824
+      ],
+      "lidar_count": 606,
+      "lidar_all_finite": true,
+      "lidar_sensor_intervals_s": {
+        "count": 605,
+        "max": 0.10066295999999397,
+        "p99": 0.10065288240000314,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "lidar_receipt_intervals_s": {
+        "count": 605,
+        "max": 0.13504886627197266,
+        "p99": 0.11416290283203126,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "lidar_sensor_span_s": 60.50052904,
+      "lidar_first_stamp": 111.699292944,
+      "lidar_last_stamp": 172.199821984,
+      "lidar_startup_from_first_imu_s": 1.1814485840000089,
+      "lidar_tail_to_last_imu_s": 0.12207968599997798,
+      "lidar_pose_cov_trace_range": [
+        0.0017862879860478182,
+        0.020229811870781968
+      ],
+      "posterior_count": 606,
+      "lidar_vs_posterior_max_abs": [
+        1.0000036354540498e-09,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "status_counts": {
+        "UNINITIALIZED": 74,
+        "FRESH": 597,
+        "DEGRADED": 147
+      },
+      "status_input_stale_count": 205,
+      "history_miss_max": 0,
+      "trace_counts": {
+        "C": 12611,
+        "I": 12611,
+        "U": 606,
+        "R": 606,
+        "E": 606,
+        "P": 2724,
+        "D": 2724
+      },
+      "posterior_arrival_sensor_lag_s": {
+        "count": 606,
+        "max": 0.15475561499999912,
+        "p99": 0.1024870290000104,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "posterior_arrival_sensor_lag_definition": "Newest IMU received before posterior enqueue minus posterior measurement timestamp; not absolute wall latency.",
+      "posterior_enqueue_to_replay_start_s": {
+        "count": 606,
+        "max": 0.002893586000027426,
+        "p99": 0.0006399313501333445,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "posterior_enqueued_count": 606,
+      "posterior_replay_started_count": 606,
+      "publish_wall_intervals_s": {
+        "count": 2723,
+        "max": 0.033168425999974716,
+        "p99": 0.026981294819879625,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "publish_sensor_intervals_s": {
+        "count": 2723,
+        "max": 0.025086659999999483,
+        "p99": 0.025052069200011146,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "max_correction_age_s": 0.2445968549999975,
+      "stale_prediction_sensor_duration_s": 0.0,
+      "published_vs_received_count_equal": true,
+      "published_vs_received_stamp_max_abs_s": 1.0000036354540498e-09,
+      "publish_call_duration_s": {
+        "count": 2724,
+        "max": 0.007805123000252934,
+        "p99": 0.00025092359963764424,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "replay_duration_s": {
+        "count": 606,
+        "max": 0.0026905629997600045,
+        "p99": 0.0004120430002103617,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "published_imu_enqueue_to_publish_s": {
+        "count": 2724,
+        "max": 0.004970371000126761,
+        "p99": 0.0013780801500342928,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "wall_gap_audit": []
+    },
+    {
+      "run": "glim_retimed_fixed_b",
+      "processes": {
+        "binary": "/workspace/install-fixed/adaptive_lio/lib/adaptive_lio/adaptive_lio",
+        "bag": "/workspace/datasets/glim_cross_sensor/livox_retimed",
+        "config": "/workspace/Adaptive-LIO/benchmark/rebuild/glim.yaml",
+        "output": "/workspace/bench/rebuild_runs/glim_retimed_fixed_b",
+        "domain": 81,
+        "drain": 15,
+        "started_unix": 1793423072.7413437,
+        "binary_sha256": "0362c6ef5c78635cb3d2355a8042ff1bc97736d180856064fe05d72a410bed0a",
+        "config_sha256": "7de0ca0e6599c4974e95f04cbce908f1b8f31c2fc24665da4ccd6152bb8fbf68",
+        "playback_rate": 1,
+        "player_delay_s": 3,
+        "recorder_storage": "sqlite3",
+        "qos_overrides_sha256": "57466208f8572cb8d17aa5f5d6793a1d90d39617bea12da3858c50c465f0a932",
+        "player_exit": 0,
+        "node_exit": 0,
+        "recorder_exit": 0,
+        "finished_unix": 1793423157.5916889
+      },
+      "source_imu_count": 12611,
+      "recorded_imu_count": 12611,
+      "recorded_imu_matches_source": true,
+      "source_imu_intervals_s": {
+        "count": 12610,
+        "max": 0.005098050000015064,
+        "p99": 0.005059219999992592,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "imu_callback_count": 12611,
+      "imu_callback_matches_source": true,
+      "imu_callback_decisions": {
+        "0": 12611
+      },
+      "imu_callback_delivery_intervals_s": {
+        "count": 12610,
+        "max": 0.014246790000470355,
+        "p99": 0.007022212219944773,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "recorded_imu_delivery_intervals_s": {
+        "count": 12610,
+        "max": 0.011442184448242188,
+        "p99": 0.006384546756744381,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "odom_count": 2724,
+      "odom_all_finite": true,
+      "odom_sensor_intervals_s": {
+        "count": 2723,
+        "max": 0.025086659999999483,
+        "p99": 0.02505207020000057,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "odom_receipt_intervals_s": {
+        "count": 2723,
+        "max": 0.03191399574279785,
+        "p99": 0.027019224166870144,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "odom_sensor_span_s": 60.55005873100001,
+      "odom_first_stamp": 111.756858789,
+      "odom_last_stamp": 172.30691752,
+      "odom_startup_from_first_imu_s": 1.239014429000008,
+      "odom_tail_to_last_imu_s": 0.014984149999975216,
+      "odom_pose_cov_trace_range": [
+        0.004708924103315454,
+        0.10326936481584185
+      ],
+      "lidar_count": 606,
+      "lidar_all_finite": true,
+      "lidar_sensor_intervals_s": {
+        "count": 605,
+        "max": 0.10066295999999397,
+        "p99": 0.10065288240000314,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "lidar_receipt_intervals_s": {
+        "count": 605,
+        "max": 0.13632535934448242,
+        "p99": 0.11469889640808106,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "lidar_sensor_span_s": 60.50052904,
+      "lidar_first_stamp": 111.699292944,
+      "lidar_last_stamp": 172.199821984,
+      "lidar_startup_from_first_imu_s": 1.1814485840000089,
+      "lidar_tail_to_last_imu_s": 0.12207968599997798,
+      "lidar_pose_cov_trace_range": [
+        0.0017862879860478182,
+        0.020229811870781968
+      ],
+      "posterior_count": 606,
+      "lidar_vs_posterior_max_abs": [
+        1.0000036354540498e-09,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "status_counts": {
+        "UNINITIALIZED": 72,
+        "FRESH": 597,
+        "DEGRADED": 147
+      },
+      "status_input_stale_count": 205,
+      "history_miss_max": 0,
+      "trace_counts": {
+        "C": 12611,
+        "I": 12611,
+        "U": 606,
+        "R": 606,
+        "E": 606,
+        "P": 2724,
+        "D": 2724
+      },
+      "posterior_arrival_sensor_lag_s": {
+        "count": 606,
+        "max": 0.14040354499996965,
+        "p99": 0.10235286950000462,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "posterior_arrival_sensor_lag_definition": "Newest IMU received before posterior enqueue minus posterior measurement timestamp; not absolute wall latency.",
+      "posterior_enqueue_to_replay_start_s": {
+        "count": 606,
+        "max": 0.0033859300001495285,
+        "p99": 0.00043144720016244234,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "posterior_enqueued_count": 606,
+      "posterior_replay_started_count": 606,
+      "publish_wall_intervals_s": {
+        "count": 2723,
+        "max": 0.030377550000594056,
+        "p99": 0.026522332719614523,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "publish_sensor_intervals_s": {
+        "count": 2723,
+        "max": 0.025086659999999483,
+        "p99": 0.025052069200011146,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "max_correction_age_s": 0.23521555499999636,
+      "stale_prediction_sensor_duration_s": 0.0,
+      "published_vs_received_count_equal": true,
+      "published_vs_received_stamp_max_abs_s": 1.0000036354540498e-09,
+      "publish_call_duration_s": {
+        "count": 2724,
+        "max": 0.00393194099979155,
+        "p99": 0.00021815251986481596,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "replay_duration_s": {
+        "count": 606,
+        "max": 0.0008620680000603897,
+        "p99": 0.00040628815022501,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "published_imu_enqueue_to_publish_s": {
+        "count": 2724,
+        "max": 0.003264642999965872,
+        "p99": 0.0008633832001487462,
+        "over_0_5": 0,
+        "negative": 0,
+        "zero": 0
+      },
+      "wall_gap_audit": []
+    }
+  ],
+  "posterior_comparison": {
+    "flatwall05": {
+      "flatwall05_baseline_a": {
+        "reference": "flatwall05_baseline_a",
+        "same_shape": true,
+        "exactly_equal": true,
+        "max_abs": 0.0,
+        "max_stamp_delta_s": 0.0,
+        "max_position_delta_m": 0.0,
+        "max_orientation_delta_rad": 0.0,
+        "numerically_invariant": true
+      },
+      "flatwall05_baseline_b": {
+        "reference": "flatwall05_baseline_a",
+        "same_shape": true,
+        "exactly_equal": false,
+        "max_abs": 2.3939183968479938e-15,
+        "max_stamp_delta_s": 0.0,
+        "max_position_delta_m": 3.3113285781359497e-15,
+        "max_orientation_delta_rad": 8.3820000221454525e-16,
+        "numerically_invariant": true
+      },
+      "flatwall05_fixed_a": {
+        "reference": "flatwall05_baseline_a",
+        "same_shape": true,
+        "exactly_equal": false,
+        "max_abs": 2.1649348980190553e-15,
+        "max_stamp_delta_s": 0.0,
+        "max_position_delta_m": 2.752144125093401e-15,
+        "max_orientation_delta_rad": 1.0532500405730103e-15,
+        "numerically_invariant": true
+      },
+      "flatwall05_fixed_b": {
+        "reference": "flatwall05_baseline_a",
+        "same_shape": true,
+        "exactly_equal": false,
+        "max_abs": 1.8735013540549517e-15,
+        "max_stamp_delta_s": 0.0,
+        "max_position_delta_m": 2.7111458154724703e-15,
+        "max_orientation_delta_rad": 6.684427777288335e-16,
+        "numerically_invariant": true
+      }
+    },
+    "glim_original": {
+      "glim_original_baseline_a": {
+        "reference": "glim_original_baseline_a",
+        "same_shape": true,
+        "exactly_equal": true,
+        "max_abs": 0.0,
+        "max_stamp_delta_s": 0.0,
+        "max_position_delta_m": 0.0,
+        "max_orientation_delta_rad": 0.0,
+        "numerically_invariant": true
+      },
+      "glim_original_baseline_b": {
+        "reference": "glim_original_baseline_a",
+        "same_shape": true,
+        "exactly_equal": true,
+        "max_abs": 0.0,
+        "max_stamp_delta_s": 0.0,
+        "max_position_delta_m": 0.0,
+        "max_orientation_delta_rad": 0.0,
+        "numerically_invariant": true
+      },
+      "glim_original_fixed_a": {
+        "reference": "glim_original_baseline_a",
+        "same_shape": true,
+        "exactly_equal": true,
+        "max_abs": 0.0,
+        "max_stamp_delta_s": 0.0,
+        "max_position_delta_m": 0.0,
+        "max_orientation_delta_rad": 0.0,
+        "numerically_invariant": true
+      },
+      "glim_original_fixed_b": {
+        "reference": "glim_original_baseline_a",
+        "same_shape": true,
+        "exactly_equal": true,
+        "max_abs": 0.0,
+        "max_stamp_delta_s": 0.0,
+        "max_position_delta_m": 0.0,
+        "max_orientation_delta_rad": 0.0,
+        "numerically_invariant": true
+      }
+    },
+    "glim_retimed": {
+      "glim_retimed_baseline_a": {
+        "reference": "glim_retimed_baseline_a",
+        "same_shape": true,
+        "exactly_equal": true,
+        "max_abs": 0.0,
+        "max_stamp_delta_s": 0.0,
+        "max_position_delta_m": 0.0,
+        "max_orientation_delta_rad": 0.0,
+        "numerically_invariant": true
+      },
+      "glim_retimed_baseline_b": {
+        "reference": "glim_retimed_baseline_a",
+        "same_shape": true,
+        "exactly_equal": true,
+        "max_abs": 0.0,
+        "max_stamp_delta_s": 0.0,
+        "max_position_delta_m": 0.0,
+        "max_orientation_delta_rad": 0.0,
+        "numerically_invariant": true
+      },
+      "glim_retimed_fixed_a": {
+        "reference": "glim_retimed_baseline_a",
+        "same_shape": true,
+        "exactly_equal": true,
+        "max_abs": 0.0,
+        "max_stamp_delta_s": 0.0,
+        "max_position_delta_m": 0.0,
+        "max_orientation_delta_rad": 0.0,
+        "numerically_invariant": true
+      },
+      "glim_retimed_fixed_b": {
+        "reference": "glim_retimed_baseline_a",
+        "same_shape": true,
+        "exactly_equal": true,
+        "max_abs": 0.0,
+        "max_stamp_delta_s": 0.0,
+        "max_position_delta_m": 0.0,
+        "max_orientation_delta_rad": 0.0,
+        "numerically_invariant": true
+      }
+    }
+  },
+  "common_gt_ape": {
+    "flatwall05": {
+      "gt_count": 552,
+      "common_count": 427,
+      "association_limit_s": 0.03,
+      "alignment": "rigid SE3, no scale; common GT nearest timestamp intersection",
+      "runs": {
+        "flatwall05_baseline_a": {
+          "rmse_m": 1.1624561225708039,
+          "max_m": 1.7577678414816131
+        },
+        "flatwall05_baseline_b": {
+          "rmse_m": 1.1629612016568789,
+          "max_m": 1.7573452124472912
+        },
+        "flatwall05_fixed_a": {
+          "rmse_m": 1.1617902216863978,
+          "max_m": 1.757824420985935
+        },
+        "flatwall05_fixed_b": {
+          "rmse_m": 1.1617902216863976,
+          "max_m": 1.757824420985935
+        }
+      }
+    },
+    "glim_original": {
+      "gt_count": 618,
+      "common_count": 605,
+      "association_limit_s": 0.03,
+      "alignment": "rigid SE3, no scale; common GT nearest timestamp intersection",
+      "runs": {
+        "glim_original_baseline_a": {
+          "rmse_m": 0.21476621935129514,
+          "max_m": 0.609637985849555
+        },
+        "glim_original_baseline_b": {
+          "rmse_m": 0.2147249380032275,
+          "max_m": 0.60949452612381
+        },
+        "glim_original_fixed_a": {
+          "rmse_m": 0.2146347889103383,
+          "max_m": 0.6120334438809892
+        },
+        "glim_original_fixed_b": {
+          "rmse_m": 0.21462580691491578,
+          "max_m": 0.6120453665730761
+        }
+      }
+    },
+    "glim_retimed": {
+      "gt_count": 618,
+      "common_count": 579,
+      "association_limit_s": 0.03,
+      "alignment": "rigid SE3, no scale; common GT nearest timestamp intersection",
+      "runs": {
+        "glim_retimed_baseline_a": {
+          "rmse_m": 0.21162340622091064,
+          "max_m": 0.5826132683020087
+        },
+        "glim_retimed_baseline_b": {
+          "rmse_m": 0.2102400225513764,
+          "max_m": 0.5805632780798969
+        },
+        "glim_retimed_fixed_a": {
+          "rmse_m": 0.21149900849868103,
+          "max_m": 0.5824204230179411
+        },
+        "glim_retimed_fixed_b": {
+          "rmse_m": 0.21184204379897018,
+          "max_m": 0.5825934361177533
+        }
+      }
+    }
+  }
+}

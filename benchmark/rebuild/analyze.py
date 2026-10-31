@@ -117,8 +117,19 @@ def analyze(run, source):
     statuses = data['status']
     result['status_counts'] = dict(Counter(row[1]['state'] for row in statuses))
     result['status_input_stale_count'] = sum(bool(row[1].get('input_stale')) for row in statuses)
+    result['history_miss_max'] = max((row[1].get('history_miss', 0) for row in statuses), default=0)
     trace = trace_data(run / 'output_trace.tsv')
     result['trace_counts'] = {key: len(rows) for key, rows in trace.items()}
+    if 'U' in trace and 'I' in trace:
+        arrival_indices = np.searchsorted(trace['I'][:, -1], trace['U'][:, -1], side='right') - 1
+        valid = arrival_indices >= 0
+        result['posterior_arrival_sensor_lag_s'] = stats(trace['I'][arrival_indices[valid], 0] - trace['U'][valid, 0])
+        result['posterior_arrival_sensor_lag_definition'] = 'Newest IMU received before posterior enqueue minus posterior measurement timestamp; not absolute wall latency.'
+    if 'U' in trace and 'R' in trace:
+        enqueued_updates = {row[0]: row[-1] for row in trace['U']}
+        result['posterior_enqueue_to_replay_start_s'] = stats([row[-1] - enqueued_updates[row[0]] for row in trace['R'] if row[0] in enqueued_updates])
+        result['posterior_enqueued_count'] = len(trace['U'])
+        result['posterior_replay_started_count'] = len(trace['R'])
     if 'P' in trace:
         pub = trace['P']
         result['publish_wall_intervals_s'] = stats(np.diff(pub[:, -1]))
@@ -193,6 +204,18 @@ def main():
             comparison[run.name] = {'reference': runs[0].name, 'same_shape': same_shape,
                                     'exactly_equal': same_shape and bool(np.array_equal(ref, other)),
                                     'max_abs': float(np.max(np.abs(ref - other))) if same_shape and ref.size else None}
+            comp = comparison[run.name]
+            if same_shape and ref.size:
+                comp['max_stamp_delta_s'] = float(np.max(np.abs(ref[:, 0] - other[:, 0])))
+                comp['max_position_delta_m'] = float(np.max(np.linalg.norm(ref[:, 1:4] - other[:, 1:4], axis=1)))
+                qa = ref[:, 4:8] / np.linalg.norm(ref[:, 4:8], axis=1, keepdims=True)
+                qb = other[:, 4:8] / np.linalg.norm(other[:, 4:8], axis=1, keepdims=True)
+                # Chord distance is stable near zero and invariant to quaternion sign.
+                chord = np.minimum(np.linalg.norm(qa - qb, axis=1), np.linalg.norm(qa + qb, axis=1))
+                comp['max_orientation_delta_rad'] = float(np.max(4 * np.arcsin(np.clip(chord / 2, 0, 1))))
+                comp['numerically_invariant'] = comp['max_stamp_delta_s'] <= 1e-9 and comp['max_position_delta_m'] <= 1e-6 and comp['max_orientation_delta_rad'] <= 1e-6
+            else:
+                comp['numerically_invariant'] = False
         report['posterior_comparison'][case] = comparison
         gt = trajectory(Path(gt_path))
         estimates = [trajectory(run / 'odom.tum') for run in runs]
