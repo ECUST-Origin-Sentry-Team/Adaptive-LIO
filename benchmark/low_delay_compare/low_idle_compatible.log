@@ -1,0 +1,27 @@
+[adaptive_lio] argv before init: '/workspace/install-low/adaptive_lio/lib/adaptive_lio/adaptive_lio' '--config_file' '/workspace/Adaptive-LIO/benchmark/low_delay_compare/flatwall_low.yaml' '--trajectory_file' '/workspace/bench/low_idle.tum'
+[0;32mconfig_file:/workspace/Adaptive-LIO/benchmark/low_delay_compare/flatwall_low.yaml[0m
+- 1.0
+- 0.0
+- 0.0
+- 0.0
+- 1.0
+- 0.0
+- 0.0
+- 0.0
+- 1.0
+RIL:
+1 0 0
+0 1 0
+0 0 1
+tIL:0 0 0
+[0;33m [WARNING] The config does not have any node 'map_options', using the default parameters to define the map.
+W20261031 05:20:08.328148 48469 lidarodom.cpp:257] motion_compensation:1, model: 0
+I20261031 05:20:08.339037 48469 cloud_convert2.cc:494] Sweep cut num: 1, degenerate_window_num: 10
+I20261031 05:20:08.339061 48469 cloud_convert2.cc:500] Using AVIA Lidar
+[1;32minit successful[0m
+[INFO] [1793424011.246752608] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[1;32m>>> ===== Printing run time =====
+>>> ===== Printing run time end =====[0m
+[1;31mFailed to open file: /workspace/low-delay/Log/log_time.txt
+[1;32m out done. [0m
+terminate called without an active exception

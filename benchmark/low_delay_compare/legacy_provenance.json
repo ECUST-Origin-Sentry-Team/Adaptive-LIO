@@ -1,0 +1,66 @@
+{
+  "legacy_branch": "Low-Delay-Time",
+  "legacy_commit": "24e6ca33b5878d97c5515b4d3350ce790399bb8d",
+  "fixed_binary_sha256_before_legacy_build": "0362c6ef5c78635cb3d2355a8042ff1bc97736d180856064fe05d72a410bed0a",
+  "changes": [
+    "Ceres 2.2 compatibility: exclude unused PoseParameterization source and two obsolete includes; active EigenQuaternionManifold unchanged",
+    "Optional observer-only CLI --trajectory_file and ADAPTIVE_LIO_IMU_TRACE/ADAPTIVE_LIO_OUTPUT_TRACE",
+    "Explicit observer flush before pre-existing legacy sleep(3) and unjoined-thread shutdown failure"
+  ],
+  "unchanged": [
+    "Legacy subscription QoS and common mutually exclusive callback group",
+    "Legacy IMU interpolation, integration, history clamp, correction-age gate",
+    "Legacy output timestamps and TF restamping",
+    "Legacy point sampling and optimizer",
+    "Legacy shutdown lifecycle; nonzero SIGINT exit expected and must be reported separately"
+  ],
+  "imu_trace_columns": [
+    "sensor_stamp",
+    "placeholder_zero_not_quality_decision",
+    "placeholder_zero",
+    "steady_seconds"
+  ],
+  "output_trace_columns": [
+    "event",
+    "sensor_stamp",
+    "extra",
+    "steady_seconds"
+  ],
+  "trace_events": {
+    "C": "raw IMU callback entry",
+    "I": "outer OnImu entry before mutex",
+    "U": "outer LiDAR correction entry before mutex",
+    "R": "historical correction replay begins",
+    "E": "historical correction replay ends",
+    "P": "odom publish entry",
+    "D": "odom publish return",
+    "S": "nonpositive IMU dt rejected; extra=dt",
+    "G": "IMU dt above legacy max; extra=dt",
+    "T": "correction-age publication suppression; extra=age",
+    "H": "posterior predates history; legacy clamps to first snapshot; extra=history_start minus posterior"
+  },
+  "instrumentation_caveat": "Observers add timing overhead and can perturb scheduling. Buffered trace must be explicitly flushed because legacy shutdown aborts. Final records after the flush may be absent if data still arrives; runner must drain first.",
+  "legacy_binary_sha256": "50de9bc73f5466f30723a6e04c591c0a8985a4cfff7ac3376ab28bb304be593f",
+  "fixed_binary_sha256_after_legacy_build": "0362c6ef5c78635cb3d2355a8042ff1bc97736d180856064fe05d72a410bed0a",
+  "idle_validation": {
+    "binary": "/workspace/install-low/adaptive_lio/lib/adaptive_lio/adaptive_lio",
+    "sha256": "50de9bc73f5466f30723a6e04c591c0a8985a4cfff7ac3376ab28bb304be593f",
+    "exit_code": -6,
+    "expected_exit_code": -6,
+    "initialization_success": true,
+    "legacy_shutdown_abort": true
+  },
+  "legacy_config_additions": {
+    "common.aux_lidar_topic": "/unused_aux",
+    "odometry.motion_compensation": "CONSTANT_VELOCITY",
+    "odometry.icpmodel": "CT_POINT_TO_PLANE",
+    "preprocess.degenerate_window_num": 10
+  },
+  "legacy_config_additions_source": "Original legacy config/mapping_m.yaml defaults for mandatory legacy-only keys; aux topic is empty data placeholder.",
+  "legacy_limits": {
+    "imu_gap_seconds": 0.2,
+    "history_seconds": 2.0,
+    "correction_age_limit_seconds": 1.0
+  },
+  "legacy_position_semantics": "PredictAllLocked calls only PredictOrientationLocked; PublishOdomLocked holds latest LiDAR position_xyz_ between corrections. No acceleration-based position prediction."
+}

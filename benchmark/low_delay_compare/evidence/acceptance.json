@@ -1,0 +1,149 @@
+{
+  "pass": true,
+  "checks": {
+    "twelve_formal_runs": true,
+    "six_per_version": true,
+    "all_integrity_and_fixed_guarantees": true
+  },
+  "by_run": {
+    "flatwall05_fixed_a": {
+      "complete_recorded_imu": true,
+      "successful_playback_and_recording": true,
+      "node_survived_until_requested_stop": true,
+      "node_exit_classified": true,
+      "nonempty_odometry": true,
+      "complete_imu_callbacks": true,
+      "finite_odometry": true,
+      "monotonic_unique_stamps": true,
+      "no_sensor_holes_over_half_second": true,
+      "prediction_reaches_input_tail": true,
+      "all_publications_received": true,
+      "no_fault_status": true,
+      "health_status_available": true,
+      "clean_shutdown": true
+    },
+    "flatwall05_fixed_b": {
+      "complete_recorded_imu": true,
+      "successful_playback_and_recording": true,
+      "node_survived_until_requested_stop": true,
+      "node_exit_classified": true,
+      "nonempty_odometry": true,
+      "complete_imu_callbacks": true,
+      "finite_odometry": true,
+      "monotonic_unique_stamps": true,
+      "no_sensor_holes_over_half_second": true,
+      "prediction_reaches_input_tail": true,
+      "all_publications_received": true,
+      "no_fault_status": true,
+      "health_status_available": true,
+      "clean_shutdown": true
+    },
+    "flatwall05_low_a": {
+      "complete_recorded_imu": true,
+      "successful_playback_and_recording": true,
+      "node_survived_until_requested_stop": true,
+      "node_exit_classified": true,
+      "nonempty_odometry": true
+    },
+    "flatwall05_low_b": {
+      "complete_recorded_imu": true,
+      "successful_playback_and_recording": true,
+      "node_survived_until_requested_stop": true,
+      "node_exit_classified": true,
+      "nonempty_odometry": true
+    },
+    "glim_original_fixed_a": {
+      "complete_recorded_imu": true,
+      "successful_playback_and_recording": true,
+      "node_survived_until_requested_stop": true,
+      "node_exit_classified": true,
+      "nonempty_odometry": true,
+      "complete_imu_callbacks": true,
+      "finite_odometry": true,
+      "monotonic_unique_stamps": true,
+      "no_sensor_holes_over_half_second": true,
+      "prediction_reaches_input_tail": true,
+      "all_publications_received": true,
+      "no_fault_status": true,
+      "health_status_available": true,
+      "clean_shutdown": true
+    },
+    "glim_original_fixed_b": {
+      "complete_recorded_imu": true,
+      "successful_playback_and_recording": true,
+      "node_survived_until_requested_stop": true,
+      "node_exit_classified": true,
+      "nonempty_odometry": true,
+      "complete_imu_callbacks": true,
+      "finite_odometry": true,
+      "monotonic_unique_stamps": true,
+      "no_sensor_holes_over_half_second": true,
+      "prediction_reaches_input_tail": true,
+      "all_publications_received": true,
+      "no_fault_status": true,
+      "health_status_available": true,
+      "clean_shutdown": true
+    },
+    "glim_original_low_a": {
+      "complete_recorded_imu": true,
+      "successful_playback_and_recording": true,
+      "node_survived_until_requested_stop": true,
+      "node_exit_classified": true,
+      "nonempty_odometry": true
+    },
+    "glim_original_low_b": {
+      "complete_recorded_imu": true,
+      "successful_playback_and_recording": true,
+      "node_survived_until_requested_stop": true,
+      "node_exit_classified": true,
+      "nonempty_odometry": true
+    },
+    "glim_retimed_fixed_a": {
+      "complete_recorded_imu": true,
+      "successful_playback_and_recording": true,
+      "node_survived_until_requested_stop": true,
+      "node_exit_classified": true,
+      "nonempty_odometry": true,
+      "complete_imu_callbacks": true,
+      "finite_odometry": true,
+      "monotonic_unique_stamps": true,
+      "no_sensor_holes_over_half_second": true,
+      "prediction_reaches_input_tail": true,
+      "all_publications_received": true,
+      "no_fault_status": true,
+      "health_status_available": true,
+      "clean_shutdown": true
+    },
+    "glim_retimed_fixed_b": {
+      "complete_recorded_imu": true,
+      "successful_playback_and_recording": true,
+      "node_survived_until_requested_stop": true,
+      "node_exit_classified": true,
+      "nonempty_odometry": true,
+      "complete_imu_callbacks": true,
+      "finite_odometry": true,
+      "monotonic_unique_stamps": true,
+      "no_sensor_holes_over_half_second": true,
+      "prediction_reaches_input_tail": true,
+      "all_publications_received": true,
+      "no_fault_status": true,
+      "health_status_available": true,
+      "clean_shutdown": true
+    },
+    "glim_retimed_low_a": {
+      "complete_recorded_imu": true,
+      "successful_playback_and_recording": true,
+      "node_survived_until_requested_stop": true,
+      "node_exit_classified": true,
+      "nonempty_odometry": true
+    },
+    "glim_retimed_low_b": {
+      "complete_recorded_imu": true,
+      "successful_playback_and_recording": true,
+      "node_survived_until_requested_stop": true,
+      "node_exit_classified": true,
+      "nonempty_odometry": true
+    }
+  },
+  "scope": "Old holes, callback loss, duplicates, held positions and empty covariance are measured outcomes, not hidden or excluded. Old post-SIGINT abort is explicitly retained. No expectation of inner algorithm equivalence or hard wall-time guarantee."
+}

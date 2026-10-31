@@ -1,0 +1,8 @@
+{
+  "binary": "/workspace/install-low/adaptive_lio/lib/adaptive_lio/adaptive_lio",
+  "sha256": "50de9bc73f5466f30723a6e04c591c0a8985a4cfff7ac3376ab28bb304be593f",
+  "exit_code": -6,
+  "expected_exit_code": -6,
+  "initialization_success": true,
+  "legacy_shutdown_abort": true
+}

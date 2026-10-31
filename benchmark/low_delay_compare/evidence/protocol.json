@@ -1,0 +1,47 @@
+{
+  "date": "2026-10-31",
+  "fixed_runtime_commit": "16185f2576ed70d3d5b7fa7f98e8e423a5cb8c51",
+  "fixed_published_checkpoint": "3483a8aac9eff483dbc1178f67094838f876ec35",
+  "fixed_binary_sha256": "0362c6ef5c78635cb3d2355a8042ff1bc97736d180856064fe05d72a410bed0a",
+  "legacy_commit": "24e6ca33b5878d97c5515b4d3350ce790399bb8d",
+  "legacy_binary_sha256": "50de9bc73f5466f30723a6e04c591c0a8985a4cfff7ac3376ab28bb304be593f",
+  "legacy_patch": "legacy_compat_observers.patch",
+  "cases": [
+    "flatwall05",
+    "glim_original",
+    "glim_retimed"
+  ],
+  "repeats": 2,
+  "orders": {
+    "a": [
+      "fixed",
+      "low"
+    ],
+    "b": [
+      "low",
+      "fixed"
+    ]
+  },
+  "playback_rate": 1,
+  "player_delay_s": 3,
+  "drain_s": 15,
+  "formal_runs": 12,
+  "fault_runs": 2,
+  "hole_threshold_s": 0.5,
+  "imu_gap_policy_s": {
+    "fixed": 0.05,
+    "low": 0.2
+  },
+  "fixed_target_output_hz": 50,
+  "ape": {
+    "association_limit_s": 0.03,
+    "alignment": "SE3 no scale",
+    "duplicate_policy": "last received pose at each timestamp",
+    "support": "intersection shared by all four runs within one condition"
+  },
+  "runtime_scope": "No fixed source or binary changes; oldactivealgorithm/QoS/timestamps unchanged. Configuration schema differences documented; inner algorithms differ so not an output-only ablation.",
+  "shutdown_policy": "Legacy -6 accepted only after successful playback and explicit requestedstop; earlyexit is failure.",
+  "exclusions": [
+    "low_delay_smoke: startup validation, earlier legacy config snapshot preserved"
+  ]
+}

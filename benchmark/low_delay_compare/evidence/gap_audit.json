@@ -1,0 +1,247 @@
+{
+  "definition": "Gap index zero denotes the first interval between sorted unique odom timestamps. Excluding that first interval is descriptive only; original acceptance and maximum-gap metrics remain unchanged.",
+  "runs": {
+    "flatwall05_fixed_a": {
+      "version": "fixed",
+      "first_unique_stamp": 1656505492.5028715,
+      "second_unique_stamp": 1656505492.5228758,
+      "first_unique_interval_s": 0.0200042724609375,
+      "max_unique_interval_s": 0.025053977966308594,
+      "max_unique_interval_index_zero_based": 11,
+      "max_gap_left_stamp": 1656505492.7418377,
+      "max_gap_right_stamp": 1656505492.7668917,
+      "max_gap_is_first_interval": false,
+      "max_unique_interval_excluding_first_s": 0.025053977966308594,
+      "max_receipt_interval_s": 0.11349797248840332,
+      "mean_unique_sensor_rate_hz": 45.24891981916168,
+      "median_unique_sensor_period_s": 0.02001357078552246
+    },
+    "flatwall05_fixed_b": {
+      "version": "fixed",
+      "first_unique_stamp": 1656505492.5028715,
+      "second_unique_stamp": 1656505492.5228758,
+      "first_unique_interval_s": 0.0200042724609375,
+      "max_unique_interval_s": 0.025053977966308594,
+      "max_unique_interval_index_zero_based": 11,
+      "max_gap_left_stamp": 1656505492.7418377,
+      "max_gap_right_stamp": 1656505492.7668917,
+      "max_gap_is_first_interval": false,
+      "max_unique_interval_excluding_first_s": 0.025053977966308594,
+      "max_receipt_interval_s": 0.11357831954956055,
+      "mean_unique_sensor_rate_hz": 45.24891981916168,
+      "median_unique_sensor_period_s": 0.02001357078552246
+    },
+    "flatwall05_low_a": {
+      "version": "low",
+      "first_unique_stamp": 1656505492.399296,
+      "second_unique_stamp": 1656505492.5028715,
+      "first_unique_interval_s": 0.10357546806335449,
+      "max_unique_interval_s": 0.10357546806335449,
+      "max_unique_interval_index_zero_based": 0,
+      "max_gap_left_stamp": 1656505492.399296,
+      "max_gap_right_stamp": 1656505492.5028715,
+      "max_gap_is_first_interval": true,
+      "max_unique_interval_excluding_first_s": 0.0051310062408447266,
+      "max_receipt_interval_s": 0.10175657272338867,
+      "mean_unique_sensor_rate_hz": 201.35908858113444,
+      "median_unique_sensor_period_s": 0.004997730255126953
+    },
+    "flatwall05_low_b": {
+      "version": "low",
+      "first_unique_stamp": 1656505492.399296,
+      "second_unique_stamp": 1656505492.5028715,
+      "first_unique_interval_s": 0.10357546806335449,
+      "max_unique_interval_s": 0.10357546806335449,
+      "max_unique_interval_index_zero_based": 0,
+      "max_gap_left_stamp": 1656505492.399296,
+      "max_gap_right_stamp": 1656505492.5028715,
+      "max_gap_is_first_interval": true,
+      "max_unique_interval_excluding_first_s": 0.0051310062408447266,
+      "max_receipt_interval_s": 0.09491086006164551,
+      "mean_unique_sensor_rate_hz": 201.35908858113444,
+      "median_unique_sensor_period_s": 0.004997730255126953
+    },
+    "glim_original_fixed_a": {
+      "version": "fixed",
+      "first_unique_stamp": 111.791840809,
+      "second_unique_stamp": 111.811846349,
+      "first_unique_interval_s": 0.020005539999999655,
+      "max_unique_interval_s": 0.025086659999999483,
+      "max_unique_interval_index_zero_based": 1080,
+      "max_gap_left_stamp": 135.76685692,
+      "max_gap_right_stamp": 135.79194358,
+      "max_gap_is_first_interval": false,
+      "max_unique_interval_excluding_first_s": 0.025086659999999483,
+      "max_receipt_interval_s": 0.12629914283752441,
+      "mean_unique_sensor_rate_hz": 44.96400149990053,
+      "median_unique_sensor_period_s": 0.020033890999997084
+    },
+    "glim_original_fixed_b": {
+      "version": "fixed",
+      "first_unique_stamp": 111.791840809,
+      "second_unique_stamp": 111.811846349,
+      "first_unique_interval_s": 0.020005539999999655,
+      "max_unique_interval_s": 0.025086659999999483,
+      "max_unique_interval_index_zero_based": 1080,
+      "max_gap_left_stamp": 135.76685692,
+      "max_gap_right_stamp": 135.79194358,
+      "max_gap_is_first_interval": false,
+      "max_unique_interval_excluding_first_s": 0.025086659999999483,
+      "max_receipt_interval_s": 0.1122903823852539,
+      "mean_unique_sensor_rate_hz": 44.96400149990053,
+      "median_unique_sensor_period_s": 0.020033890999997084
+    },
+    "glim_original_low_a": {
+      "version": "low",
+      "first_unique_stamp": 111.699292944,
+      "second_unique_stamp": 111.771843009,
+      "first_unique_interval_s": 0.07255006499998728,
+      "max_unique_interval_s": 0.07255006499998728,
+      "max_unique_interval_index_zero_based": 0,
+      "max_gap_left_stamp": 111.699292944,
+      "max_gap_right_stamp": 111.771843009,
+      "max_gap_is_first_interval": true,
+      "max_unique_interval_excluding_first_s": 0.005098051000004489,
+      "max_receipt_interval_s": 0.12480759620666504,
+      "mean_unique_sensor_rate_hz": 203.78535763845093,
+      "median_unique_sensor_period_s": 0.004996625499998686
+    },
+    "glim_original_low_b": {
+      "version": "low",
+      "first_unique_stamp": 111.699292944,
+      "second_unique_stamp": 111.80184678,
+      "first_unique_interval_s": 0.10255383599999846,
+      "max_unique_interval_s": 0.10255383599999846,
+      "max_unique_interval_index_zero_based": 0,
+      "max_gap_left_stamp": 111.699292944,
+      "max_gap_right_stamp": 111.80184678,
+      "max_gap_is_first_interval": true,
+      "max_unique_interval_excluding_first_s": 0.005098051000004489,
+      "max_receipt_interval_s": 0.09542131423950195,
+      "mean_unique_sensor_rate_hz": 203.6863846624245,
+      "median_unique_sensor_period_s": 0.004996625499998686
+    },
+    "glim_retimed_fixed_a": {
+      "version": "fixed",
+      "first_unique_stamp": 111.756858789,
+      "second_unique_stamp": 111.77685784,
+      "first_unique_interval_s": 0.019999050999999213,
+      "max_unique_interval_s": 0.025086659999999483,
+      "max_unique_interval_index_zero_based": 1082,
+      "max_gap_left_stamp": 135.76685692,
+      "max_gap_right_stamp": 135.79194358,
+      "max_gap_is_first_interval": false,
+      "max_unique_interval_excluding_first_s": 0.025086659999999483,
+      "max_receipt_interval_s": 0.10665297508239746,
+      "mean_unique_sensor_rate_hz": 44.97105464582972,
+      "median_unique_sensor_period_s": 0.020033541000003652
+    },
+    "glim_retimed_fixed_b": {
+      "version": "fixed",
+      "first_unique_stamp": 111.761842329,
+      "second_unique_stamp": 111.781844939,
+      "first_unique_interval_s": 0.020002609999991705,
+      "max_unique_interval_s": 0.025086659999999483,
+      "max_unique_interval_index_zero_based": 1082,
+      "max_gap_left_stamp": 135.76685692,
+      "max_gap_right_stamp": 135.79194358,
+      "max_gap_is_first_interval": false,
+      "max_unique_interval_excluding_first_s": 0.025086659999999483,
+      "max_receipt_interval_s": 0.032294511795043945,
+      "mean_unique_sensor_rate_hz": 44.97475626894212,
+      "median_unique_sensor_period_s": 0.02003313000000162
+    },
+    "glim_retimed_low_a": {
+      "version": "low",
+      "first_unique_stamp": 111.699292944,
+      "second_unique_stamp": 111.761842329,
+      "first_unique_interval_s": 0.06254938499999696,
+      "max_unique_interval_s": 0.06254938499999696,
+      "max_unique_interval_index_zero_based": 0,
+      "max_gap_left_stamp": 111.699292944,
+      "max_gap_right_stamp": 111.761842329,
+      "max_gap_is_first_interval": true,
+      "max_unique_interval_excluding_first_s": 0.005098051000004489,
+      "max_receipt_interval_s": 0.05341792106628418,
+      "mean_unique_sensor_rate_hz": 203.81834863045975,
+      "median_unique_sensor_period_s": 0.004996625499998686
+    },
+    "glim_retimed_low_b": {
+      "version": "low",
+      "first_unique_stamp": 111.699292944,
+      "second_unique_stamp": 111.761842329,
+      "first_unique_interval_s": 0.06254938499999696,
+      "max_unique_interval_s": 0.06254938499999696,
+      "max_unique_interval_index_zero_based": 0,
+      "max_gap_left_stamp": 111.699292944,
+      "max_gap_right_stamp": 111.761842329,
+      "max_gap_is_first_interval": true,
+      "max_unique_interval_excluding_first_s": 0.005098051000004489,
+      "max_receipt_interval_s": 0.05297493934631348,
+      "mean_unique_sensor_rate_hz": 203.81834863045975,
+      "median_unique_sensor_period_s": 0.004996625499998686
+    }
+  },
+  "cases": {
+    "flatwall05": {
+      "fixed": {
+        "max_receipt_interval_s": 0.11357831954956055,
+        "mean_unique_sensor_rate_hz_range": [
+          45.24891981916168,
+          45.24891981916168
+        ],
+        "max_unique_interval_excluding_first_s": 0.025053977966308594,
+        "all_max_gaps_are_first_interval": false
+      },
+      "low": {
+        "max_receipt_interval_s": 0.10175657272338867,
+        "mean_unique_sensor_rate_hz_range": [
+          201.35908858113444,
+          201.35908858113444
+        ],
+        "max_unique_interval_excluding_first_s": 0.0051310062408447266,
+        "all_max_gaps_are_first_interval": true
+      }
+    },
+    "glim_original": {
+      "fixed": {
+        "max_receipt_interval_s": 0.12629914283752441,
+        "mean_unique_sensor_rate_hz_range": [
+          44.96400149990053,
+          44.96400149990053
+        ],
+        "max_unique_interval_excluding_first_s": 0.025086659999999483,
+        "all_max_gaps_are_first_interval": false
+      },
+      "low": {
+        "max_receipt_interval_s": 0.12480759620666504,
+        "mean_unique_sensor_rate_hz_range": [
+          203.6863846624245,
+          203.78535763845093
+        ],
+        "max_unique_interval_excluding_first_s": 0.005098051000004489,
+        "all_max_gaps_are_first_interval": true
+      }
+    },
+    "glim_retimed": {
+      "fixed": {
+        "max_receipt_interval_s": 0.10665297508239746,
+        "mean_unique_sensor_rate_hz_range": [
+          44.97105464582972,
+          44.97475626894212
+        ],
+        "max_unique_interval_excluding_first_s": 0.025086659999999483,
+        "all_max_gaps_are_first_interval": false
+      },
+      "low": {
+        "max_receipt_interval_s": 0.05341792106628418,
+        "mean_unique_sensor_rate_hz_range": [
+          203.81834863045975,
+          203.81834863045975
+        ],
+        "max_unique_interval_excluding_first_s": 0.005098051000004489,
+        "all_max_gaps_are_first_interval": true
+      }
+    }
+  }
+}

@@ -1,0 +1,74 @@
+[
+  {
+    "case": "flatwall05",
+    "version": "fixed",
+    "repeat": "a",
+    "path": "/workspace/bench/low_delay_runs/flatwall05_fixed_a"
+  },
+  {
+    "case": "flatwall05",
+    "version": "low",
+    "repeat": "a",
+    "path": "/workspace/bench/low_delay_runs/flatwall05_low_a"
+  },
+  {
+    "case": "flatwall05",
+    "version": "low",
+    "repeat": "b",
+    "path": "/workspace/bench/low_delay_runs/flatwall05_low_b"
+  },
+  {
+    "case": "flatwall05",
+    "version": "fixed",
+    "repeat": "b",
+    "path": "/workspace/bench/low_delay_runs/flatwall05_fixed_b"
+  },
+  {
+    "case": "glim_original",
+    "version": "fixed",
+    "repeat": "a",
+    "path": "/workspace/bench/low_delay_runs/glim_original_fixed_a"
+  },
+  {
+    "case": "glim_original",
+    "version": "low",
+    "repeat": "a",
+    "path": "/workspace/bench/low_delay_runs/glim_original_low_a"
+  },
+  {
+    "case": "glim_original",
+    "version": "low",
+    "repeat": "b",
+    "path": "/workspace/bench/low_delay_runs/glim_original_low_b"
+  },
+  {
+    "case": "glim_original",
+    "version": "fixed",
+    "repeat": "b",
+    "path": "/workspace/bench/low_delay_runs/glim_original_fixed_b"
+  },
+  {
+    "case": "glim_retimed",
+    "version": "fixed",
+    "repeat": "a",
+    "path": "/workspace/bench/low_delay_runs/glim_retimed_fixed_a"
+  },
+  {
+    "case": "glim_retimed",
+    "version": "low",
+    "repeat": "a",
+    "path": "/workspace/bench/low_delay_runs/glim_retimed_low_a"
+  },
+  {
+    "case": "glim_retimed",
+    "version": "low",
+    "repeat": "b",
+    "path": "/workspace/bench/low_delay_runs/glim_retimed_low_b"
+  },
+  {
+    "case": "glim_retimed",
+    "version": "fixed",
+    "repeat": "b",
+    "path": "/workspace/bench/low_delay_runs/glim_retimed_fixed_b"
+  }
+]

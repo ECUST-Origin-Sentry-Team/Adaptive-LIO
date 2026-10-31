@@ -1,0 +1,183 @@
+diff --git a/src/apps/main_ada.cpp b/src/apps/main_ada.cpp
+index 9587df6..646386e 100755
+--- a/src/apps/main_ada.cpp
++++ b/src/apps/main_ada.cpp
+@@ -9,6 +9,9 @@
+ #include <memory>
+ #include <deque>
+ #include <algorithm>
++#include <fstream>
++#include <iomanip>
++#include <cstdlib>
+ 
+ // ros2 lib
+ #include "rclcpp/rclcpp.hpp"
+@@ -42,6 +45,43 @@
+ nav_msgs::msg::Path laserOdoPath;
+ 
+ DEFINE_string(config_file, "", "Path to adaptive_lio config YAML.");
++DEFINE_string(trajectory_file, "", "Optional observer-only LiDAR pose TUM export.");
++
++// Optional observers only: retain legacy queues, prediction, and publication
++// decisions unchanged. Flush explicitly before legacy unjoined-thread shutdown.
++class LegacyObservers {
++public:
++    static LegacyObservers& Get(){static LegacyObservers observer;return observer;}
++    void Trace(char event,double stamp,double extra){
++        std::lock_guard<std::mutex> lock(mutex_);
++        if(output_.is_open())output_<<event<<' '<<stamp<<' '<<extra<<' '<<Now()<<'\n';
++    }
++    void Input(double stamp){
++        std::lock_guard<std::mutex> lock(mutex_);
++        const double now=Now();
++        // 0/0 are placeholders: the old adapter has no new quality gate.
++        if(imu_.is_open())imu_<<stamp<<" 0 0 "<<now<<'\n';
++        if(output_.is_open())output_<<"C "<<stamp<<" 0 "<<now<<'\n';
++    }
++    void Posterior(const SE3& pose,double stamp){
++        std::lock_guard<std::mutex> lock(mutex_);
++        if(!trajectory_.is_open())return;
++        const auto& p=pose.translation();const auto q=pose.unit_quaternion();
++        trajectory_<<stamp<<' '<<p.x()<<' '<<p.y()<<' '<<p.z()<<' '
++            <<q.x()<<' '<<q.y()<<' '<<q.z()<<' '<<q.w()<<'\n';
++    }
++    void Flush(){std::lock_guard<std::mutex> lock(mutex_);output_.flush();imu_.flush();trajectory_.flush();}
++private:
++    static double Now(){return std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch()).count();}
++    LegacyObservers(){
++        if(const char* p=std::getenv("ADAPTIVE_LIO_OUTPUT_TRACE"))output_.open(p);
++        if(const char* p=std::getenv("ADAPTIVE_LIO_IMU_TRACE"))imu_.open(p);
++        if(!FLAGS_trajectory_file.empty())trajectory_.open(FLAGS_trajectory_file);
++        output_<<std::setprecision(17);imu_<<std::setprecision(17);trajectory_<<std::setprecision(17);
++    }
++    std::mutex mutex_;
++    std::ofstream output_,imu_,trajectory_;
++};
+ 
+ zjloc::lidarodom_m *lio;
+ zjloc::CloudConvert2 *convert;
+@@ -136,6 +176,7 @@ public:
+ 
+     void OnLioMeasurement(const SE3 &pose, double stamp)
+     {
++        LegacyObservers::Get().Trace('U',stamp,0.);
+         std::lock_guard<std::mutex> lk(mtx_);
+         const Eigen::Vector3d p_meas = pose.translation();
+         position_xyz_ = p_meas;
+@@ -200,9 +241,11 @@ public:
+         }
+         if (idx < 0)
+         {
++            LegacyObservers::Get().Trace('H',stamp,history_.front().stamp-stamp);
+             idx = 0;
+         }
+ 
++        LegacyObservers::Get().Trace('R',stamp,history_.back().stamp-stamp);
+         LoadSnapshotLocked(history_[static_cast<size_t>(idx)]);
+         UpdateOrientationLocked(rpy_meas);
+         SaveSnapshotLocked(history_[static_cast<size_t>(idx)]);
+@@ -215,11 +258,13 @@ public:
+         }
+ 
+         last_meas_t_ = stamp;
++        LegacyObservers::Get().Trace('E',stamp,history_.back().stamp-stamp);
+         AppendPathAndPublishLocked(history_.back().stamp);
+     }
+ 
+     void OnImu(const IMUPtr &imu)
+     {
++        LegacyObservers::Get().Trace('I',imu->timestamp_,0.);
+         std::lock_guard<std::mutex> lk(mtx_);
+         const Vec3d gyro_base = r_base_imu_ * imu->gyro_;
+         const Vec3d acc_base = r_base_imu_ * imu->acce_;
+@@ -236,11 +281,13 @@ public:
+         double dt = t - last_imu_t_;
+         if (dt <= 0.0)
+         {
++            LegacyObservers::Get().Trace('S',t,dt);
+             return;
+         }
+ 
+         if (dt > kMaxImuDtSec)
+         {
++            LegacyObservers::Get().Trace('G',t,dt);
+             last_imu_t_ = t;
+             history_.clear();
+             return;
+@@ -264,6 +311,7 @@ public:
+ 
+         if ((t - last_meas_t_) > max_predict_without_meas_)
+         {
++            LegacyObservers::Get().Trace('T',t,t-last_meas_t_);
+             return;
+         }
+ 
+@@ -525,7 +573,9 @@ private:
+         odom.pose.pose.orientation.y = q.y();
+         odom.pose.pose.orientation.z = q.z();
+         odom.pose.pose.orientation.w = q.w();
++        LegacyObservers::Get().Trace('P',stamp,stamp-last_meas_t_);
+         odom_pub_->publish(odom);
++        LegacyObservers::Get().Trace('D',stamp,stamp-last_meas_t_);
+ 
+         if (tf_pub_)
+         {
+@@ -745,6 +795,7 @@ void standard_pcl_cbk(const sensor_msgs::msg::PointCloud2::SharedPtr msg)
+ 
+ void imuHandler(const sensor_msgs::msg::Imu::SharedPtr msg)
+ {
++    LegacyObservers::Get().Input(msg->header.stamp.sec+msg->header.stamp.nanosec*1e-9);
+ 
+     // sensor_msgs::msg::Imu::SharedPtr msg_temp(new sensor_msgs::msg::Imu(*msg));
+     IMUPtr imu = std::make_shared<zjloc::IMU>(
+@@ -1014,6 +1065,7 @@ int main(int argc, char **argv)
+         {
+             if (topic_name == "laser")
+             {
++                LegacyObservers::Get().Posterior(pose,stamp);
+                 if (imu_odom_fusion)
+                 {
+                     imu_odom_fusion->OnLioMeasurement(pose, stamp);
+@@ -1278,6 +1330,7 @@ int main(int argc, char **argv)
+ 
+     std::cout << ANSI_COLOR_GREEN_BOLD << " out done. " << ANSI_COLOR_RESET << std::endl;
+ 
++    LegacyObservers::Get().Flush();
+     sleep(3);
+     return 0;
+ }
+diff --git a/src/lio/CMakeLists.txt b/src/lio/CMakeLists.txt
+index fd1f5f7..e193a98 100755
+--- a/src/lio/CMakeLists.txt
++++ b/src/lio/CMakeLists.txt
+@@ -1,6 +1,5 @@
+ 
+ add_library(${PROJECT_NAME}.lio
+-        poseParameterization.cpp
+         lidarFactor.cpp
+         lio_utils.cpp
+         lidarodom.cpp
+diff --git a/src/lio/lidarodom.cpp b/src/lio/lidarodom.cpp
+index f272c0d..1b8f8ac 100755
+--- a/src/lio/lidarodom.cpp
++++ b/src/lio/lidarodom.cpp
+@@ -6,7 +6,6 @@
+ #include <pcl/common/io.h>
+ #include <pcl/filters/passthrough.h>
+ #include <ceres/ceres.h>
+-#include <ceres/local_parameterization.h>
+ #include <ceres/rotation.h>
+ #include <algorithm>
+ #include <cmath>
+diff --git a/src/lio/lidarodom.h b/src/lio/lidarodom.h
+index b875f65..2ddca63 100755
+--- a/src/lio/lidarodom.h
++++ b/src/lio/lidarodom.h
+@@ -2,7 +2,6 @@
+ #define LIDAR_ODOM_M_H__
+ #include "common/timer/timer.h"
+ #include "lio/lidarFactor.h"
+-#include "lio/poseParameterization.h"
+ 
+ #include "algo/eskf.hpp"
+ #include "algo/static_imu_init.h"
