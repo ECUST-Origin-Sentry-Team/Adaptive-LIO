@@ -1,0 +1,34 @@
+{
+  "flatwall": {
+    "description_url": "https://staff.aist.go.jp/k.koide/projects/glimsupp/flatwall.html",
+    "record_url": "https://zenodo.org/records/7641866",
+    "bag_url": "https://zenodo.org/records/7641866/files/flatwall_05.bag",
+    "expected_bag_md5": "15b7c46d0a018d0dbaf6bb8a1b30a828",
+    "gt_url": "https://zenodo.org/records/7641866/files/gt.tar.gz",
+    "config_url": "https://staff.aist.go.jp/k.koide/projects/glim_params/config_flatwall.tar.gz",
+    "gt_method": "Camera fiducial tags; author-provided LiDAR trajectory"
+  },
+  "glim_cross_sensor": {
+    "description_url": "https://staff.aist.go.jp/k.koide/projects/glimsupp/versatile.html",
+    "record_url": "https://zenodo.org/records/6864654",
+    "bag_url": "https://zenodo.org/records/6864654/files/livox.bag",
+    "expected_bag_md5": "fb17a6d4e0bc1765e276f0dcca8a5063",
+    "gt_url": "https://zenodo.org/records/6864654/files/gt.tar.gz",
+    "config_url": "https://staff.aist.go.jp/k.koide/projects/glim_params/config_versatile.tar.gz",
+    "gt_method": "Batch LiDAR-IMU optimization against survey-grade FARO map; not independent motion-capture GT"
+  },
+  "sensor_config": {
+    "acceleration_scale": 9.80665,
+    "T_lidar_imu_xyz_xyzw": [0,0,0,0,0,0,1],
+    "imu_time_offset": 0,
+    "source": "Official config archives listed above; both datasets agree"
+  },
+  "conversion": {
+    "script": "data_convert.py",
+    "topics": ["/livox/lidar", "/livox/imu"],
+    "message_type_rename": "livox_ros_driver/CustomMsg to livox_ros_driver2/msg/CustomMsg; schema unchanged apart from ROS1 Header.seq removal",
+    "standard_output": "Preserve original bag storage timestamp and all measurement fields/header timestamps",
+    "retimed_output": "Only bag storage timestamp changes to header timestamp; globally sorted; CDR bytes identical",
+    "retimed_caveat": "Reconstructed derivative with explicit procedure; lost prior derivative cannot be proven bitwise identical"
+  }
+}

@@ -17,8 +17,8 @@ int main(){try {
     s=sample(1.99);require(timing.Process(s)==Decision::Drop,"minor reorder");
     s=sample(.5);require(timing.Process(s)==Decision::Fault,"clock reset");
     ImuQualityGate gap(options);s=sample(1);gap.Process(s);s=sample(1.051);require(gap.Process(s)==Decision::Fault,"gap");
-    ImuQualityGate bad_stamp(options);s=sample(NAN);require(bad_stamp.Process(s)==Decision::Drop,"NaN time");
-    s=sample(1);require(bad_stamp.Process(s)==Decision::Forward,"NaN time poisoned watermark");
+    ImuQualityGate bad_stamp(options);s=sample(NAN);require(bad_stamp.Process(s)==Decision::Fault,"NaN time");
+    s=sample(1);require(bad_stamp.Process(s)==Decision::Fault,"NaN time fault not latched");
     options.hold_seconds=.025;options.recovery_samples=2;
     ImuQualityGate gate(options);std::vector<IMU> sequence;
     for(int i=0;i<=6;++i){s=sample(1+i*.005);if(i==1||i==2)s.gyro_.x()=2.;

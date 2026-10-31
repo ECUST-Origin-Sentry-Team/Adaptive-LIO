@@ -1,0 +1,56 @@
+{
+  "source": "/workspace/datasets/glim_cross_sensor/livox.bag",
+  "source_md5": "fb17a6d4e0bc1765e276f0dcca8a5063",
+  "source_sha256": "f57a2e85339316d4235ab693ab2876aac5e113625c7f8b0f7873b62f92e09643",
+  "source_bytes": 613350674,
+  "source_connections": [
+    {
+      "topic": "/livox/imu",
+      "type": "sensor_msgs/msg/Imu",
+      "count": 12611
+    },
+    {
+      "topic": "/livox/points",
+      "type": "sensor_msgs/msg/PointCloud2",
+      "count": 618
+    },
+    {
+      "topic": "/livox/lidar",
+      "type": "livox_ros_driver/msg/CustomMsg",
+      "count": 618
+    }
+  ],
+  "output": "/workspace/datasets/glim_cross_sensor/livox_ros2",
+  "retimed": "/workspace/datasets/glim_cross_sensor/livox_retimed",
+  "retiming": "storage timestamp = actual message header; payload unchanged; globally sorted",
+  "topics": {
+    "/livox/imu": {
+      "count": 12611,
+      "header_first_ns": 110517844360,
+      "header_last_ns": 172321901670,
+      "max_header_gap_s": 0.005098050000000001,
+      "duplicate_headers": 0,
+      "backward_headers": 0,
+      "record_minus_header_min_s": 1655977530.1449373,
+      "record_minus_header_max_s": 1655977530.2785866,
+      "ordered_cdr_sha256": "263af319b67389d03f4af9285bdb6159be659b8c7a3ff7092cfc9c5e30201b7b"
+    },
+    "/livox/lidar": {
+      "count": 618,
+      "header_first_ns": 110599457540,
+      "header_last_ns": 172299675480,
+      "max_header_gap_s": 0.10065834000000001,
+      "duplicate_headers": 0,
+      "backward_headers": 0,
+      "record_minus_header_min_s": 1655977530.2436466,
+      "record_minus_header_max_s": 1655977530.2648115,
+      "ordered_cdr_sha256": "570db5bc1f01f6c50ee33116cbc7a2dfde8d5c35bc31bec8029299d9afb006e2"
+    }
+  },
+  "acceleration_norm_median_raw": 0.9930274954606305,
+  "lidar_point_count_range": [
+    24000,
+    24000
+  ],
+  "output_sha256": "97e919e08f8ed0491485051d7ad3bb27364b7a5c6e3f3bbb8110060b23c09767"
+}

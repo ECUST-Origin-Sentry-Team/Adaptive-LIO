@@ -1,0 +1,8 @@
+PASS delay_s=0.75 valid_checks=1001 stale_checks=900 history_miss=0 fresh_recovery=1
+PASS delay_s=1.5 valid_checks=1001 stale_checks=900 history_miss=0 fresh_recovery=1
+PASS delay_s=2.5 valid_checks=1001 stale_checks=900 history_miss=25 fresh_recovery=1
+PASS off_grid_replay_delay_s=0.75 state_and_covariance_equal=1
+PASS off_grid_replay_delay_s=1.5 state_and_covariance_equal=1
+PASS burst_s=4 covariance_growth=1 ordering_rejection=1 gap_fault_latched=1
+PASS nonfinite_fault=1 expired_initialization_recovery=1 pending_ordering=1 replay_failure_closed=1
+ALL CONTINUITY TESTS PASSED

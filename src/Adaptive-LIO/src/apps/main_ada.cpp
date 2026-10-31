@@ -18,6 +18,9 @@
 #include "nav_msgs/msg/odometry.hpp"
 #include "std_msgs/msg/float32.hpp"
 #include "std_msgs/msg/int32.hpp"
+#include "std_msgs/msg/string.hpp"
+#include <fstream>
+#include <iomanip>
 #include "nav_msgs/msg/path.hpp"
 #include <tf2_ros/transform_broadcaster.h>
 #include "tf2/LinearMath/Quaternion.h"
@@ -42,6 +45,7 @@
 nav_msgs::msg::Path laserOdoPath;
 
 DEFINE_string(config_file, "", "Path to adaptive_lio config YAML.");
+DEFINE_string(trajectory_file, "", "Optional committed LiDAR posterior TUM trajectory.");
 
 zjloc::lidarodom_m *lio;
 zjloc::CloudConvert2 *convert;
@@ -86,7 +90,7 @@ void livox_pcl_cbk(const livox_ros_driver2::msg::CustomMsg::ConstSharedPtr msg)
     {
         auto &cloud_out = cloud_vec[i];
         double sample_size = 0.01;
-        thread_local std::mt19937_64 g;
+        std::mt19937_64 g(0); // deterministic per frame, independent of executor thread
         zjloc::common::Timer::Evaluate([&]()
                                        { std::shuffle(cloud_out.begin(), cloud_out.end(), g);
             sub_sample_frame(cloud_out, sample_size); },
@@ -113,7 +117,7 @@ void aux_livox_pcl_cbk(const livox_ros_driver2::msg::CustomMsg::ConstSharedPtr m
 
     auto &cloud_out = cloud_vec[0];
     double sample_size = 0.01;
-    thread_local std::mt19937_64 g;
+    std::mt19937_64 g(0); // deterministic per frame, independent of executor thread
     zjloc::common::Timer::Evaluate([&]()
                                    { std::shuffle(cloud_out.begin(), cloud_out.end(), g);
         sub_sample_frame(cloud_out, sample_size);
@@ -142,7 +146,7 @@ void standard_pcl_cbk(const sensor_msgs::msg::PointCloud2::SharedPtr msg)
         double sample_size = lio->getIndex() < 30 ? 0.02 : 0.1;
         // double sample_size = 0.05;
         zjloc::common::Timer::Evaluate([&]() { // boost::mt19937_64 g;
-            thread_local std::mt19937_64 g;
+            std::mt19937_64 g(0); // deterministic per frame, independent of executor thread
             std::shuffle(cloud_out.begin(), cloud_out.end(), g);
             sub_sample_frame(cloud_out, sample_size);
         },
@@ -155,6 +159,7 @@ void standard_pcl_cbk(const sensor_msgs::msg::PointCloud2::SharedPtr msg)
 
 void imuHandler(const sensor_msgs::msg::Imu::SharedPtr msg)
 {
+    if(imu_odom_output)imu_odom_output->TraceIngress(msg->header.stamp.sec+msg->header.stamp.nanosec*1e-9);
 
     // sensor_msgs::msg::Imu::SharedPtr msg_temp(new sensor_msgs::msg::Imu(*msg));
     IMUPtr imu = std::make_shared<zjloc::IMU>(
@@ -163,6 +168,15 @@ void imuHandler(const sensor_msgs::msg::Imu::SharedPtr msg)
         Vec3d(msg->linear_acceleration.x, msg->linear_acceleration.y, msg->linear_acceleration.z) * gnorm);
     // Once, after SI conversion: share processed values AND immutable quality with both chains.
     const auto decision=imu_quality_gate.Process(*imu);
+    // Same opt-in ingress/decision observer in the controlled baseline and fix.
+    // Serialized by the IMU callback group; flushed at process teardown.
+    static std::ofstream imu_trace([]{
+        const char* path=std::getenv("ADAPTIVE_LIO_IMU_TRACE");
+        return path?std::string(path):std::string();
+    }());
+    if(imu_trace.is_open())imu_trace<<std::setprecision(17)<<imu->timestamp_<<' '
+        <<int(decision)<<' '<<imu->quality_.reasons<<' '
+        <<std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch()).count()<<'\n';
     if(decision==zjloc::ImuQualityGate::Decision::Fault) {
         lio->Fail();
         LOG_FIRST_N(ERROR,1)<<"IMU quality/time fault; stopped both chains, restart node. reason="<<imu->quality_.reasons;
@@ -324,7 +338,8 @@ int main(int argc, char **argv)
     std::mutex scan_publish_queue_mutex;
     std::condition_variable scan_publish_queue_cv;
     bool stop_scan_publish_thread = false;
-    std::thread scan_publish_worker([&]()
+    std::thread scan_publish_worker;
+    auto scan_publish_run = [&]()
                                     {
         while (true)
         {
@@ -354,7 +369,7 @@ int main(int argc, char **argv)
             cloud_output.header.stamp = get_ros_time(task.time);
             cloud_output.header.frame_id = "odom";
             pub_scan->publish(cloud_output);
-        } });
+        } };
 
     auto cloud_pub_func = std::function<bool(std::string & topic_name, zjloc::CloudPtr & cloud, double time)>(
         [&](std::string &topic_name, zjloc::CloudPtr &cloud, double time)
@@ -379,6 +394,9 @@ int main(int argc, char **argv)
     );
 
     auto pubLaserOdometry = node->create_publisher<nav_msgs::msg::Odometry>("/odom", 100);
+    auto pubLidarOdometry = node->create_publisher<nav_msgs::msg::Odometry>("/odom/lidar",100);
+    auto pubOdomStatus = node->create_publisher<std_msgs::msg::String>(
+        "/odom/status",rclcpp::QoS(1).reliable().transient_local());
     auto pubLaserOdometryPath = node->create_publisher<nav_msgs::msg::Path>("/odometry_path", 5);
 
     // 创建tf广播器
@@ -396,6 +414,7 @@ int main(int argc, char **argv)
     // User setup: IMU is colocated/aligned with aft_mapped frame
     imu_odom_output->SetAftToBaseTransform(Eigen::Vector3d::Zero(), Eigen::Vector3d::Zero());
     imu_odom_output->SetBaseLinkFrame("base_link");
+    imu_odom_output->SetStatusPublisher(pubOdomStatus);
 
     if (yaml_cfg["common"])
     {
@@ -420,11 +439,32 @@ int main(int argc, char **argv)
         }
     }
 
+    std::ofstream posterior_trajectory;
+    if(!FLAGS_trajectory_file.empty()){
+        posterior_trajectory.open(FLAGS_trajectory_file);
+        if(!posterior_trajectory)throw std::runtime_error("cannot open trajectory_file");
+        posterior_trajectory<<std::setprecision(17);
+    }
     lio->SetFaultCallback([] { imu_odom_output->Fail(); });
     imu_odom_output->SetFaultCallback([] { lio->RequestStop(); });
     imu_odom_output->Start();
-    lio->SetStateCallback([](const zjloc::LioStateUpdate& state) {
+    scan_publish_worker=std::thread(scan_publish_run);
+    lio->SetStateCallback([&](const zjloc::LioStateUpdate& state) {
         imu_odom_output->OnState(state);
+        const auto projected=zjloc::ProjectOdometry(state.state,Vec3d::Zero(),Vec3d::Zero());
+        const auto& p=projected.pose.translation();const auto q=projected.pose.unit_quaternion();
+        nav_msgs::msg::Odometry odom;
+        odom.header.stamp=get_ros_time(state.state.nav.timestamp_);
+        odom.header.frame_id="odom";odom.child_frame_id="aft_mapped";
+        odom.pose.pose.position.x=p.x();odom.pose.pose.position.y=p.y();odom.pose.pose.position.z=p.z();
+        odom.pose.pose.orientation.x=q.x();odom.pose.pose.orientation.y=q.y();
+        odom.pose.pose.orientation.z=q.z();odom.pose.pose.orientation.w=q.w();
+        for(int r=0;r<6;++r)for(int c=0;c<6;++c)odom.pose.covariance[r*6+c]=projected.pose_cov(r,c);
+        // Pose-only committed posterior. Twist is not an observation on this
+        // topic; match rejection remains available in the LIO quality logs.
+        pubLidarOdometry->publish(odom);
+        if(posterior_trajectory.is_open())posterior_trajectory<<state.state.nav.timestamp_<<' '
+            <<p.x()<<' '<<p.y()<<' '<<p.z()<<' '<<q.x()<<' '<<q.y()<<' '<<q.z()<<' '<<q.w()<<'\n';
     });
     // Scantext processing queue
     struct ScantextTask
@@ -449,7 +489,7 @@ int main(int argc, char **argv)
     {
         scantext_worker = std::thread([&]()
                                       {
-    while (!stop_scantext_thread) {
+    while (true) {
         ScantextTask task;
         {
             std::unique_lock<std::mutex> lock(scantext_queue_mutex);
@@ -658,10 +698,12 @@ int main(int argc, char **argv)
         subAuxLaserCloud = node->create_subscription<livox_ros_driver2::msg::CustomMsg>(aux_laser_topic, 100, aux_livox_pcl_cbk, sensor_sub_options);
     }
 
-    auto imu_callback_group = node->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+    // Do not let point-cloud processing monopolize the IMU callback executor.
+    auto imu_callback_group = node->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive,false);
     rclcpp::SubscriptionOptions imu_sub_options;
     imu_sub_options.callback_group = imu_callback_group;
-    auto sub_imu_ori = node->create_subscription<sensor_msgs::msg::Imu>(imu_topic, 500, imuHandler, imu_sub_options);
+    auto sub_imu_ori = node->create_subscription<sensor_msgs::msg::Imu>(
+        imu_topic,rclcpp::QoS(rclcpp::KeepAll()).reliable(),imuHandler,imu_sub_options);
 
     std::thread measurement_process([] {
         try { lio->run(); }
@@ -671,7 +713,15 @@ int main(int argc, char **argv)
     const size_t executor_threads = std::max<size_t>(2, std::min<size_t>(4, std::thread::hardware_concurrency()));
     rclcpp::executors::MultiThreadedExecutor executor(rclcpp::ExecutorOptions(), executor_threads);
     executor.add_node(node);
+    rclcpp::executors::SingleThreadedExecutor imu_executor;
+    imu_executor.add_callback_group(imu_callback_group,node->get_node_base_interface());
+    std::thread imu_spin([&]{
+        try {imu_executor.spin();}
+        catch(const std::exception& e){LOG(ERROR)<<"IMU executor failed: "<<e.what();lio->Fail();}
+    });
     executor.spin();
+    imu_executor.cancel();
+    if(imu_spin.joinable())imu_spin.join();
 
     // Stop producers and join them before stopping cloud consumers/publishers.
     lio->RequestStop();

@@ -6,6 +6,11 @@
 #include <thread>
 #include <mutex>
 #include <glog/logging.h>
+#include <fstream>
+#include <iomanip>
+#include <sstream>
+#include <cstdlib>
+#include "std_msgs/msg/string.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 #include "nav_msgs/msg/path.hpp"
@@ -32,13 +37,23 @@ public:
     }
     void SetBaseLinkFrame(const std::string& frame){base_=frame;}
     void SetMaxPathPoses(size_t count){max_path_=count;}
-    void Start(){worker_=std::thread([this]{
+    void SetStatusPublisher(const rclcpp::Publisher<std_msgs::msg::String>::SharedPtr& pub){status_pub_=pub;}
+    // Trace is opt-in, buffered, and flushed when the worker is stopped. The
+    // steady clock separates sensor coverage from scheduling/transport latency.
+    void TraceIngress(double stamp){Trace('C',stamp,0.);}
+    void Start(){
+        if(const char* path=std::getenv("ADAPTIVE_LIO_OUTPUT_TRACE")) {
+            trace_.open(path); trace_<<std::setprecision(17);
+            if(!trace_)throw std::runtime_error("cannot open ADAPTIVE_LIO_OUTPUT_TRACE");
+        }
+        worker_=std::thread([this]{
         try {Run();}
-        catch(const std::exception& e){Fail();LOG(ERROR)<<"IMU output worker failed: "<<e.what();}
+        catch(const std::exception& e){Fail();ReportStatus(nullptr,true);LOG(ERROR)<<"IMU output worker failed: "<<e.what();}
     });}
     void Stop(){
         {std::lock_guard<std::mutex> lock(mutex_);stopping_=true;}
         cv_.notify_all();if(worker_.joinable())worker_.join();
+        std::lock_guard<std::mutex> trace_lock(trace_mutex_);if(trace_.is_open())trace_.flush();
     }
     void SetFaultCallback(std::function<void()> callback){fault_callback_=std::move(callback);}
     void Fail(){if(!faulted_.exchange(true) && fault_callback_)fault_callback_();cv_.notify_one();}
@@ -46,50 +61,64 @@ public:
         std::lock_guard<std::mutex> lock(mutex_);
         if(stopping_ || faulted_)return;
         if(imu_queue_.size()>=20000){Fail();return;}
-        imu_queue_.push_back(*imu);cv_.notify_one();
+        imu_queue_.push_back(*imu);Trace('I',imu->timestamp_,double(imu_queue_.size()));cv_.notify_one();
     }
     void OnState(const zjloc::LioStateUpdate& state){
         std::lock_guard<std::mutex> lock(mutex_);
         if(stopping_ || faulted_)return;
+        Trace('U',state.state.nav.timestamp_,state.last_accepted_lidar_stamp);
         if(!pending_ || state.sequence>pending_->sequence)pending_=state;
         cv_.notify_one();
     }
 private:
+    void Trace(char event,double stamp,double extra){
+        std::lock_guard<std::mutex> lock(trace_mutex_);
+        if(trace_.is_open())trace_<<event<<' '<<stamp<<' '<<extra<<' '
+            <<std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch()).count()<<'\n';
+    }
+    void ReportStatus(zjloc::ImuOdomPredictor* predictor,bool force=false){
+        if(!status_pub_)return;
+        const auto now=std::chrono::steady_clock::now();
+        const bool input_stale=now-last_input_>std::chrono::milliseconds(500);
+        const bool fault=faulted_ || (predictor && predictor->Faulted());
+        const bool valid=predictor && predictor->Publishable();
+        const std::string state=fault?"FAULT":!valid?"UNINITIALIZED":
+            (input_stale || predictor->Degraded()?"DEGRADED":"FRESH");
+        if(!force && state==last_health_ && now-last_status_<std::chrono::milliseconds(100))return;
+        const double age=predictor?predictor->CorrectionAge():std::numeric_limits<double>::infinity();
+        std::ostringstream json;json<<std::setprecision(17)
+            <<"{\"state\":\""<<state<<"\",\"stamp\":"<<last_stamp_
+            <<",\"correction_age_s\":";
+        if(std::isfinite(age))json<<age;else json<<"null";
+        json<<",\"input_stale\":"<<(input_stale?"true":"false")
+            <<",\"history_miss\":"<<(predictor?predictor->counters.history_miss:0)
+            <<",\"last_publish_sensor_interval_s\":"<<last_sensor_interval_<<"}";
+        std_msgs::msg::String msg;msg.data=json.str();
+        // Shutdown may invalidate the ROS context before the worker can report.
+        try {status_pub_->publish(msg);} catch(const std::exception& e){
+            LOG(WARNING)<<"status publication failed: "<<e.what();
+        }
+        last_status_=now;last_health_=state;
+    }
     void Run(){
         zjloc::ImuOdomPredictor predictor;
         double last_published=-std::numeric_limits<double>::infinity(),last_path=last_published;
         auto last_log=std::chrono::steady_clock::now();
-        auto last_input=last_log;
-        while(true){
-            std::deque<zjloc::IMU> batch;std::optional<zjloc::LioStateUpdate> update;
-            {
-                std::unique_lock<std::mutex> lock(mutex_);
-                cv_.wait_for(lock,std::chrono::seconds(1),[&]{return stopping_||faulted_||!imu_queue_.empty()||pending_.has_value();});
-                if(stopping_)break;
-                if(faulted_){LOG(ERROR)<<"IMU output invalid: input reset/gap/queue overflow; restart whole adaptive_lio node";break;}
-                batch.swap(imu_queue_);update=std::move(pending_);pending_.reset();
-            }
-            if(!batch.empty())last_input=std::chrono::steady_clock::now();
-            if(std::chrono::steady_clock::now()-last_input>std::chrono::seconds(1))
-                LOG(WARNING)<<"IMU input interrupted; no synthetic timestamps or repeated TF published";
-            for(const auto& imu:batch)predictor.Append(imu);
-            if(update)predictor.Submit(*update);
+        last_input_=last_log;
+        auto advance=[&]{
+            const bool replay=predictor.HasReadyUpdate();
+            const double anchor=predictor.PendingStamp();
+            if(replay)Trace('R',anchor,predictor.LastAccepted());
             predictor.Advance();
-            if(predictor.Faulted()){LOG(ERROR)<<"IMU replay failed; restart whole adaptive_lio node";Fail();continue;}
-            const auto now=std::chrono::steady_clock::now();
-            const bool publishable=predictor.Publishable();
-            if(now-last_log>std::chrono::seconds(5)){
-                const auto& c=predictor.counters;
-                LOG(INFO)<<"imu_output valid="<<publishable<<" history="<<predictor.HistorySize()
-                         <<" applied="<<c.applied<<" stale_state="<<c.stale_state
-                         <<" history_miss="<<c.history_miss<<" timeout="<<c.timeout
-                         <<" degraded="<<predictor.Degraded()<<" degraded_total_s="<<predictor.DegradedSeconds()
-                         <<" batch="<<batch.size();last_log=now;
-            }
-            if(!publishable)continue;
+            if(replay)Trace('E',anchor,predictor.LastAccepted());
+        };
+        auto publish_prediction=[&]{
+            if(!predictor.Publishable() || faulted_)return;
             const auto state=predictor.Snapshot();
             const double stamp=state.nav.timestamp_;
-            if(stamp<=last_published || faulted_)continue;
+            // Downsample by real sensor time; never restamp or interpolate an
+            // absent IMU sample. Check every sample, including catch-up bursts.
+            if(stamp<=last_published || stamp-last_published<.02-1e-6)return;
             const auto projected=zjloc::ProjectOdometry(state,predictor.AngularVelocity(),predictor.GyroVariance());
             nav_msgs::msg::Odometry odom;
             odom.header.stamp=get_ros_time(stamp);odom.header.frame_id=world_;odom.child_frame_id=child_;
@@ -103,7 +132,9 @@ private:
                 odom.pose.covariance[r*6+c]=projected.pose_cov(r,c);
                 odom.twist.covariance[r*6+c]=projected.twist_cov(r,c);
             }
+            Trace('P',stamp,predictor.CorrectionAge());
             odom_pub_->publish(odom);
+            Trace('D',stamp,predictor.CorrectionAge());
             geometry_msgs::msg::TransformStamped tf;
             tf.header=odom.header;tf.child_frame_id=child_;tf.transform.translation.x=pos.x();
             tf.transform.translation.y=pos.y();tf.transform.translation.z=pos.z();tf.transform.rotation=odom.pose.pose.orientation;
@@ -112,20 +143,56 @@ private:
             fixed.transform.translation.x=t_.x();fixed.transform.translation.y=t_.y();fixed.transform.translation.z=t_.z();
             fixed.transform.rotation.x=q_.x();fixed.transform.rotation.y=q_.y();fixed.transform.rotation.z=q_.z();fixed.transform.rotation.w=q_.w();
             if(tf_)tf_->sendTransform(std::vector<geometry_msgs::msg::TransformStamped>{tf,fixed});
-            last_published=stamp;
+            last_sensor_interval_=std::isfinite(last_published)?stamp-last_published:0.;
+            last_published=stamp; last_stamp_=stamp;
             if(max_path_ && path_pub_->get_subscription_count()>0 && stamp-last_path>=.1){
                 geometry_msgs::msg::PoseStamped ps;ps.header=odom.header;ps.pose=odom.pose.pose;
                 path_.header=odom.header;path_.poses.push_back(ps);
                 if(path_.poses.size()>max_path_)path_.poses.erase(path_.poses.begin(),path_.poses.end()-max_path_);
                 path_pub_->publish(path_);last_path=stamp;
             }
-            if(update && now-last_state_log_>std::chrono::seconds(5)) {
-                last_state_log_=now; LOG(INFO)<<"posterior_replay_age_s="<<stamp-update->state.nav.timestamp_
-                              <<" correction_age_s="<<stamp-predictor.LastAccepted()
-                              <<" posterior_stamp="<<update->state.nav.timestamp_;
+        };
+        while(true){
+            std::deque<zjloc::IMU> batch;std::optional<zjloc::LioStateUpdate> update;
+            {
+                std::unique_lock<std::mutex> lock(mutex_);
+                cv_.wait_for(lock,std::chrono::milliseconds(100),[&]{return stopping_||faulted_||!imu_queue_.empty()||pending_.has_value();});
+                if(stopping_)break;
+                if(faulted_){lock.unlock();ReportStatus(&predictor,true);break;}
+                for(size_t i=0;i<4 && !imu_queue_.empty();++i){
+                    batch.push_back(std::move(imu_queue_.front()));imu_queue_.pop_front();
+                }
+                update=std::move(pending_);pending_.reset();
+            }
+            if(update){
+                predictor.Submit(*update);advance();
+            }
+            if(!batch.empty())last_input_=std::chrono::steady_clock::now();
+            for(const auto& imu:batch){
+                if(faulted_)break;
+                predictor.Append(imu);advance();
+                if(predictor.Faulted()){Fail();break;}
+                publish_prediction();
+            }
+            if(predictor.Faulted())Fail();
+            ReportStatus(&predictor);
+            if(faulted_)break;
+            const auto now=std::chrono::steady_clock::now();
+            if(now-last_log>std::chrono::seconds(5)){
+                const auto& c=predictor.counters;
+                LOG(INFO)<<"imu_output valid="<<predictor.Publishable()<<" history="<<predictor.HistorySize()
+                    <<" applied="<<c.applied<<" stale_state="<<c.stale_state
+                    <<" history_miss="<<c.history_miss<<" stale_checks="<<c.timeout
+                    <<" degraded="<<predictor.Degraded()<<" correction_age_s="<<predictor.CorrectionAge()
+                    <<" batch="<<batch.size();last_log=now;
             }
         }
     }
+    rclcpp::Publisher<std_msgs::msg::String>::SharedPtr status_pub_;
+    std::ofstream trace_;std::mutex trace_mutex_;
+    std::chrono::steady_clock::time_point last_input_{},last_status_{};
+    std::string last_health_;
+    double last_stamp_=0.,last_sensor_interval_=0.;
     rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
     rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr path_pub_;
     rclcpp::Clock::SharedPtr clock_;
@@ -136,6 +203,5 @@ private:
     std::mutex mutex_;std::condition_variable cv_;std::thread worker_;
     std::deque<zjloc::IMU> imu_queue_;std::optional<zjloc::LioStateUpdate> pending_;
     std::function<void()> fault_callback_;
-    std::chrono::steady_clock::time_point last_state_log_{};
     bool stopping_=false;std::atomic<bool> faulted_{false};
 };

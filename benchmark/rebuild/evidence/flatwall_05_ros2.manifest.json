@@ -1,0 +1,56 @@
+{
+  "source": "/workspace/datasets/flatwall/flatwall_05.bag",
+  "source_md5": "15b7c46d0a018d0dbaf6bb8a1b30a828",
+  "source_sha256": "ac668922813bb523a56309c7a0b585958eba81e0897dea711e9a04a25b4ddf8e",
+  "source_bytes": 139946903,
+  "source_connections": [
+    {
+      "topic": "/livox/imu",
+      "type": "sensor_msgs/msg/Imu",
+      "count": 2861
+    },
+    {
+      "topic": "/livox/lidar",
+      "type": "livox_ros_driver/msg/CustomMsg",
+      "count": 141
+    },
+    {
+      "topic": "/livox/points",
+      "type": "sensor_msgs/msg/PointCloud2",
+      "count": 141
+    }
+  ],
+  "output": "/workspace/datasets/flatwall/flatwall_05_ros2",
+  "retimed": null,
+  "retiming": null,
+  "topics": {
+    "/livox/imu": {
+      "count": 2861,
+      "header_first_ns": 1656505491203886986,
+      "header_last_ns": 1656505505296652794,
+      "max_header_gap_s": 0.0051310060000000005,
+      "duplicate_headers": 0,
+      "backward_headers": 0,
+      "record_minus_header_min_s": -0.007836184000000001,
+      "record_minus_header_max_s": 0.10307770100000001,
+      "ordered_cdr_sha256": "c9d9d62ef02ebc71af37b4fd207a456cdbb4def25956df096af94b89906c8948"
+    },
+    "/livox/lidar": {
+      "count": 141,
+      "header_first_ns": 1656505491199651480,
+      "header_last_ns": 1656505505199460268,
+      "max_header_gap_s": 0.100652218,
+      "duplicate_headers": 0,
+      "backward_headers": 0,
+      "record_minus_header_min_s": 0.09226550900000001,
+      "record_minus_header_max_s": 0.111511998,
+      "ordered_cdr_sha256": "0f2d53f7549b10d17362d9b0a57cc3764344c2beed585bf9101136e0297629cc"
+    }
+  },
+  "acceleration_norm_median_raw": 0.9912400522692385,
+  "lidar_point_count_range": [
+    24000,
+    24000
+  ],
+  "output_sha256": "06900f3f0df5c3361ed80bfcba067b45fd2ce8cbbee324ce59b8131c54cfa893"
+}

@@ -1,0 +1,11 @@
+PASS snapshot, atomic rejection, zero/reverse/gap dt, matrix Joseph update
+PASS stationary 2s, constant velocity, acceleration, compound rotation
+PASS off-grid posterior, 83ms late initialization replay, P equality, ordering
+PASS pending future, gap fail-closed, stale prediction, rejected-frame age, recovery
+PASS lever arm, frame rotations, finite-difference pose/twist covariance
+PASS bounded history, expired posterior, NaN input
+PASS match support/cost/innovation gates, true fast motion, finite sorted aux, adjacent windows/offset
+PASS shared LiDAR-end interpolation and truncated IMU interval
+PASS posterior state cache and registered point refresh
+PASS yaw branch, near-vertical attitude, late correction of running trajectory
+ALL CORE TESTS PASSED

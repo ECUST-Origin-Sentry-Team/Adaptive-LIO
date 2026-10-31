@@ -65,12 +65,12 @@ try {
     late.Append(sample(1.5));late.Advance();check(late.Faulted(),"gap must fault");
     ImuOdomPredictor timeout(2,.1);timeout.Submit(initial());
     for(int i=0;i<50;++i){timeout.Append(sample(1+i*.005));timeout.Advance();}
-    check(!timeout.Publishable(),"prediction timeout");
+    check(timeout.Publishable() && timeout.CorrectionStale(),"stale correction suppressed prediction");
     u=initial(1.245);u.sequence=2;u.last_accepted_lidar_stamp=1;
-    timeout.Submit(u);timeout.Advance();check(!timeout.Publishable(),"rejected match refreshed timeout");
+    timeout.Submit(u);timeout.Advance();check(timeout.Publishable() && timeout.CorrectionStale(),"rejected match refreshed correction age");
     u.sequence=3;u.state.nav.timestamp_=1.25;u.last_accepted_lidar_stamp=1.25;
-    timeout.Append(sample(1.25));timeout.Submit(u);timeout.Advance();check(timeout.Publishable(),"correction recovery");
-    std::cout<<"PASS pending future, gap fail-closed, timeout, rejected-frame age, recovery\n";
+    timeout.Append(sample(1.25));timeout.Submit(u);timeout.Advance();check(timeout.Publishable() && !timeout.CorrectionStale(),"correction recovery");
+    std::cout<<"PASS pending future, gap fail-closed, stale prediction, rejected-frame age, recovery\n";
     // Finite-difference all 18 columns of pose/twist projections with lever arm and nonzero rotations.
     s=initial().state;s.nav.R_=SO3::exp(Vec3d(.5,-.7,.9));s.nav.v_=Vec3d(1,2,3);
     const Vec3d w(.8,-.3,.4);const SE3 T(SO3::exp(Vec3d(-.4,.2,.9)),Vec3d(.2,-.3,.5));

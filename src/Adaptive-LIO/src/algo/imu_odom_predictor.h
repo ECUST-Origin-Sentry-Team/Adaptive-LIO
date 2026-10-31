@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <deque>
 #include <optional>
+#include <limits>
 
 namespace zjloc {
 struct LioStateUpdate {
@@ -42,8 +43,9 @@ public:
         : history_seconds_(history_seconds), prediction_limit_(prediction_limit) {}
 
     bool Append(const IMU& imu) {
+        if (faulted_) return false;
         if (!imu.quality_.Usable() || !std::isfinite(imu.timestamp_) || !imu.gyro_.allFinite() || !imu.acce_.allFinite()) {
-            ++counters.invalid_imu; return false;
+            ++counters.invalid_imu; Fail(); return false;
         }
         if (!history_.empty() && imu.timestamp_<=history_.back().timestamp_) {
             ++counters.stale_imu; return false;
@@ -55,6 +57,7 @@ public:
         return true;
     }
     bool Submit(const LioStateUpdate& update) {
+        if (faulted_) return false;
         // Runtime never silently resets just one estimator. A clock reset or gap
         // requires restarting the entire node.
         if (update.sequence==0 ||
@@ -68,10 +71,21 @@ public:
         if (update.sequence<=sequence_ || (pending_ && update.sequence<=pending_->sequence) ||
             (sequence_ && update.state.nav.timestamp_<=anchor_time_) ||
             (pending_ && update.state.nav.timestamp_<pending_->state.nav.timestamp_) ||
-            (sequence_ && update.last_accepted_lidar_stamp<last_accepted_)) {
+            (sequence_ && update.last_accepted_lidar_stamp<last_accepted_) ||
+            (pending_ && update.last_accepted_lidar_stamp<pending_->last_accepted_lidar_stamp)) {
             ++counters.stale_state; return false;
         }
         pending_=update; return true;
+    }
+    // Trace the point at which a pending posterior actually becomes replayable,
+    // including a future posterior released by newly arrived IMU samples.
+    bool HasReadyUpdate() const {
+        return !faulted_ && pending_ && !history_.empty() &&
+            pending_->state.nav.timestamp_<=history_.back().timestamp_;
+    }
+    double PendingStamp() const {
+        return pending_ ? pending_->state.nav.timestamp_ :
+            std::numeric_limits<double>::quiet_NaN();
     }
     void Advance() {
         if (faulted_ || history_.empty()) return;
@@ -79,7 +93,10 @@ public:
             const auto update=*pending_;
             pending_.reset();
             if (update.state.nav.timestamp_<history_.front().timestamp_) {
-                ++counters.history_miss; Fail(); return;
+                // The posterior is unusable, but the running IMU prediction may
+                // still be healthy. Reject only this correction; never clamp its
+                // measurement time to the first retained sample.
+                ++counters.history_miss;
             } else if (filter_.RestoreSnapshot(update.state)) {
                 sequence_=update.sequence; anchor_time_=update.state.nav.timestamp_;
                 last_accepted_=update.last_accepted_lidar_stamp;
@@ -101,18 +118,24 @@ public:
     }
     bool Publishable() {
         if (faulted_ || !initialized_ || history_.empty()) return false;
-        if (filter_.GetNominalState().timestamp_-last_accepted_>prediction_limit_) {
-            ++counters.timeout; return false;
-        }
+        // Compatibility counter: stale publication checks, NOT rejected output.
+        if (CorrectionStale()) ++counters.timeout;
         return true;
     }
+    double CorrectionAge() const {
+        return initialized_ && !faulted_ ?
+            filter_.GetNominalState().timestamp_-last_accepted_ :
+            std::numeric_limits<double>::infinity();
+    }
+    bool CorrectionStale() const { return CorrectionAge()>prediction_limit_; }
     void Fail() { faulted_=true; initialized_=false; pending_.reset(); }
     bool Faulted() const { return faulted_; }
     ESKFD::Snapshot Snapshot() const { return filter_.ExportSnapshot(); }
     Vec3d AngularVelocity() const { return history_.back().gyro_-filter_.GetNominalState().bg_; }
     Vec3d GyroVariance() const { return history_.empty()?gyro_variance_:
         gyro_variance_.cwiseProduct(history_.back().quality_.gyro_noise_scale); }
-    bool Degraded() const {return !history_.empty() && history_.back().quality_.degraded;}
+    bool Degraded() const {return initialized_ && !faulted_ &&
+        (CorrectionStale() || (!history_.empty() && history_.back().quality_.degraded));}
     double DegradedSeconds() const {return history_.empty()?0.:history_.back().quality_.degraded_total_seconds;}
     size_t HistorySize() const { return history_.size(); }
     double LastAccepted() const { return last_accepted_; }

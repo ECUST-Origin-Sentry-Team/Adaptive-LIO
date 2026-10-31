@@ -27,7 +27,7 @@ public:
     }
     Decision Process(IMU& sample) {
         if(faulted_)return Decision::Fault;
-        if(!std::isfinite(sample.timestamp_)){sample.quality_.reasons|=ImuQuality::NonFinite;return Decision::Drop;}
+        if(!std::isfinite(sample.timestamp_)){sample.quality_.reasons|=ImuQuality::NonFinite;return Fault();}
         const double dt=sample.timestamp_-last_stamp_;
         if(sample.timestamp_<last_stamp_-1. || (std::isfinite(last_stamp_) && dt>.05)) {
             sample.quality_.reasons|=ImuQuality::TimeFault;return Fault();
